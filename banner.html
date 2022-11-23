@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Work+Sans&display=swap');
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+        }
+    </style>
+
+    <!-- swiper -->
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+
+    <title>BANNERS</title>
+</head>
+
+<body>
+
+
+
+
+    <div class="bg-white mt-5">
+
+
+
+        <!-- Slider main container -->
+
+        <div class="swiper position-relative">
+
+            <!-- floating control buttoms -->
+            <div class="text-white p-3  ps-5 position-absolute bottom-0 text-shadowl-lg" style="z-index: 999;">
+
+                <div id="start" onclick="control()" class="swiper-button-play d-flex align-items-center d-none">
+                    <i class="fs-1 bi bi-play-fill"></i> Reproducir
+                </div>
+
+                <div id="pause" onclick="control()" class="swiper-button-pause pause-control d-flex align-items-center">
+                    <i class="fs-1 bi bi-pause-fill"></i> Pausar
+                </div>
+
+            </div>
+
+            <!-- Additional required wrapper -->
+            <div class="swiper-wrapper">
+                <!-- Slides -->
+                <!-- home  -->
+                <!-- <div class="swiper-slide">
+                    <div class="container py-5">
+                        <div class="content-home pt-5">
+                            <h1 class="text-center fw-bold" style="font-size: 40pt;">VENTANILLA ÚNICA</h1>
+                            <div class="d-flex align-items-center justify-content-center">
+                                <a href="" class="btn btn-info text-white rounded-pill m-2">Información</a>
+                                <a href="" class="btn btn-success rounded-pill m-2">Servicios</a>
+                                <a href="" class="btn btn-danger rounded-pill m-2">Programas</a>
+                            </div>
+                        </div>
+
+
+                        <div class="d-flex justify-content-center my-5">
+                            <img src="logo_ventanilla_unica.svg" alt="logo_ventanilla_unica">
+                        </div>
+
+                    </div>
+                </div> -->
+
+                <!-- Información  -->
+                <div class="swiper-slide">
+                   
+                 <div class="text-center">
+                    <a class="btn btn-success rounded-pill ms-2">Información</a>
+                    <a class="btn btn-success rounded-pill ms-2">Servicios</a>
+                    <a class="btn btn-success rounded-pill ms-2">Programas</a>
+                 </div>
+                 <img class="img-fluid"
+                 src="https://www.cartagena.gov.co/sites/default/files/2022-07/BANNER%20SEDE%20ELECTRONICA%20DESKTOP.png"
+                 alt="">
+                </div>
+                <!-- Información  -->
+                <div class="swiper-slide" id="#info">
+                    <img class="img-fluid"
+                        src="https://www.cartagena.gov.co/sites/default/files/2022-07/BANNER%20SEDE%20ELECTRONICA%20DESKTOP.png"
+                        alt="">
+                </div>
+                <!-- Información  -->
+                <div class="swiper-slide" id="service">
+                    <img class="img-fluid"
+                        src="https://www.cartagena.gov.co/sites/default/files/2022-10/Banner%20757x512.png" alt="">
+                </div>
+                <!-- Información  -->
+                <div class="swiper-slide" id="program">
+                    <img class="img-fluid"
+                        src="https://www.cartagena.gov.co/sites/default/files/2022-10/Banner%20757x512.png" alt="">
+                </div>
+
+
+            </div>
+            <!-- If we need pagination -->
+            <div class="swiper-pagination"></div>
+
+
+            <!-- If we need scrollbar -->
+            <!-- <div class="swiper-scrollbar"></div> -->
+            <!-- If we need navigation buttons -->
+
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+
+
+
+        </div>
+    </div>
+
+
+
+
+
+    <!-- hover styles from controls -->
+    <style>
+        .swiper-button-play:hover,
+        .swiper-button-pause:hover {
+            color: rgb(0, 54, 21);
+        }
+    </style>
+
+
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+
+
+    <!-- swiper -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+
+    <script>
+
+
+        // Tooltip 
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+
+        // swiper initialization 
+        const swiper = new Swiper('.swiper', {
+            // Optional parameters
+            // direction: 'vertical',
+            loop: true,
+
+            // If we need pagination
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+                renderBullet: function (index, className) {
+                    return '<span class="' + className + '">' + (index + 1) + "</span>";
+                },
+            },
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            paginationClickable: true,
+            // autoplay: {
+            //     // tiempo de cambio sliders 
+            //     delay: 3000,
+
+            // },
+
+
+        });
+
+
+
+
+
+
+    </script>
+
+
+    <!-- controls  -->
+    <script>
+
+        function control() {
+            // check autoplay running
+            if (swiper.autoplay.running) {
+
+                // show play buttom
+                let start = document.getElementById("start");
+                start.classList.remove("d-none");
+
+                // hide pause buttom
+                let pause = document.getElementById("pause");
+                pause.classList.add("d-none");
+
+                // disable
+                swiper.autoplay.stop();
+            } else {
+
+                // hide play buttom
+                let start = document.getElementById("start");
+                start.classList.add("d-none");
+
+                // show pause buttom
+                let pause = document.getElementById("pause");
+                pause.classList.remove("d-none");
+
+                // active 
+                swiper.autoplay.start();
+            }
+
+
+        }
+
+
+
+    </script>
+
+
+    <style>
+        .swiper-pagination-bullet {
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            color: #000;
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .swiper-pagination-bullet-active {
+            color: #fff;
+            background: #093;
+        }
+
+        .shadow {
+            box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
+        }
+    </style>
+</body>
+
+</html>
