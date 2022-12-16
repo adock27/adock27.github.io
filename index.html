@@ -15,6 +15,9 @@
     <!-- animate cdn  -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
+    <!-- Swiper js library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+
     <!-- google font -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
@@ -24,15 +27,17 @@
         }
     </style>
 
+    <!-- Estilos Custom  -->
+    <link rel="stylesheet" href="/styles/style.css">
+
     <title>Bootstrap Web Desing</title>
 </head>
 
 <body class="animate__animated animate__fadeIn">
 
-
+    <!-- PERFIL  -->
     <section id="Home" class="position-relative m-0 bg-custom text-white">
-
-
+        <!-- NAVBAR  -->
         <div class="custom-shape-divider-bottom-1662057955">
             <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"
                 preserveAspectRatio="none">
@@ -47,7 +52,7 @@
                     class="shape-fill"></path>
             </svg>
         </div>
-
+        <!-- FOTO Y RESUMEN  -->
         <div class="container pb-5">
             <nav class="navbar navbar-expand-lg navbar-dark text-white">
                 <div class="container-fluid">
@@ -120,12 +125,7 @@
         </div>
     </section>
 
-
-
-
-
-
-
+    <!-- ABOUT ME  -->
     <section id="about-me">
         <div class="bg-white">
             <div class="container py-5">
@@ -158,13 +158,13 @@
     </section>
 
 
-
+    <!-- Habilidades -->
     <section id="skill">
 
         <div class="bg-custom-1 position-relative py-5 px-3">
 
 
-            <div class="custom-shape-divider-top-1669177420">
+            <!-- <div class="custom-shape-divider-top-1669177420">
                 <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"
                     preserveAspectRatio="none">
                     <path
@@ -177,8 +177,8 @@
                         d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"
                         class="shape-fill"></path>
                 </svg>
-            </div>
-
+            </div> -->
+            <!-- 
             <div class="custom-shape-divider-bottom-1662057955">
                 <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"
                     preserveAspectRatio="none">
@@ -192,8 +192,8 @@
                         d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"
                         class="shape-fill"></path>
                 </svg>
-            </div>
-            <div class="container bg-white p-3 p-lg-5 my-5" style="border-radius: 35px;">
+            </div> -->
+            <div class="container bg-white p-3 p-lg-5 " style="border-radius: 5px;">
                 <div class="row  align-items-center">
                     <h2 class="fw-bold mb-3" style="font-size: 3rem;">Habilidades</h2>
                     <!-- columna 1 -->
@@ -292,12 +292,23 @@
         </div>
     </section>
 
-    <!-- cards  -->
+    <div class="container"></div>
+
+
+    <div class="container">
+       
+    </div>
+
+
+
+
+
+    <!-- PROYECTOS   -->
     <section id="segundo" class="position-relative">
 
         <div class="container p-3 p-lg-5">
 
-            <div class="row align-items-center g-4">
+            <!-- <div class="row align-items-center g-4">
                 <h2 class="fw-bold mb-3" style="font-size: 3rem;">Proyectos</h2>
                 <div class="col-6 col-md-4 col-lg-3">
                     <a class="text-decoration-none text-dark" href="ventanilla.html">
@@ -347,12 +358,28 @@
 
 
 
-            </div>
+            </div> -->
+
+ <!-- PROYECTOS -->
+ <div class="swiper">
+    <!-- Additional required wrapper -->
+    <div class="swiper-wrapper" id='proyectos'>
+        
+    </div>
+    <!-- If we need pagination -->
+    <div class="swiper-pagination"></div>
+
+    <!-- If we need navigation buttons -->
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+
+</div>
+
 
         </div>
     </section>
 
-
+    <!-- EXPERIENCIA  -->
     <section>
         <div class="container p-3 p-lg-5">
             <h2 class="fw-bold mb-5" style="font-size: 3rem;">Experiencia</h2>
@@ -410,9 +437,9 @@
         </div>
     </section>
 
+
+    <!-- PIE DE PAGINA FOOTER  -->
     <footer>
-
-
         <div class="bg-custom-1 text-white pb-5">
             <div class=" p-5" style="border-radius: 35px;">
                 <h3 class="fw-bold mb-4">Contactame</h3>
@@ -435,125 +462,87 @@
                 </div>
             </div>
         </div>
-        </section>
-
-        <style>
-            .bg-custom-0 {
-                /* background-image: linear-gradient(to right top, #051937, #004d7a, #008793, #00bf72, #a8eb12); */
-                background-image: linear-gradient(to right top, #a8eb12, #00bf72, #008793, #004d7a, #051937);
-            }
-
-            .bg-custom {
-                background-image: linear-gradient(to right top, #051937, #004d7a, #008793, #00bf72, #a8eb12);
-            }
-
-            .bg-custom-1 {
-                background-image: linear-gradient(to right, #004d7a, #008793);
-            }
+    </footer>
 
 
-            /* start homes */
-            .custom-shape-divider-bottom-1662057955 {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                overflow: hidden;
-                line-height: 0;
-                transform: rotate(180deg);
-            }
 
-            .custom-shape-divider-bottom-1662057955 svg {
-                position: relative;
-                display: block;
-                width: calc(124% + 1.3px);
-                height: 83px;
-            }
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
 
-            .custom-shape-divider-bottom-1662057955 .shape-fill {
-                fill: #FFFFFF;
-            }
+    <!-- swiper js  -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
 
-            /* skill  */
-            .custom-shape-divider-top-1669177420 {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                overflow: hidden;
-                line-height: 0;
-            }
 
-            .custom-shape-divider-top-1669177420 svg {
-                position: relative;
-                display: block;
-                width: calc(100% + 1.3px);
-                height: 80px;
-            }
 
-            .custom-shape-divider-top-1669177420 .shape-fill {
-                fill: #FFFFFF;
-            }
+    <script>
+        var proyectos = [
+            {
+                'titulo': 'Sede electronica',
+                'descripcion': 'Pagina principal de la Alcaldia de Cartagena',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+            {
+                'titulo': 'Gifs-App',
+                'descripcion': 'Aplicacion de react para buscar gifts',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+            {
+                'titulo': 'Sede electronica',
+                'descripcion': 'Pagina principal de la Alcaldia de Cartagena',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+            {
+                'titulo': 'Sede electronica',
+                'descripcion': 'Pagina principal de la Alcaldia de Cartagena',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+            {
+                'titulo': 'Sede electronica',
+                'descripcion': 'Pagina principal de la Alcaldia de Cartagena',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+            {
+                'titulo': 'Sede electronica',
+                'descripcion': 'Pagina principal de la Alcaldia de Cartagena',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+            {
+                'titulo': 'Sede electronica',
+                'descripcion': 'Pagina principal de la Alcaldia de Cartagena',
+                'imagen': '/src/assets/aboutme.gif',
+                'url': 'https://adock27.github.io/ander-gif/'
+            },
+        ]
+        var html = proyectos.map(function (proyecto) {
+            return `
+            <div class="swiper-slide">
+                <div class="card shadow mb-4" style="">
+                <img src="${proyecto.imagen}" class="card-img-top" alt="${proyecto.titulo}">
+                <div class="card-body">
+                    <h5 class="card-title">${proyecto.titulo}</h5>
+                    <p class="card-text">${proyecto.descripcion}.</p>
+                    <a href="${proyecto.url}" target='_blank' class="btn btn-primary">Go somewhere</a>
+                </div>
+                </div>
+            </div>
+            `;
+        })
+        document.getElementById("proyectos").innerHTML = html;
+    </script>
 
-            /* timeile */
-            ul.timeline {
-                list-style-type: none;
-                position: relative;
-            }
+    <script src="/scripts/swiper.js"></script>
 
-            ul.timeline:before {
-                content: ' ';
-                background: #d4d9df;
-                display: inline-block;
-                position: absolute;
-                left: 29px;
-                width: 2px;
-                height: 100%;
-                z-index: 400;
-            }
 
-            ul.timeline>li {
-                margin: 20px 0;
-                padding-left: 20px;
-            }
 
-            ul.timeline>li:before {
-                content: ' ';
-                background: white;
-                display: inline-block;
-                position: absolute;
-                border-radius: 50%;
-                border: 3px solid #008793;
-                left: 20px;
-                width: 20px;
-                height: 20px;
-                z-index: 400;
-            }
-
-            .text-danger {
-                color: #008793 !important;
-            }
-
-            .bg-danger {
-                background-image: linear-gradient(to right top, #a8eb12, #00bf72, #008793);
-            }
-
-            .btn-danger {
-                background: #00bf72;
-                /* background: linear-gradient(222deg, rgba(131,58,180,1) 0%, rgba(92,29,253,1) 50%, rgba(252,176,69,1) 100%); */
-                border: #1e4adc !important;
-            }
-        </style>
-
-        <!-- Optional JavaScript; choose one of the two! -->
-
-        <!-- Option 1: Bootstrap Bundle with Popper -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-            crossorigin="anonymous"></script>
-
-        <!-- Option 2: Separate Popper and Bootstrap JS -->
-        <!--
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
     -->
