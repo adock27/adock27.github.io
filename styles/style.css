@@ -12,6 +12,18 @@
     background-image: linear-gradient(to right, #004d7a, #008793);
 }
 
+.bg-dark-1 {
+    background: #202023;
+}
+.bg-dark-2 {
+    background: #2b3046;
+}
+
+.text-primary-2 {
+    color: #006283;
+}
+
+
 
 /* start homes */
 .custom-shape-divider-bottom-1662057955 {
