@@ -5,15 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Practicar verbos en inglés</title>
     <script src="styles/tailwin.js"></script>
+    <style>
+        .icon { width: 1.15rem; height: 1.15rem; flex-shrink: 0; }
+        .icon-sm { width: 1rem; height: 1rem; }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen py-6">
     <div class="max-w-6xl mx-auto px-4">
-        <h1 class="text-center text-lg text-gray-500 mb-6">Practica verbos en inglés</h1>
+        <h1 class="text-center text-lg text-gray-600 mb-6 flex items-center justify-center gap-2">
+            <svg class="icon text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            Practica verbos en inglés
+        </h1>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <!-- Columna izquierda: Historial -->
             <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-2 lg:order-1">
-                <div class="px-4 py-3 border-b border-gray-200 shrink-0">
+                <div class="px-4 py-3 border-b border-gray-200 shrink-0 flex items-center gap-2">
+                    <svg class="icon text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                     <h2 class="text-sm font-semibold text-gray-700">Verbos realizados</h2>
                 </div>
                 <div class="overflow-y-auto flex-1 min-h-[280px] max-h-[70vh]">
@@ -21,9 +29,10 @@
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
                                 <th class="text-left py-2 px-3 font-medium text-gray-600">Verbo</th>
-                                <th class="text-center py-2 px-3 font-medium text-green-600">Correctas</th>
-                                <th class="text-center py-2 px-3 font-medium text-red-600">Incorrectas</th>
-                                <th class="text-center py-2 px-3 font-medium text-amber-600">Omitidas</th>
+                                <th class="text-center py-2 px-2 font-medium text-green-600" title="Correctas"><svg class="icon-sm inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></th>
+                                <th class="text-center py-2 px-2 font-medium text-red-600" title="Incorrectas"><svg class="icon-sm inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></th>
+                                <th class="text-center py-2 px-2 font-medium text-amber-600" title="Omitidas"><svg class="icon-sm inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></th>
+                                <th class="text-center py-2 px-2 font-medium text-blue-600" title="Ayudadas"><svg class="icon-sm inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></th>
                             </tr>
                         </thead>
                         <tbody id="verbTableBody"></tbody>
@@ -35,8 +44,8 @@
             <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-1 lg:order-2">
                 <div class="p-5">
                     <div class="flex justify-between items-center mb-2">
-                        <p class="text-gray-500 text-sm mb-0">¿Cuál es el verbo en inglés?</p>
-                        <span class="text-sm font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded" id="timerDisplay">1:00</span>
+                        <p class="text-gray-500 text-sm mb-0 flex items-center gap-1.5"><svg class="icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> ¿Cuál es el verbo en inglés?</p>
+                        <span id="timerWrap" class="text-sm font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded inline-flex items-center gap-1"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> <span id="timerDisplay">1:00</span></span>
                     </div>
                     <p class="text-2xl font-semibold text-blue-600 mb-5" id="spaVerb">—</p>
 
@@ -52,28 +61,30 @@
                     <div id="resultMsg" class="text-sm mb-3"></div>
 
                     <div class="flex gap-2 flex-wrap">
-                        <button type="button" class="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-400" id="btnCheck">Comprobar</button>
-                        <button type="button" class="border border-gray-300 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-300" id="btnReveal">Ver respuesta</button>
+                        <button type="button" class="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 inline-flex items-center justify-center gap-2" id="btnCheck"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Comprobar</button>
+                        <button type="button" class="border border-gray-300 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-300 inline-flex items-center justify-center gap-2" id="btnReveal"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg> Ver respuesta</button>
                     </div>
                 </div>
                 <div class="px-5 pb-4 pt-0">
-                    <div class="flex justify-center gap-4 flex-wrap text-sm">
-                        <span class="text-gray-500">Verbos: <strong class="text-gray-800" id="statTotal">0</strong></span>
-                        <span class="text-green-600">Correctas: <strong id="statCorrect">0</strong></span>
-                        <span class="text-red-600">Incorrectas: <strong id="statIncorrect">0</strong></span>
-                        <span class="text-amber-600">Omitidas: <strong id="statOmitted">0</strong></span>
+                    <div class="flex justify-center gap-5 flex-wrap text-sm items-center">
+                        <span class="text-gray-500 inline-flex items-center gap-1" title="Verbos"><svg class="icon-sm text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg> <strong class="text-gray-800" id="statTotal">0</strong></span>
+                        <span class="text-green-600 inline-flex items-center gap-1" title="Correctas"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> <strong id="statCorrect">0</strong></span>
+                        <span class="text-red-600 inline-flex items-center gap-1" title="Incorrectas"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> <strong id="statIncorrect">0</strong></span>
+                        <span class="text-amber-600 inline-flex items-center gap-1" title="Omitidas"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> <strong id="statOmitted">0</strong></span>
+                        <span class="text-blue-600 inline-flex items-center gap-1" title="Ayudadas"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> <strong id="statHelped">0</strong></span>
                     </div>
                     <div class="flex justify-between items-center mt-3">
-                        <button type="button" class="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50" id="btnPrev">← Anterior</button>
+                        <button type="button" class="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 inline-flex items-center gap-1" id="btnPrev"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg> Anterior</button>
                         <span class="text-sm text-gray-500" id="progress">0 / 0</span>
-                        <button type="button" class="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50" id="btnNext">Siguiente →</button>
+                        <button type="button" class="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 inline-flex items-center gap-1" id="btnNext">Siguiente <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
                     </div>
                 </div>
             </div>
 
             <!-- Columna derecha: Cargar nuevos verbos -->
             <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-3">
-                <div class="px-4 py-3 border-b border-gray-200 shrink-0">
+                <div class="px-4 py-3 border-b border-gray-200 shrink-0 flex items-center gap-2">
+                    <svg class="icon text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     <h2 class="text-sm font-semibold text-gray-700">Cargar verbos</h2>
                 </div>
                 <div class="p-4 text-sm flex-1 flex flex-col min-h-[280px]">
@@ -81,8 +92,8 @@
                     <code class="block bg-gray-100 px-2 py-1.5 rounded text-xs font-mono mb-3 break-all">[{base:"be", past:"was/were", part:"been", spa:"ser/estar"}, ...]</code>
                     <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-xs mb-3 flex-1 min-h-[120px]" id="jsonInput" rows="6" placeholder="Pega el array JSON aquí"></textarea>
                     <div id="jsonMsg" class="mb-2 text-xs"></div>
-                    <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full" id="btnImport">Importar</button>
-                    <button type="button" class="mt-2 text-xs text-gray-500 hover:text-gray-700 underline" id="btnResetVerbs">Restablecer lista por defecto (56 verbos)</button>
+                    <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full inline-flex items-center justify-center gap-2" id="btnImport"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l4-4m-4 4V4"/></svg> Importar</button>
+                    <button type="button" class="mt-2 text-xs text-gray-500 hover:text-gray-700 underline inline-flex items-center gap-1" id="btnResetVerbs"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Restablecer lista por defecto (56 verbos)</button>
                 </div>
             </div>
         </div>
@@ -163,6 +174,7 @@
         let statsCorrect = 0;
         let statsIncorrect = 0;
         let statsOmitted = 0;
+        let statsHelped = 0;
         let timerId = null;
         let timeLeft = 0;
         let perVerbStats = {};
@@ -196,12 +208,13 @@
 
         function recordVerbResult(base, type) {
             if (!perVerbStats[base]) {
-                perVerbStats[base] = { correct: 0, incorrect: 0, omitted: 0 };
+                perVerbStats[base] = { correct: 0, incorrect: 0, omitted: 0, helped: 0 };
                 attemptedOrder.push(base);
             }
             if (type === 'correct') perVerbStats[base].correct++;
             else if (type === 'incorrect') perVerbStats[base].incorrect++;
             else if (type === 'omitted') perVerbStats[base].omitted++;
+            else if (type === 'helped') perVerbStats[base].helped = (perVerbStats[base].helped || 0) + 1;
             saveHistory();
             renderVerbTable();
         }
@@ -209,18 +222,20 @@
         function renderVerbTable() {
             const tbody = document.getElementById('verbTableBody');
             if (attemptedOrder.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="py-3 px-3 text-gray-400 text-center">Aún no hay verbos realizados</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="py-3 px-3 text-gray-400 text-center">Aún no hay verbos realizados</td></tr>';
                 return;
             }
             tbody.innerHTML = attemptedOrder.map(function(base) {
                 const s = perVerbStats[base];
                 const v = getVerbByBase(base);
                 const label = v ? v.spa + ' (' + v.base + ')' : base;
+                const helped = s.helped || 0;
                 return '<tr class="border-t border-gray-100 hover:bg-gray-50">' +
                     '<td class="py-2 px-3 text-gray-800">' + escapeHtml(label) + '</td>' +
                     '<td class="py-2 px-3 text-center text-green-600 font-medium">' + s.correct + '</td>' +
                     '<td class="py-2 px-3 text-center text-red-600 font-medium">' + s.incorrect + '</td>' +
                     '<td class="py-2 px-3 text-center text-amber-600 font-medium">' + s.omitted + '</td>' +
+                    '<td class="py-2 px-3 text-center text-blue-600 font-medium">' + helped + '</td>' +
                     '</tr>';
             }).join('');
         }
@@ -282,14 +297,14 @@
             if (!verbs.length) return;
             timeLeft = TIMER_SECONDS;
             document.getElementById('timerDisplay').textContent = '1:00';
-            document.getElementById('timerDisplay').className = 'text-sm font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded';
+            document.getElementById('timerWrap').className = 'text-sm font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded inline-flex items-center gap-1';
             timerId = setInterval(function() {
                 timeLeft--;
                 const m = Math.floor(timeLeft / 60);
                 const s = timeLeft % 60;
                 document.getElementById('timerDisplay').textContent = m + ':' + (s < 10 ? '0' : '') + s;
                 if (timeLeft <= 10) {
-                    document.getElementById('timerDisplay').className = 'text-sm font-mono font-semibold text-red-600 bg-red-50 px-2 py-1 rounded';
+                    document.getElementById('timerWrap').className = 'text-sm font-mono font-semibold text-red-600 bg-red-50 px-2 py-1 rounded inline-flex items-center gap-1';
                 }
                 if (timeLeft <= 0) {
                     clearTimer();
@@ -332,6 +347,7 @@
             document.getElementById('statCorrect').textContent = statsCorrect;
             document.getElementById('statIncorrect').textContent = statsIncorrect;
             document.getElementById('statOmitted').textContent = statsOmitted;
+            document.getElementById('statHelped').textContent = statsHelped;
         }
 
         function normalize(s) {
@@ -386,6 +402,9 @@
             if (!verbs.length) return;
             clearTimer();
             const v = verbs[order[index]];
+            recordVerbResult(v.base, 'helped');
+            statsHelped++;
+            renderStats();
             document.getElementById('inputBase').value = v.base;
             document.getElementById('inputPast').value = v.past;
             document.getElementById('inputPart').value = v.part;
