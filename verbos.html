@@ -20,9 +20,12 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <!-- Columna izquierda: Historial -->
             <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-2 lg:order-1">
-                <div class="px-4 py-3 border-b border-gray-200 shrink-0 flex items-center gap-2">
-                    <svg class="icon text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                    <h2 class="text-sm font-semibold text-gray-700">Verbos realizados</h2>
+                <div class="px-4 py-3 border-b border-gray-200 shrink-0 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="icon text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        <h2 class="text-sm font-semibold text-gray-700">Verbos realizados</h2>
+                    </div>
+                    <button type="button" class="text-xs text-gray-500 hover:text-red-600 inline-flex items-center gap-1" id="btnResetHistory" title="Vaciar historial y estadísticas"><svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Reiniciar</button>
                 </div>
                 <div class="overflow-y-auto flex-1 min-h-[280px] max-h-[70vh]">
                     <table class="w-full text-sm">
@@ -285,6 +288,19 @@
             msg.className = 'mb-2 text-xs text-green-600';
         }
 
+        function resetHistory() {
+            if (!confirm('¿Vaciar la tabla de verbos realizados y poner las estadísticas a cero?')) return;
+            perVerbStats = {};
+            attemptedOrder = [];
+            statsCorrect = 0;
+            statsIncorrect = 0;
+            statsOmitted = 0;
+            statsHelped = 0;
+            saveHistory();
+            renderStats();
+            renderVerbTable();
+        }
+
         function clearTimer() {
             if (timerId) {
                 clearInterval(timerId);
@@ -458,6 +474,7 @@
         document.getElementById('btnNext').addEventListener('click', () => { index++; showVerb(); });
         document.getElementById('btnImport').addEventListener('click', importJson);
         document.getElementById('btnResetVerbs').addEventListener('click', resetToDefault);
+        document.getElementById('btnResetHistory').addEventListener('click', resetHistory);
 
         document.getElementById('inputBase').addEventListener('keydown', onInputKeydown);
         document.getElementById('inputPast').addEventListener('keydown', onInputKeydown);
