@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Practicar verbos en inglés</title>
+    <script src="styles/tailwin.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-6">
+    <div class="max-w-6xl mx-auto px-4">
+        <h1 class="text-center text-lg text-gray-500 mb-6">Practica verbos en inglés</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Columna izquierda: Historial -->
+            <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-2 lg:order-1">
+                <div class="px-4 py-3 border-b border-gray-200 shrink-0">
+                    <h2 class="text-sm font-semibold text-gray-700">Verbos realizados</h2>
+                </div>
+                <div class="overflow-y-auto flex-1 min-h-[280px] max-h-[70vh]">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="text-left py-2 px-3 font-medium text-gray-600">Verbo</th>
+                                <th class="text-center py-2 px-3 font-medium text-green-600">Correctas</th>
+                                <th class="text-center py-2 px-3 font-medium text-red-600">Incorrectas</th>
+                                <th class="text-center py-2 px-3 font-medium text-amber-600">Omitidas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="verbTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Columna central: Formulario de práctica -->
+            <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-1 lg:order-2">
+                <div class="p-5">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-gray-500 text-sm mb-0">¿Cuál es el verbo en inglés?</p>
+                        <span class="text-sm font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded" id="timerDisplay">1:00</span>
+                    </div>
+                    <p class="text-2xl font-semibold text-blue-600 mb-5" id="spaVerb">—</p>
+
+                    <label class="block text-gray-500 text-sm mb-1">Infinitivo (base)</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-lg mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" id="inputBase" placeholder="escribe en inglés" autocomplete="off">
+
+                    <label class="block text-gray-500 text-sm mb-1">Pasado simple</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-lg mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" id="inputPast" placeholder="escribe en inglés" autocomplete="off">
+
+                    <label class="block text-gray-500 text-sm mb-1">Pasado participio</label>
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" id="inputPart" placeholder="escribe en inglés" autocomplete="off">
+
+                    <div id="resultMsg" class="text-sm mb-3"></div>
+
+                    <div class="flex gap-2 flex-wrap">
+                        <button type="button" class="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-400" id="btnCheck">Comprobar</button>
+                        <button type="button" class="border border-gray-300 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-300" id="btnReveal">Ver respuesta</button>
+                    </div>
+                </div>
+                <div class="px-5 pb-4 pt-0">
+                    <div class="flex justify-center gap-4 flex-wrap text-sm">
+                        <span class="text-gray-500">Verbos: <strong class="text-gray-800" id="statTotal">0</strong></span>
+                        <span class="text-green-600">Correctas: <strong id="statCorrect">0</strong></span>
+                        <span class="text-red-600">Incorrectas: <strong id="statIncorrect">0</strong></span>
+                        <span class="text-amber-600">Omitidas: <strong id="statOmitted">0</strong></span>
+                    </div>
+                    <div class="flex justify-between items-center mt-3">
+                        <button type="button" class="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50" id="btnPrev">← Anterior</button>
+                        <span class="text-sm text-gray-500" id="progress">0 / 0</span>
+                        <button type="button" class="text-sm border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50" id="btnNext">Siguiente →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Cargar nuevos verbos -->
+            <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden flex flex-col order-3">
+                <div class="px-4 py-3 border-b border-gray-200 shrink-0">
+                    <h2 class="text-sm font-semibold text-gray-700">Cargar verbos</h2>
+                </div>
+                <div class="p-4 text-sm flex-1 flex flex-col min-h-[280px]">
+                    <p class="mb-2 text-gray-600">Estructura JSON:</p>
+                    <code class="block bg-gray-100 px-2 py-1.5 rounded text-xs font-mono mb-3 break-all">[{base:"be", past:"was/were", part:"been", spa:"ser/estar"}, ...]</code>
+                    <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono text-xs mb-3 flex-1 min-h-[120px]" id="jsonInput" rows="6" placeholder="Pega el array JSON aquí"></textarea>
+                    <div id="jsonMsg" class="mb-2 text-xs"></div>
+                    <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 w-full" id="btnImport">Importar</button>
+                    <button type="button" class="mt-2 text-xs text-gray-500 hover:text-gray-700 underline" id="btnResetVerbs">Restablecer lista por defecto (56 verbos)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'verbos-ingles-app';
+        const STORAGE_KEY_HISTORY = 'verbos-ingles-app-historial';
+        const INPUT_BASE_CLASS = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-lg mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none';
+        const INPUT_PART_CLASS = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-lg mb-6 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none';
+        const INPUT_OK = ' bg-green-50 border-green-500';
+        const INPUT_FAIL = ' bg-red-50 border-red-500';
+
+        const DEFAULT_VERBS = [
+            { base: "be", past: "was/were", part: "been", spa: "ser/estar" },
+            { base: "become", past: "became", part: "become", spa: "convertirse" },
+            { base: "begin", past: "began", part: "begun", spa: "comenzar" },
+            { base: "break", past: "broke", part: "broken", spa: "romper" },
+            { base: "bring", past: "brought", part: "brought", spa: "traer" },
+            { base: "build", past: "built", part: "built", spa: "construir" },
+            { base: "buy", past: "bought", part: "bought", spa: "comprar" },
+            { base: "can", past: "could", part: "could", spa: "poder" },
+            { base: "catch", past: "caught", part: "caught", spa: "atrapar" },
+            { base: "come", past: "came", part: "come", spa: "venir" },
+            { base: "do", past: "did", part: "done", spa: "hacer" },
+            { base: "drink", past: "drank", part: "drunk", spa: "beber" },
+            { base: "eat", past: "ate", part: "eaten", spa: "comer" },
+            { base: "feel", past: "felt", part: "felt", spa: "sentir" },
+            { base: "fight", past: "fought", part: "fought", spa: "pelear" },
+            { base: "fly", past: "flew", part: "flown", spa: "volar" },
+            { base: "forget", past: "forgot", part: "forgotten", spa: "olvidar" },
+            { base: "forgive", past: "forgave", part: "forgiven", spa: "perdonar" },
+            { base: "get", past: "got", part: "gotten", spa: "obtener" },
+            { base: "go", past: "went", part: "gone", spa: "ir" },
+            { base: "grow", past: "grew", part: "grown", spa: "crecer" },
+            { base: "have", past: "had", part: "had", spa: "haber" },
+            { base: "hear", past: "heard", part: "heard", spa: "oír" },
+            { base: "hit", past: "hit", part: "hit", spa: "golpear" },
+            { base: "hurt", past: "hurt", part: "hurt", spa: "herir" },
+            { base: "know", past: "knew", part: "known", spa: "saber/conocer" },
+            { base: "leave", past: "left", part: "left", spa: "dejar" },
+            { base: "let", past: "let", part: "let", spa: "permitir" },
+            { base: "lose", past: "lost", part: "lost", spa: "perder" },
+            { base: "make", past: "made", part: "made", spa: "hacer" },
+            { base: "pay", past: "paid", part: "paid", spa: "pagar" },
+            { base: "put", past: "put", part: "put", spa: "poner" },
+            { base: "read", past: "read", part: "read", spa: "leer" },
+            { base: "ring", past: "rang", part: "rung", spa: "llamar" },
+            { base: "run", past: "ran", part: "run", spa: "correr" },
+            { base: "say", past: "said", part: "said", spa: "decir" },
+            { base: "see", past: "saw", part: "seen", spa: "ver" },
+            { base: "sell", past: "sold", part: "sold", spa: "vender" },
+            { base: "send", past: "sent", part: "sent", spa: "enviar" },
+            { base: "shine", past: "shone", part: "shone", spa: "brillar" },
+            { base: "shut", past: "shut", part: "shut", spa: "cerrar" },
+            { base: "sing", past: "sang", part: "sung", spa: "cantar" },
+            { base: "sit", past: "sat", part: "sat", spa: "sentar" },
+            { base: "sleep", past: "slept", part: "slept", spa: "dormir" },
+            { base: "spend", past: "spent", part: "spent", spa: "gastar" },
+            { base: "steal", past: "stole", part: "stolen", spa: "robar" },
+            { base: "swim", past: "swam", part: "swum", spa: "nadar" },
+            { base: "take", past: "took", part: "taken", spa: "agarrar" },
+            { base: "teach", past: "taught", part: "taught", spa: "enseñar" },
+            { base: "tell", past: "told", part: "told", spa: "contar/platicar" },
+            { base: "think", past: "thought", part: "thought", spa: "pensar" },
+            { base: "understand", past: "understood", part: "understood", spa: "entender" },
+            { base: "wake", past: "woke", part: "woken", spa: "despertar" },
+            { base: "wear", past: "wore", part: "worn", spa: "vestir" },
+            { base: "win", past: "won", part: "won", spa: "ganar" },
+            { base: "write", past: "wrote", part: "written", spa: "escribir" }
+        ];
+
+        const TIMER_SECONDS = 60;
+
+        let verbs = [];
+        let order = [];
+        let index = 0;
+        let statsCorrect = 0;
+        let statsIncorrect = 0;
+        let statsOmitted = 0;
+        let timerId = null;
+        let timeLeft = 0;
+        let perVerbStats = {};
+        let attemptedOrder = [];
+
+        function getVerbByBase(base) {
+            return verbs.find(function(v) { return v.base.toLowerCase() === base.toLowerCase(); });
+        }
+
+        function saveHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify({
+                    perVerbStats: perVerbStats,
+                    attemptedOrder: attemptedOrder
+                }));
+            } catch (e) {}
+        }
+
+        function loadHistory() {
+            try {
+                var raw = localStorage.getItem(STORAGE_KEY_HISTORY);
+                if (raw) {
+                    var data = JSON.parse(raw);
+                    if (data && data.perVerbStats && data.attemptedOrder) {
+                        perVerbStats = data.perVerbStats;
+                        attemptedOrder = data.attemptedOrder;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function recordVerbResult(base, type) {
+            if (!perVerbStats[base]) {
+                perVerbStats[base] = { correct: 0, incorrect: 0, omitted: 0 };
+                attemptedOrder.push(base);
+            }
+            if (type === 'correct') perVerbStats[base].correct++;
+            else if (type === 'incorrect') perVerbStats[base].incorrect++;
+            else if (type === 'omitted') perVerbStats[base].omitted++;
+            saveHistory();
+            renderVerbTable();
+        }
+
+        function renderVerbTable() {
+            const tbody = document.getElementById('verbTableBody');
+            if (attemptedOrder.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-3 px-3 text-gray-400 text-center">Aún no hay verbos realizados</td></tr>';
+                return;
+            }
+            tbody.innerHTML = attemptedOrder.map(function(base) {
+                const s = perVerbStats[base];
+                const v = getVerbByBase(base);
+                const label = v ? v.spa + ' (' + v.base + ')' : base;
+                return '<tr class="border-t border-gray-100 hover:bg-gray-50">' +
+                    '<td class="py-2 px-3 text-gray-800">' + escapeHtml(label) + '</td>' +
+                    '<td class="py-2 px-3 text-center text-green-600 font-medium">' + s.correct + '</td>' +
+                    '<td class="py-2 px-3 text-center text-red-600 font-medium">' + s.incorrect + '</td>' +
+                    '<td class="py-2 px-3 text-center text-amber-600 font-medium">' + s.omitted + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function shuffleOrder() {
+            order = verbs.map((_, i) => i);
+            for (let i = order.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+        }
+
+        function load() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const p = JSON.parse(raw);
+                    if (Array.isArray(p) && p.length) { verbs = p; shuffleOrder(); loadHistory(); return; }
+                }
+            } catch (e) {}
+            verbs = DEFAULT_VERBS.map(v => ({ ...v }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(verbs));
+            shuffleOrder();
+            loadHistory();
+        }
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(verbs));
+        }
+
+        function resetToDefault() {
+            if (!confirm('¿Cargar la lista por defecto de 56 verbos? Se reemplazará la lista actual. El historial se mantiene.')) return;
+            verbs = DEFAULT_VERBS.map(function(v) { return { base: v.base, past: v.past, part: v.part, spa: v.spa }; });
+            save();
+            shuffleOrder();
+            index = 0;
+            showVerb();
+            renderStats();
+            var msg = document.getElementById('jsonMsg');
+            msg.textContent = 'Lista restablecida: 56 verbos.';
+            msg.className = 'mb-2 text-xs text-green-600';
+        }
+
+        function clearTimer() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+            }
+        }
+
+        function startTimer() {
+            clearTimer();
+            if (!verbs.length) return;
+            timeLeft = TIMER_SECONDS;
+            document.getElementById('timerDisplay').textContent = '1:00';
+            document.getElementById('timerDisplay').className = 'text-sm font-mono font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded';
+            timerId = setInterval(function() {
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                document.getElementById('timerDisplay').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+                if (timeLeft <= 10) {
+                    document.getElementById('timerDisplay').className = 'text-sm font-mono font-semibold text-red-600 bg-red-50 px-2 py-1 rounded';
+                }
+                if (timeLeft <= 0) {
+                    clearTimer();
+                    var currentBase = verbs[order[index]].base;
+                    recordVerbResult(currentBase, 'omitted');
+                    statsOmitted++;
+                    renderStats();
+                    document.getElementById('resultMsg').textContent = 'Omitida — tiempo agotado';
+                    document.getElementById('resultMsg').className = 'text-sm mb-3 text-amber-600';
+                    setTimeout(function() {
+                        index++;
+                        showVerb();
+                    }, 1500);
+                }
+            }, 1000);
+        }
+
+        function showVerb() {
+            clearTimer();
+            if (!verbs.length) return;
+            if (index >= order.length) index = order.length - 1;
+            if (index < 0) index = 0;
+            const verbIndex = order[index];
+            const v = verbs[verbIndex];
+            document.getElementById('spaVerb').textContent = v.spa;
+            document.getElementById('inputBase').value = '';
+            document.getElementById('inputPast').value = '';
+            document.getElementById('inputPart').value = '';
+            document.getElementById('inputBase').className = INPUT_BASE_CLASS;
+            document.getElementById('inputPast').className = INPUT_BASE_CLASS;
+            document.getElementById('inputPart').className = INPUT_PART_CLASS;
+            document.getElementById('resultMsg').textContent = '';
+            document.getElementById('progress').textContent = (index + 1) + ' / ' + order.length;
+            renderStats();
+            startTimer();
+        }
+
+        function renderStats() {
+            document.getElementById('statTotal').textContent = verbs.length;
+            document.getElementById('statCorrect').textContent = statsCorrect;
+            document.getElementById('statIncorrect').textContent = statsIncorrect;
+            document.getElementById('statOmitted').textContent = statsOmitted;
+        }
+
+        function normalize(s) {
+            return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function same(a, b) {
+            return normalize(a) === normalize(b);
+        }
+
+        function check() {
+            if (!verbs.length) return;
+            clearTimer();
+            const v = verbs[order[index]];
+            const base = document.getElementById('inputBase').value;
+            const past = document.getElementById('inputPast').value;
+            const part = document.getElementById('inputPart').value;
+
+            const okBase = same(base, v.base);
+            const okPast = same(past, v.past);
+            const okPart = same(part, v.part);
+
+            document.getElementById('inputBase').className = INPUT_BASE_CLASS + (okBase ? INPUT_OK : INPUT_FAIL);
+            document.getElementById('inputPast').className = INPUT_BASE_CLASS + (okPast ? INPUT_OK : INPUT_FAIL);
+            document.getElementById('inputPart').className = INPUT_PART_CLASS + (okPart ? INPUT_OK : INPUT_FAIL);
+
+            if (!okBase) document.getElementById('inputBase').value = v.base;
+            if (!okPast) document.getElementById('inputPast').value = v.past;
+            if (!okPart) document.getElementById('inputPart').value = v.part;
+
+            const total = (okBase ? 1 : 0) + (okPast ? 1 : 0) + (okPart ? 1 : 0);
+            if (total === 3) {
+                recordVerbResult(v.base, 'correct');
+                statsCorrect++;
+                renderStats();
+                document.getElementById('resultMsg').textContent = '✓ Correcto';
+                document.getElementById('resultMsg').className = 'text-sm mb-3 text-green-600';
+                setTimeout(function() {
+                    index++;
+                    showVerb();
+                }, 600);
+            } else {
+                recordVerbResult(v.base, 'incorrect');
+                statsIncorrect++;
+                renderStats();
+                document.getElementById('resultMsg').textContent = 'Revisa las respuestas en rojo.';
+                document.getElementById('resultMsg').className = 'text-sm mb-3 text-red-600';
+            }
+        }
+
+        function reveal() {
+            if (!verbs.length) return;
+            clearTimer();
+            const v = verbs[order[index]];
+            document.getElementById('inputBase').value = v.base;
+            document.getElementById('inputPast').value = v.past;
+            document.getElementById('inputPart').value = v.part;
+            document.getElementById('inputBase').className = INPUT_BASE_CLASS + INPUT_OK;
+            document.getElementById('inputPast').className = INPUT_BASE_CLASS + INPUT_OK;
+            document.getElementById('inputPart').className = INPUT_PART_CLASS + INPUT_OK;
+            document.getElementById('resultMsg').textContent = '';
+        }
+
+        function importJson() {
+            const raw = document.getElementById('jsonInput').value.trim();
+            const msg = document.getElementById('jsonMsg');
+            msg.textContent = '';
+            if (!raw) { msg.textContent = 'Pega un array JSON.'; msg.className = 'mb-2 text-red-600'; return; }
+            let arr;
+            try { arr = JSON.parse(raw); } catch (e) { msg.textContent = 'JSON inválido.'; msg.className = 'mb-2 text-red-600'; return; }
+            if (!Array.isArray(arr)) { msg.textContent = 'Debe ser un array.'; msg.className = 'mb-2 text-red-600'; return; }
+            let added = 0;
+            const keys = ['base', 'past', 'part', 'spa'];
+            for (const o of arr) {
+                if (!o || typeof o !== 'object') continue;
+                const base = String(o.base || '').trim().toLowerCase();
+                if (!base) continue;
+                if (verbs.some(v => v.base.toLowerCase() === base)) continue;
+                if (!keys.every(k => o.hasOwnProperty(k))) continue;
+                verbs.push({ base, past: String(o.past||'').trim(), part: String(o.part||'').trim(), spa: String(o.spa||'').trim() });
+                added++;
+            }
+            save();
+            document.getElementById('jsonInput').value = '';
+            msg.textContent = added ? 'Se agregaron ' + added + ' verbos.' : 'Ninguno nuevo (duplicados o estructura incorrecta).';
+            msg.className = 'mb-2 ' + (added ? 'text-green-600' : 'text-amber-600');
+            if (added) { shuffleOrder(); index = 0; }
+            showVerb();
+        }
+
+        load();
+        showVerb();
+        renderVerbTable();
+
+        function onInputKeydown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                check();
+            }
+        }
+
+        document.getElementById('btnCheck').addEventListener('click', check);
+        document.getElementById('btnReveal').addEventListener('click', reveal);
+        document.getElementById('btnPrev').addEventListener('click', () => { index--; showVerb(); });
+        document.getElementById('btnNext').addEventListener('click', () => { index++; showVerb(); });
+        document.getElementById('btnImport').addEventListener('click', importJson);
+        document.getElementById('btnResetVerbs').addEventListener('click', resetToDefault);
+
+        document.getElementById('inputBase').addEventListener('keydown', onInputKeydown);
+        document.getElementById('inputPast').addEventListener('keydown', onInputKeydown);
+        document.getElementById('inputPart').addEventListener('keydown', onInputKeydown);
+    </script>
+</body>
+</html>
