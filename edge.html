@@ -87,6 +87,24 @@
         <div id="readingContent" class="reading-content"></div>
       </div>
 
+      <!-- Panel de pronunciación: palabra actual + fonética (IPA) + botón Escuchar -->
+      <div id="pronunciationPanel" class="hidden mt-3 p-4 rounded-xl bg-indigo-900/30 border border-indigo-500/30">
+        <p class="text-xs font-medium text-indigo-300/90 uppercase tracking-wider mb-1">Pronunciación actual</p>
+        <p id="currentWordDisplay" class="text-2xl sm:text-3xl font-semibold text-white break-all"></p>
+        <p id="phoneticDisplay" class="mt-1 text-lg text-indigo-200/90 font-mono"></p>
+        <button
+          type="button"
+          onclick="speakCurrentWord()"
+          class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-800"
+          title="Escuchar solo esta palabra"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+          Escuchar
+        </button>
+      </div>
+
       <!-- Estado: Reproduciendo / Pausado -->
       <div id="playbackStatus" class="mt-4 hidden items-center gap-2 text-sm">
         <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400" id="statusDot" aria-hidden="true"></span>
@@ -164,6 +182,11 @@
     let voices = [];
     // Chrome/Edge a veces no actualiza synth.paused; llevamos nosotros el estado de pausa
     let playbackPausedByUser = false;
+    // Para reanudar después de "Escuchar palabra": guardamos texto y posición al pausar
+    let currentReadingText = '';
+    let currentCharIndex = 0;
+    let savedPausedText = '';
+    let savedPausedCharIndex = -1;
 
     const allowedVoices = [
       "Microsoft AndrewMultilingual Online (Natural)",
@@ -253,23 +276,126 @@
       });
     }
 
+    // --- Panel de pronunciación: palabra actual + fonética IPA ---
+    const pronunciationPanel = document.getElementById('pronunciationPanel');
+    const currentWordDisplay = document.getElementById('currentWordDisplay');
+    const phoneticDisplay = document.getElementById('phoneticDisplay');
+    const phoneticCache = new Map();
+    let lastWordForPhonetic = '';
+
+    function showPronunciation(word) {
+      if (!word || !word.trim()) return;
+      const w = word.trim();
+      currentWordDisplay.textContent = w;
+      phoneticDisplay.textContent = '';
+      lastWordForPhonetic = w;
+      pronunciationPanel.classList.remove('hidden');
+
+      const key = w.toLowerCase();
+      if (phoneticCache.has(key)) {
+        phoneticDisplay.textContent = phoneticCache.get(key);
+        return;
+      }
+      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+          const phon = data[0]?.phonetics?.find(p => p.text)?.text || data[0]?.phonetic;
+          if (phon && lastWordForPhonetic === w) {
+            phoneticDisplay.textContent = phon;
+            phoneticCache.set(key, phon);
+          }
+        })
+        .catch(() => {});
+    }
+
+    function hidePronunciation() {
+      pronunciationPanel.classList.add('hidden');
+      currentWordDisplay.textContent = '';
+      phoneticDisplay.textContent = '';
+    }
+
+    function speakCurrentWord() {
+      const word = (currentWordDisplay.textContent || '').trim();
+      if (!word || !voices.length) return;
+      // Si la lectura está pausada, guardar posición antes de cancelar para poder reanudar después
+      if (playbackPausedByUser || synth.paused) {
+        savedPausedText = currentReadingText;
+        savedPausedCharIndex = currentCharIndex;
+      }
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.voice = voices[voiceSelect.value];
+      utterance.rate = parseFloat(rateInput.value);
+      utterance.lang = 'en-US';
+      utterance.onend = () => updatePlaybackState();
+      synth.cancel();
+      synth.speak(utterance);
+    }
+
+    function resumeFromPosition(fullText, startIndex) {
+      const remainder = fullText.substring(startIndex);
+      if (!remainder.trim()) {
+        savedPausedText = '';
+        savedPausedCharIndex = -1;
+        updatePlaybackState();
+        return;
+      }
+      savedPausedText = '';
+      savedPausedCharIndex = -1;
+      playbackPausedByUser = false;
+      currentReadingText = fullText;
+      showReadingView(fullText);
+      const utterance = new SpeechSynthesisUtterance(remainder);
+      utterance.voice = voices[voiceSelect.value];
+      utterance.rate = parseFloat(rateInput.value);
+      utterance.lang = 'en-US';
+      utterance.onboundary = (e) => {
+        const absIndex = startIndex + (e.charIndex || 0);
+        const len = e.charLength || 1;
+        highlightReadingAt(absIndex, len);
+        const w = fullText.substring(absIndex, absIndex + len).trim();
+        if (w) showPronunciation(w);
+        currentCharIndex = absIndex + len;
+      };
+      utterance.onend = () => {
+        playbackPausedByUser = false;
+        currentReadingText = '';
+        hideReadingView();
+        hidePronunciation();
+        updatePlaybackState();
+      };
+      synth.speak(utterance);
+      setTimeout(updatePlaybackState, 50);
+    }
+
     function speakWithHighlight(text) {
       if (!text.trim()) return;
       if (!voices.length) {
         alert("No hay voces permitidas disponibles en este navegador.");
         return;
       }
+      currentReadingText = text;
+      currentCharIndex = 0;
+      savedPausedText = '';
+      savedPausedCharIndex = -1;
       showReadingView(text);
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = voices[voiceSelect.value];
       utterance.rate = parseFloat(rateInput.value);
       utterance.lang = "en-US";
       utterance.onboundary = (e) => {
-        if (e.charIndex != null) highlightReadingAt(e.charIndex, e.charLength || 1);
+        if (e.charIndex != null) {
+          const len = e.charLength || 1;
+          currentCharIndex = e.charIndex + len;
+          highlightReadingAt(e.charIndex, len);
+          const word = text.substring(e.charIndex, e.charIndex + len).trim();
+          if (word) showPronunciation(word);
+        }
       };
       utterance.onend = () => {
         playbackPausedByUser = false;
+        currentReadingText = '';
         hideReadingView();
+        hidePronunciation();
         updatePlaybackState();
       };
       synth.cancel();
@@ -292,7 +418,17 @@
       const btnResume = document.getElementById('btnResume');
       const btnStop = document.getElementById('btnStop');
 
-      // Priorizar nuestro estado: si el usuario pausó, mostrar Pausado y habilitar Reanudar
+      // Después de "Escuchar palabra": permitir Reanudar desde posición guardada
+      if (savedPausedText.length > 0 && savedPausedCharIndex >= 0 && !synth.speaking && !synth.paused) {
+        statusEl.classList.remove('hidden');
+        statusEl.classList.add('flex');
+        statusLabel.textContent = 'Pausado';
+        statusDot.className = 'inline-flex h-2 w-2 rounded-full bg-amber-400';
+        btnPause.disabled = true;
+        btnResume.disabled = false;
+        btnStop.disabled = false;
+        return;
+      }
       if (playbackPausedByUser) {
         statusEl.classList.remove('hidden');
         statusEl.classList.add('flex');
@@ -328,6 +464,8 @@
 
     function pauseText() {
       if (synth.speaking) {
+        savedPausedText = currentReadingText;
+        savedPausedCharIndex = currentCharIndex;
         synth.pause();
         playbackPausedByUser = true;
       }
@@ -335,6 +473,10 @@
     }
 
     function resumeText() {
+      if (savedPausedText.length > 0 && savedPausedCharIndex >= 0) {
+        resumeFromPosition(savedPausedText, savedPausedCharIndex);
+        return;
+      }
       if (playbackPausedByUser || synth.paused) {
         synth.resume();
         playbackPausedByUser = false;
@@ -344,8 +486,11 @@
 
     function stopText() {
       playbackPausedByUser = false;
+      savedPausedText = '';
+      savedPausedCharIndex = -1;
       synth.cancel();
       hideReadingView();
+      hidePronunciation();
       updatePlaybackState();
     }
 
