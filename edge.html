@@ -6,586 +6,60 @@
   <title>Lector de Texto</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['DM Sans', 'system-ui', 'sans-serif'],
-          },
-        },
-      },
-    };
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['DM Sans', 'system-ui', 'sans-serif'] } } } };
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
   <style>
     .reading-word { transition: background-color 0.1s ease; }
     .reading-word.current { background-color: rgba(99, 102, 241, 0.4); border-radius: 2px; }
   </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-slate-100 font-sans antialiased flex flex-col lg:flex-row">
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-slate-100 font-sans antialiased">
+  <div id="root"></div>
 
-  <!-- Sidebar: guardados en localStorage -->
-  <aside class="lg:w-80 lg:min-h-screen lg:border-r lg:border-slate-700/50 bg-slate-800/30 flex-shrink-0">
-    <div class="p-4 lg:p-6 lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
-      <h2 class="text-lg font-semibold text-white flex items-center gap-2 mb-4">
-        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-        </svg>
-        Textos guardados
-      </h2>
-      <div class="space-y-3 mb-4">
-        <input
-          type="text"
-          id="saveName"
-          placeholder="Nombre del texto"
-          class="w-full px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-600/50 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        <button
-          type="button"
-          onclick="saveToStorage()"
-          class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-          Guardar actual
-        </button>
-      </div>
-      <div class="border-t border-slate-700/50 pt-3">
-        <p class="text-xs text-slate-500 mb-2">Clic en Cargar o Pronunciar</p>
-        <div id="savedList" class="space-y-2 max-h-64 overflow-y-auto lg:max-h-[50vh]">
-          <!-- Se llena con JS -->
-        </div>
-        <p id="savedEmpty" class="text-sm text-slate-500 py-2 hidden">Aún no hay textos guardados.</p>
-      </div>
-    </div>
-  </aside>
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useRef, useCallback } = React;
 
-  <div class="flex-1 max-w-2xl w-full mx-auto px-4 py-10 sm:py-16 lg:py-12">
-    <!-- Header -->
-    <header class="text-center mb-10">
-      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 mb-4">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-        </svg>
-      </div>
-      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">Lector de Texto</h1>
-      <p class="mt-2 text-slate-400 text-sm sm:text-base">Escribe y escucha el texto con voces naturales</p>
-    </header>
-
-    <!-- Card -->
-    <main class="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 shadow-xl shadow-black/20 p-6 sm:p-8">
-      <label for="text" class="block text-sm font-medium text-slate-300 mb-2">Texto a leer</label>
-      <textarea
-        id="text"
-        placeholder="Escribe aquí el texto que quieres escuchar..."
-        class="w-full h-40 sm:h-44 px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-600/50 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y transition shadow-inner"
-      ></textarea>
-
-      <!-- Vista de lectura con resaltado (visible mientras se lee) -->
-      <div id="readingView" class="hidden mt-3 p-4 rounded-xl bg-slate-900/60 border border-slate-600/50 text-slate-100 leading-relaxed min-h-[6rem] max-h-52 overflow-y-auto">
-        <div id="readingContent" class="reading-content"></div>
-      </div>
-
-      <!-- Panel de pronunciación: palabra actual + fonética (IPA) + botón Escuchar -->
-      <div id="pronunciationPanel" class="hidden mt-3 p-4 rounded-xl bg-indigo-900/30 border border-indigo-500/30">
-        <p class="text-xs font-medium text-indigo-300/90 uppercase tracking-wider mb-1">Pronunciación actual</p>
-        <p id="currentWordDisplay" class="text-2xl sm:text-3xl font-semibold text-white break-all"></p>
-        <p id="phoneticDisplay" class="mt-1 text-lg text-indigo-200/90 font-mono"></p>
-        <button
-          type="button"
-          onclick="speakCurrentWord()"
-          class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-800"
-          title="Escuchar solo esta palabra"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-          </svg>
-          Escuchar
-        </button>
-      </div>
-
-      <!-- Estado: Reproduciendo / Pausado -->
-      <div id="playbackStatus" class="mt-4 hidden items-center gap-2 text-sm">
-        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400" id="statusDot" aria-hidden="true"></span>
-        <span id="statusLabel">Reproduciendo</span>
-      </div>
-
-      <!-- Botones de control -->
-      <div class="mt-4 flex flex-wrap gap-3">
-        <button
-          onclick="speakText()"
-          id="btnPlay"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-500/25 transition focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="text-lg" aria-hidden="true">▶</span> Leer
-        </button>
-        <button
-          onclick="pauseText()"
-          id="btnPause"
-          disabled
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="text-lg" aria-hidden="true">⏸</span> Pausar
-        </button>
-        <button
-          onclick="resumeText()"
-          id="btnResume"
-          disabled
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="text-lg" aria-hidden="true">⏯</span> Reanudar
-        </button>
-        <button
-          onclick="stopText()"
-          id="btnStop"
-          disabled
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white font-medium transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="text-lg" aria-hidden="true">⏹</span> Detener
-        </button>
-      </div>
-
-      <!-- Voz y velocidad -->
-      <div class="mt-6 pt-6 border-t border-slate-700/50 flex flex-wrap items-end gap-6">
-        <div class="flex-1 min-w-[200px]">
-          <label for="voiceSelect" class="block text-sm font-medium text-slate-300 mb-2">Voz</label>
-          <select
-            id="voiceSelect"
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-600/50 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
-          ></select>
-        </div>
-        <div class="flex-1 min-w-[180px]">
-          <label for="rate" class="block text-sm font-medium text-slate-300 mb-2">
-            Velocidad: <span id="rateValue" class="text-indigo-400 font-semibold">1.0</span>x
-          </label>
-          <input
-            type="range"
-            id="rate"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value="1"
-            class="w-full h-2 rounded-lg appearance-none bg-slate-600 accent-indigo-500 cursor-pointer"
-          />
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <script>
-    const synth = window.speechSynthesis;
-    const voiceSelect = document.getElementById('voiceSelect');
-    const rateInput = document.getElementById('rate');
-    const rateValue = document.getElementById('rateValue');
-
-    let voices = [];
-    // Chrome/Edge a veces no actualiza synth.paused; llevamos nosotros el estado de pausa
-    let playbackPausedByUser = false;
-    // Para reanudar después de "Escuchar palabra": guardamos texto y posición al pausar
-    let currentReadingText = '';
-    let currentCharIndex = 0;
-    let savedPausedText = '';
-    let savedPausedCharIndex = -1;
-
-    const allowedVoices = [
-      "Microsoft AndrewMultilingual Online (Natural)",
-      "Microsoft Aria Online (Natural)",
-      "Microsoft AvaMultilingual Online (Natural)",
-      "Microsoft BrianMultilingual Online (Natural)",
-      "Microsoft Christopher Online (Natural)",
-      "Microsoft EmmaMultilingual Online (Natural)",
-      "Microsoft Eric Online (Natural)",
-      "Microsoft Guy Online (Natural)",
-      "Microsoft Jenny Online (Natural)",
-      "Microsoft Michelle Online (Natural)",
-      "Microsoft Roger Online (Natural)",
-      "Microsoft Steffan Online (Natural)"
+    const STORAGE_KEY = 'edge-reader-saved';
+    const ALLOWED_VOICES = [
+      'Microsoft AndrewMultilingual Online (Natural)', 'Microsoft Aria Online (Natural)',
+      'Microsoft AvaMultilingual Online (Natural)', 'Microsoft BrianMultilingual Online (Natural)',
+      'Microsoft Christopher Online (Natural)', 'Microsoft EmmaMultilingual Online (Natural)',
+      'Microsoft Eric Online (Natural)', 'Microsoft Guy Online (Natural)', 'Microsoft Jenny Online (Natural)',
+      'Microsoft Michelle Online (Natural)', 'Microsoft Roger Online (Natural)', 'Microsoft Steffan Online (Natural)'
     ];
 
-    function loadVoices() {
-      const allVoices = synth.getVoices();
-      voices = allVoices.filter(voice =>
-        voice.lang === "en-US" &&
-        allowedVoices.some(name => voice.name.includes(name))
-      );
-
-      voiceSelect.innerHTML = "";
-      voices.forEach((voice, index) => {
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = voice.name;
-        voiceSelect.appendChild(option);
-      });
-
-      if (voices.length > 0) {
-        voiceSelect.value = 0;
+    function getSentenceBoundaries(text) {
+      if (!text || !text.trim()) return [];
+      const re = /[^.!?]+[.!?]?\s*/g;
+      const sentences = [];
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const trimmed = m[0].trimEnd();
+        if (trimmed.length > 0) sentences.push({ start: m.index, end: m.index + trimmed.length, text: trimmed });
       }
+      if (sentences.length === 0 && text.trim()) sentences.push({ start: 0, end: text.length, text: text.trim() });
+      return sentences;
     }
 
-    rateInput.addEventListener('input', () => {
-      rateValue.textContent = parseFloat(rateInput.value).toFixed(1);
-    });
-
-    loadVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = loadVoices;
-    }
-
-    // --- Resaltado mientras se lee ---
-    const readingView = document.getElementById('readingView');
-    const readingContent = document.getElementById('readingContent');
-
-    function buildReadingView(text) {
-      readingContent.innerHTML = '';
+    function parseWords(text) {
+      const parts = [];
       let index = 0;
-      const parts = text.split(/(\s+)/);
-      parts.forEach(part => {
+      text.split(/(\s+)/).forEach(part => {
         if (/\S/.test(part)) {
-          const span = document.createElement('span');
-          span.className = 'reading-word';
-          span.dataset.start = index;
-          span.dataset.end = index + part.length;
-          span.textContent = part;
-          readingContent.appendChild(span);
+          parts.push({ start: index, end: index + part.length, text: part });
         } else {
-          readingContent.appendChild(document.createTextNode(part));
+          parts.push({ start: index, end: index + part.length, text: part, isSpace: true });
         }
         index += part.length;
       });
+      return parts;
     }
-
-    function showReadingView(text) {
-      buildReadingView(text);
-      readingView.classList.remove('hidden');
-    }
-
-    function hideReadingView() {
-      readingView.classList.add('hidden');
-      readingContent.querySelectorAll('.reading-word.current').forEach(el => el.classList.remove('current'));
-    }
-
-    function highlightReadingAt(charIndex, charLength) {
-      const end = charIndex + (charLength || 1);
-      readingContent.querySelectorAll('.reading-word').forEach(span => {
-        const start = parseInt(span.dataset.start, 10);
-        const spanEnd = parseInt(span.dataset.end, 10);
-        const inRange = start < end && spanEnd > charIndex;
-        span.classList.toggle('current', inRange);
-        if (inRange) span.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      });
-    }
-
-    // --- Panel de pronunciación: palabra actual + fonética IPA ---
-    const pronunciationPanel = document.getElementById('pronunciationPanel');
-    const currentWordDisplay = document.getElementById('currentWordDisplay');
-    const phoneticDisplay = document.getElementById('phoneticDisplay');
-    const phoneticCache = new Map();
-    let lastWordForPhonetic = '';
-
-    function showPronunciation(word) {
-      if (!word || !word.trim()) return;
-      const w = word.trim();
-      currentWordDisplay.textContent = w;
-      phoneticDisplay.textContent = '';
-      lastWordForPhonetic = w;
-      pronunciationPanel.classList.remove('hidden');
-
-      const key = w.toLowerCase();
-      if (phoneticCache.has(key)) {
-        phoneticDisplay.textContent = phoneticCache.get(key);
-        return;
-      }
-      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`)
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => {
-          const phon = data[0]?.phonetics?.find(p => p.text)?.text || data[0]?.phonetic;
-          if (phon && lastWordForPhonetic === w) {
-            phoneticDisplay.textContent = phon;
-            phoneticCache.set(key, phon);
-          }
-        })
-        .catch(() => {});
-    }
-
-    function hidePronunciation() {
-      pronunciationPanel.classList.add('hidden');
-      currentWordDisplay.textContent = '';
-      phoneticDisplay.textContent = '';
-    }
-
-    function speakCurrentWord() {
-      const word = (currentWordDisplay.textContent || '').trim();
-      if (!word || !voices.length) return;
-      // Si la lectura está pausada, guardar posición antes de cancelar para poder reanudar después
-      if (playbackPausedByUser || synth.paused) {
-        savedPausedText = currentReadingText;
-        savedPausedCharIndex = currentCharIndex;
-      }
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.voice = voices[voiceSelect.value];
-      utterance.rate = parseFloat(rateInput.value);
-      utterance.lang = 'en-US';
-      utterance.onend = () => updatePlaybackState();
-      synth.cancel();
-      synth.speak(utterance);
-    }
-
-    function resumeFromPosition(fullText, startIndex) {
-      const remainder = fullText.substring(startIndex);
-      if (!remainder.trim()) {
-        savedPausedText = '';
-        savedPausedCharIndex = -1;
-        updatePlaybackState();
-        return;
-      }
-      savedPausedText = '';
-      savedPausedCharIndex = -1;
-      playbackPausedByUser = false;
-      currentReadingText = fullText;
-      showReadingView(fullText);
-      const utterance = new SpeechSynthesisUtterance(remainder);
-      utterance.voice = voices[voiceSelect.value];
-      utterance.rate = parseFloat(rateInput.value);
-      utterance.lang = 'en-US';
-      utterance.onboundary = (e) => {
-        const absIndex = startIndex + (e.charIndex || 0);
-        const len = e.charLength || 1;
-        highlightReadingAt(absIndex, len);
-        const w = fullText.substring(absIndex, absIndex + len).trim();
-        if (w) showPronunciation(w);
-        currentCharIndex = absIndex + len;
-      };
-      utterance.onend = () => {
-        playbackPausedByUser = false;
-        currentReadingText = '';
-        hideReadingView();
-        hidePronunciation();
-        updatePlaybackState();
-      };
-      synth.speak(utterance);
-      setTimeout(updatePlaybackState, 50);
-    }
-
-    function speakWithHighlight(text) {
-      if (!text.trim()) return;
-      if (!voices.length) {
-        alert("No hay voces permitidas disponibles en este navegador.");
-        return;
-      }
-      currentReadingText = text;
-      currentCharIndex = 0;
-      savedPausedText = '';
-      savedPausedCharIndex = -1;
-      showReadingView(text);
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.voice = voices[voiceSelect.value];
-      utterance.rate = parseFloat(rateInput.value);
-      utterance.lang = "en-US";
-      utterance.onboundary = (e) => {
-        if (e.charIndex != null) {
-          const len = e.charLength || 1;
-          currentCharIndex = e.charIndex + len;
-          highlightReadingAt(e.charIndex, len);
-          const word = text.substring(e.charIndex, e.charIndex + len).trim();
-          if (word) showPronunciation(word);
-        }
-      };
-      utterance.onend = () => {
-        playbackPausedByUser = false;
-        currentReadingText = '';
-        hideReadingView();
-        hidePronunciation();
-        updatePlaybackState();
-      };
-      synth.cancel();
-      playbackPausedByUser = false;
-      synth.speak(utterance);
-      setTimeout(updatePlaybackState, 50);
-    }
-
-    function speakText() {
-      const text = document.getElementById("text").value;
-      if (!text.trim()) return;
-      speakWithHighlight(text);
-    }
-
-    function updatePlaybackState() {
-      const statusEl = document.getElementById('playbackStatus');
-      const statusLabel = document.getElementById('statusLabel');
-      const statusDot = document.getElementById('statusDot');
-      const btnPause = document.getElementById('btnPause');
-      const btnResume = document.getElementById('btnResume');
-      const btnStop = document.getElementById('btnStop');
-
-      // Después de "Escuchar palabra": permitir Reanudar desde posición guardada
-      if (savedPausedText.length > 0 && savedPausedCharIndex >= 0 && !synth.speaking && !synth.paused) {
-        statusEl.classList.remove('hidden');
-        statusEl.classList.add('flex');
-        statusLabel.textContent = 'Pausado';
-        statusDot.className = 'inline-flex h-2 w-2 rounded-full bg-amber-400';
-        btnPause.disabled = true;
-        btnResume.disabled = false;
-        btnStop.disabled = false;
-        return;
-      }
-      if (playbackPausedByUser) {
-        statusEl.classList.remove('hidden');
-        statusEl.classList.add('flex');
-        statusLabel.textContent = 'Pausado';
-        statusDot.className = 'inline-flex h-2 w-2 rounded-full bg-amber-400';
-        btnPause.disabled = true;
-        btnResume.disabled = false;
-        btnStop.disabled = false;
-      } else if (synth.paused) {
-        statusEl.classList.remove('hidden');
-        statusEl.classList.add('flex');
-        statusLabel.textContent = 'Pausado';
-        statusDot.className = 'inline-flex h-2 w-2 rounded-full bg-amber-400';
-        btnPause.disabled = true;
-        btnResume.disabled = false;
-        btnStop.disabled = false;
-      } else if (synth.speaking) {
-        statusEl.classList.remove('hidden');
-        statusEl.classList.add('flex');
-        statusLabel.textContent = 'Reproduciendo';
-        statusDot.className = 'inline-flex h-2 w-2 rounded-full bg-emerald-400';
-        btnPause.disabled = false;
-        btnResume.disabled = true;
-        btnStop.disabled = false;
-      } else {
-        statusEl.classList.add('hidden');
-        statusEl.classList.remove('flex');
-        btnPause.disabled = true;
-        btnResume.disabled = true;
-        btnStop.disabled = true;
-      }
-    }
-
-    function pauseText() {
-      if (synth.speaking) {
-        savedPausedText = currentReadingText;
-        savedPausedCharIndex = currentCharIndex;
-        synth.pause();
-        playbackPausedByUser = true;
-      }
-      updatePlaybackState();
-    }
-
-    function resumeText() {
-      if (savedPausedText.length > 0 && savedPausedCharIndex >= 0) {
-        resumeFromPosition(savedPausedText, savedPausedCharIndex);
-        return;
-      }
-      if (playbackPausedByUser || synth.paused) {
-        synth.resume();
-        playbackPausedByUser = false;
-      }
-      updatePlaybackState();
-    }
-
-    function stopText() {
-      playbackPausedByUser = false;
-      savedPausedText = '';
-      savedPausedCharIndex = -1;
-      synth.cancel();
-      hideReadingView();
-      hidePronunciation();
-      updatePlaybackState();
-    }
-
-    // --- LocalStorage: guardar / cargar / pronunciar ---
-    const STORAGE_KEY = 'edge-reader-saved';
-
-    function getSavedItems() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function setSavedItems(items) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-      renderSavedList();
-    }
-
-    function saveToStorage() {
-      const nameInput = document.getElementById('saveName');
-      const textEl = document.getElementById('text');
-      const name = (nameInput.value || '').trim() || 'Sin nombre';
-      const text = (textEl.value || '').trim();
-      if (!text) {
-        alert('Escribe algo en el cuadro de texto antes de guardar.');
-        return;
-      }
-      const items = getSavedItems();
-      const newItem = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-        title: name,
-        text: text,
-        createdAt: Date.now()
-      };
-      items.unshift(newItem);
-      setSavedItems(items);
-      nameInput.value = '';
-    }
-
-    function loadFromStorage(id) {
-      const items = getSavedItems();
-      const item = items.find(i => i.id === id);
-      if (item) {
-        document.getElementById('text').value = item.text;
-      }
-    }
-
-    function speakFromStorage(id) {
-      const items = getSavedItems();
-      const item = items.find(i => i.id === id);
-      if (!item || !item.text.trim()) return;
-      speakWithHighlight(item.text);
-    }
-
-    function deleteFromStorage(id) {
-      const items = getSavedItems().filter(i => i.id !== id);
-      setSavedItems(items);
-    }
-
-    function renderSavedList() {
-      const container = document.getElementById('savedList');
-      const emptyMsg = document.getElementById('savedEmpty');
-      const items = getSavedItems();
-      emptyMsg.classList.toggle('hidden', items.length > 0);
-      container.innerHTML = '';
-      items.forEach(item => {
-        const title = (item.title || 'Sin nombre').slice(0, 30);
-        const row = document.createElement('div');
-        row.className = 'flex flex-col gap-1 p-2 rounded-lg bg-slate-900/50 border border-slate-700/50';
-        row.dataset.id = item.id;
-        row.innerHTML = `
-          <span class="text-sm font-medium text-slate-200 truncate" title="${escapeHtml(item.title || '')}">${escapeHtml(title)}${(item.title || '').length > 30 ? '…' : ''}</span>
-          <div class="flex flex-wrap gap-1 saved-actions">
-            <button type="button" data-action="load" class="px-2 py-1 rounded text-xs bg-slate-600 hover:bg-slate-500 text-white">Cargar</button>
-            <button type="button" data-action="speak" class="px-2 py-1 rounded text-xs bg-indigo-600 hover:bg-indigo-500 text-white">Pronunciar</button>
-            <button type="button" data-action="delete" class="px-2 py-1 rounded text-xs bg-red-900/60 hover:bg-red-800/60 text-white" title="Eliminar">✕</button>
-          </div>
-        `;
-        container.appendChild(row);
-      });
-    }
-
-    document.getElementById('savedList').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const row = btn.closest('[data-id]');
-      const id = row && row.dataset.id;
-      if (!id) return;
-      const action = btn.dataset.action;
-      if (action === 'load') loadFromStorage(id);
-      else if (action === 'speak') speakFromStorage(id);
-      else if (action === 'delete') deleteFromStorage(id);
-    });
 
     function escapeHtml(s) {
       const div = document.createElement('div');
@@ -593,8 +67,474 @@
       return div.innerHTML;
     }
 
-    renderSavedList();
-  </script>
+    function App() {
+      const synthRef = useRef(window.speechSynthesis);
+      const phoneticCacheRef = useRef(new Map());
 
+      const [text, setText] = useState('');
+      const [saveName, setSaveName] = useState('');
+      const [savedItems, setSavedItems] = useState(() => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch { return []; }
+      });
+      const [voices, setVoices] = useState([]);
+      const [voiceIndex, setVoiceIndex] = useState(0);
+      const [rate, setRate] = useState(1);
+      const [status, setStatus] = useState('idle'); // idle | playing | paused | pausedAfterWord
+      const [savedPausedText, setSavedPausedText] = useState('');
+      const [savedPausedCharIndex, setSavedPausedCharIndex] = useState(-1);
+      const [currentReadingText, setCurrentReadingText] = useState('');
+      const [currentCharIndex, setCurrentCharIndex] = useState(0);
+      const [highlightStart, setHighlightStart] = useState(0);
+      const [highlightLen, setHighlightLen] = useState(0);
+      const [currentWord, setCurrentWord] = useState('');
+      const [phonetic, setPhonetic] = useState('');
+      const [showReadingView, setShowReadingView] = useState(false);
+      const [readingWords, setReadingWords] = useState([]);
+      const currentUtteranceRef = useRef(null);
+      const readingContainerRef = useRef(null);
+
+      useEffect(() => {
+        const load = () => {
+          const all = synthRef.current.getVoices();
+          const filtered = all.filter(v => v.lang === 'en-US' && ALLOWED_VOICES.some(n => v.name.includes(n)));
+          const list = filtered.length > 0 ? filtered : all.filter(v => v.lang === 'en-US');
+          if (list.length > 0) {
+            setVoices(list);
+            setVoiceIndex(i => (i >= list.length ? 0 : i));
+          }
+        };
+        load();
+        window.speechSynthesis.onvoiceschanged = load;
+        const t = setTimeout(load, 800);
+        return () => clearTimeout(t);
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedItems));
+      }, [savedItems]);
+
+      const getPosition = useCallback(() => {
+        if (savedPausedText && savedPausedCharIndex >= 0) return { text: savedPausedText, index: savedPausedCharIndex };
+        if (currentReadingText) return { text: currentReadingText, index: currentCharIndex };
+        return null;
+      }, [savedPausedText, savedPausedCharIndex, currentReadingText, currentCharIndex]);
+
+      const sentences = getSentenceBoundaries(getPosition()?.text || '');
+      const currentSentenceIndex = sentences.length ? Math.max(0, sentences.findIndex(s => (getPosition()?.index ?? 0) < s.end)) : 0;
+      const canPrevSentence = currentSentenceIndex > 0;
+      const canNextSentence = currentSentenceIndex < sentences.length - 1 && sentences.length > 1;
+
+      const fetchPhonetic = useCallback((word) => {
+        const w = (word || '').trim().toLowerCase();
+        if (!w) return;
+        if (phoneticCacheRef.current.has(w)) {
+          setPhonetic(phoneticCacheRef.current.get(w));
+          return;
+        }
+        setPhonetic('');
+        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(w)}`)
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(data => {
+            const ph = data[0]?.phonetics?.find(p => p.text)?.text || data[0]?.phonetic;
+            if (ph) {
+              phoneticCacheRef.current.set(w, ph);
+              setPhonetic(ph);
+            }
+          })
+          .catch(() => {});
+      }, []);
+
+      const resumeFromPosition = useCallback((fullText, startIndex) => {
+        const remainder = fullText.substring(startIndex);
+        if (!remainder.trim()) {
+          setSavedPausedText('');
+          setSavedPausedCharIndex(-1);
+          setStatus('idle');
+          return;
+        }
+        setSavedPausedText('');
+        setSavedPausedCharIndex(-1);
+        setCurrentReadingText(fullText);
+        setReadingWords(parseWords(fullText));
+        setShowReadingView(true);
+        setStatus('playing');
+
+        const utterance = new SpeechSynthesisUtterance(remainder);
+        utterance.voice = voices[voiceIndex] || null;
+        utterance.rate = rate;
+        utterance.lang = 'en-US';
+        utterance.onboundary = (e) => {
+          const absIndex = startIndex + (e.charIndex || 0);
+          const len = e.charLength || 1;
+          setHighlightStart(absIndex);
+          setHighlightLen(len);
+          setCurrentCharIndex(absIndex + len);
+          const w = fullText.substring(absIndex, absIndex + len).trim();
+          if (w) {
+            setCurrentWord(w);
+            fetchPhonetic(w);
+          }
+        };
+        utterance.onend = () => {
+          setStatus('idle');
+          setCurrentReadingText('');
+          setShowReadingView(false);
+          setCurrentWord('');
+          setPhonetic('');
+        };
+        currentUtteranceRef.current = utterance;
+        synthRef.current.cancel();
+        synthRef.current.speak(utterance);
+      }, [voices, voiceIndex, rate, fetchPhonetic]);
+
+      const speakFromStart = useCallback((fullText) => {
+        if (!fullText.trim() || !voices.length) {
+          if (!voices.length) alert('No hay voces disponibles.');
+          return;
+        }
+        setCurrentReadingText(fullText);
+        setCurrentCharIndex(0);
+        setSavedPausedText('');
+        setSavedPausedCharIndex(-1);
+        setReadingWords(parseWords(fullText));
+        setShowReadingView(true);
+        setStatus('playing');
+
+        const utterance = new SpeechSynthesisUtterance(fullText);
+        utterance.voice = voices[voiceIndex] || null;
+        utterance.rate = rate;
+        utterance.lang = 'en-US';
+        utterance.onboundary = (e) => {
+          if (e.charIndex != null) {
+            const len = e.charLength || 1;
+            setHighlightStart(e.charIndex);
+            setHighlightLen(len);
+            setCurrentCharIndex(e.charIndex + len);
+            const w = fullText.substring(e.charIndex, e.charIndex + len).trim();
+            if (w) {
+              setCurrentWord(w);
+              fetchPhonetic(w);
+            }
+          }
+        };
+        utterance.onend = () => {
+          setStatus('idle');
+          setCurrentReadingText('');
+          setShowReadingView(false);
+          setCurrentWord('');
+          setPhonetic('');
+        };
+        currentUtteranceRef.current = utterance;
+        synthRef.current.cancel();
+        synthRef.current.speak(utterance);
+      }, [voices, voiceIndex, rate, fetchPhonetic]);
+
+      const speakText = useCallback(() => {
+        const t = text.trim();
+        if (!t) return;
+        speakFromStart(t);
+      }, [text, speakFromStart]);
+
+      const pauseText = useCallback(() => {
+        if (synthRef.current.speaking) {
+          setSavedPausedText(currentReadingText);
+          setSavedPausedCharIndex(currentCharIndex);
+          synthRef.current.pause();
+          setStatus('paused');
+        }
+      }, [currentReadingText, currentCharIndex]);
+
+      const resumeText = useCallback(() => {
+        if (savedPausedText && savedPausedCharIndex >= 0) {
+          resumeFromPosition(savedPausedText, savedPausedCharIndex);
+          return;
+        }
+        if (synthRef.current.paused) {
+          synthRef.current.resume();
+          setStatus('playing');
+        }
+      }, [savedPausedText, savedPausedCharIndex, resumeFromPosition]);
+
+      const stopText = useCallback(() => {
+        setSavedPausedText('');
+        setSavedPausedCharIndex(-1);
+        setStatus('idle');
+        synthRef.current.cancel();
+        setShowReadingView(false);
+        setCurrentWord('');
+        setPhonetic('');
+      }, []);
+
+      const speakCurrentWord = useCallback(() => {
+        const w = currentWord.trim();
+        if (!w || !voices.length) return;
+        if (status === 'paused' || synthRef.current.paused) {
+          setSavedPausedText(currentReadingText);
+          setSavedPausedCharIndex(currentCharIndex);
+        }
+        const utterance = new SpeechSynthesisUtterance(w);
+        utterance.voice = voices[voiceIndex] || null;
+        utterance.rate = rate;
+        utterance.lang = 'en-US';
+        utterance.onend = () => {
+          if (savedPausedText && savedPausedCharIndex >= 0) setStatus('pausedAfterWord');
+          else setStatus('paused');
+        };
+        synthRef.current.cancel();
+        synthRef.current.speak(utterance);
+      }, [currentWord, currentReadingText, currentCharIndex, savedPausedText, savedPausedCharIndex, voices, voiceIndex, rate, status]);
+
+      const goToPrevSentence = useCallback(() => {
+        const pos = getPosition();
+        if (!pos || !voices.length || sentences.length < 2) return;
+        let idx = sentences.findIndex(s => pos.index <= s.end);
+        if (idx < 0) idx = sentences.length - 1;
+        if (idx > 0) idx -= 1;
+        const start = sentences[idx].start;
+        synthRef.current.cancel();
+        setSavedPausedText('');
+        setSavedPausedCharIndex(-1);
+        resumeFromPosition(pos.text, start);
+      }, [getPosition, sentences, voices.length, resumeFromPosition]);
+
+      const goToNextSentence = useCallback(() => {
+        const pos = getPosition();
+        if (!pos || !voices.length || sentences.length < 2) return;
+        let idx = sentences.findIndex(s => pos.index < s.end);
+        if (idx < 0) idx = sentences.length - 1;
+        if (idx < sentences.length - 1) idx += 1;
+        const start = sentences[idx].start;
+        synthRef.current.cancel();
+        setSavedPausedText('');
+        setSavedPausedCharIndex(-1);
+        resumeFromPosition(pos.text, start);
+      }, [getPosition, sentences, voices.length, resumeFromPosition]);
+
+      useEffect(() => {
+        const synth = synthRef.current;
+        const tick = () => {
+          if (status === 'playing' && !synth.speaking && !synth.paused) setStatus('idle');
+          if (status === 'paused' && !synth.paused && savedPausedText) setStatus('pausedAfterWord');
+        };
+        const id = setInterval(tick, 200);
+        return () => clearInterval(id);
+      }, [status, savedPausedText]);
+
+      const showPlaybackStatus = status !== 'idle';
+      const isPaused = status === 'paused' || status === 'pausedAfterWord';
+      const isPlaying = status === 'playing';
+      const canResume = isPaused || (savedPausedText && savedPausedCharIndex >= 0);
+      const canPause = isPlaying;
+
+      const saveToStorage = () => {
+        const name = (saveName || '').trim() || 'Sin nombre';
+        const t = text.trim();
+        if (!t) {
+          alert('Escribe algo antes de guardar.');
+          return;
+        }
+        setSavedItems(prev => [{
+          id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+          title: name,
+          text: t,
+          createdAt: Date.now()
+        }, ...prev]);
+        setSaveName('');
+      };
+
+      const loadFromStorage = (id) => {
+        const item = savedItems.find(i => i.id === id);
+        if (item) setText(item.text);
+      };
+
+      const speakFromStorage = (id) => {
+        const item = savedItems.find(i => i.id === id);
+        if (item?.text?.trim()) speakFromStart(item.text);
+      };
+
+      const deleteFromStorage = (id) => {
+        setSavedItems(prev => prev.filter(i => i.id !== id));
+      };
+
+      const btnClass = 'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed';
+      const btnPrimary = 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 focus:ring-indigo-400 ' + btnClass;
+      const btnSecondary = 'bg-slate-600 hover:bg-slate-500 text-white focus:ring-slate-500 ' + btnClass;
+
+      return (
+        <div className="flex flex-col lg:flex-row min-h-screen">
+          <aside className="lg:w-80 lg:min-h-screen lg:border-r lg:border-slate-700/50 bg-slate-800/30 flex-shrink-0">
+            <div className="p-4 lg:p-6 lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+                <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                Textos guardados
+              </h2>
+              <div className="space-y-3 mb-4">
+                <input
+                  type="text"
+                  value={saveName}
+                  onChange={e => setSaveName(e.target.value)}
+                  placeholder="Nombre del texto"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-600/50 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button type="button" onClick={saveToStorage} className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                  Guardar actual
+                </button>
+              </div>
+              <div className="border-t border-slate-700/50 pt-3">
+                <p className="text-xs text-slate-500 mb-2">Clic en Cargar o Pronunciar</p>
+                <div className="space-y-2 max-h-64 overflow-y-auto lg:max-h-[50vh]">
+                  {savedItems.length === 0 ? (
+                    <p className="text-sm text-slate-500 py-2">Aún no hay textos guardados.</p>
+                  ) : (
+                    savedItems.map(item => {
+                      const title = (item.title || 'Sin nombre').slice(0, 30);
+                      return (
+                        <div key={item.id} className="flex flex-col gap-1 p-2 rounded-lg bg-slate-900/50 border border-slate-700/50">
+                          <span className="text-sm font-medium text-slate-200 truncate" title={item.title}>{title}{(item.title || '').length > 30 ? '…' : ''}</span>
+                          <div className="flex flex-wrap gap-1">
+                            <button type="button" onClick={() => loadFromStorage(item.id)} className="px-2 py-1 rounded text-xs bg-slate-600 hover:bg-slate-500 text-white">Cargar</button>
+                            <button type="button" onClick={() => speakFromStorage(item.id)} className="px-2 py-1 rounded text-xs bg-indigo-600 hover:bg-indigo-500 text-white">Pronunciar</button>
+                            <button type="button" onClick={() => deleteFromStorage(item.id)} className="px-2 py-1 rounded text-xs bg-red-900/60 hover:bg-red-800/60 text-white" title="Eliminar">✕</button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-10 sm:py-16 lg:py-12">
+            <header className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 mb-4">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">Lector de Texto</h1>
+              <p className="mt-2 text-slate-400 text-sm sm:text-base">Escribe y escucha el texto con voces naturales</p>
+            </header>
+
+            <main className="bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 shadow-xl shadow-black/20 p-6 sm:p-8">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Texto a leer</label>
+              <textarea
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder="Escribe aquí el texto que quieres escuchar..."
+                className="w-full h-40 sm:h-44 px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-600/50 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y transition shadow-inner"
+              />
+
+              {showReadingView && (
+                <div ref={readingContainerRef} className="mt-3 p-4 rounded-xl bg-slate-900/60 border border-slate-600/50 text-slate-100 leading-relaxed min-h-[6rem] max-h-52 overflow-y-auto">
+                  <div className="reading-content">
+                    {readingWords.map((part, i) =>
+                      part.isSpace ? (
+                        <span key={i}>{part.text}</span>
+                      ) : (
+                        <span
+                          key={i}
+                          className={`reading-word ${part.start < highlightStart + highlightLen && part.end > highlightStart ? 'current' : ''}`}
+                        >
+                          {part.text}
+                        </span>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {currentWord && (
+                <div className="mt-3 p-4 rounded-xl bg-indigo-900/30 border border-indigo-500/30">
+                  <p className="text-xs font-medium text-indigo-300/90 uppercase tracking-wider mb-1">Pronunciación actual</p>
+                  <p className="text-2xl sm:text-3xl font-semibold text-white break-all">{currentWord}</p>
+                  {phonetic && <p className="mt-1 text-lg text-indigo-200/90 font-mono">{phonetic}</p>}
+                  <button
+                    type="button"
+                    onClick={speakCurrentWord}
+                    className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    title="Escuchar solo esta palabra"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    Escuchar
+                  </button>
+                </div>
+              )}
+
+              {showPlaybackStatus && (
+                <div className="mt-4 flex items-center gap-2 text-sm">
+                  <span className={`inline-flex h-2 w-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  <span>{isPaused ? 'Pausado' : 'Reproduciendo'}</span>
+                </div>
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button onClick={speakText} disabled={!text.trim()} className={btnPrimary}>
+                  <span className="text-lg">▶</span> Leer
+                </button>
+                <button onClick={pauseText} disabled={!canPause} className={btnSecondary}>
+                  <span className="text-lg">⏸</span> Pausar
+                </button>
+                <button onClick={resumeText} disabled={!canResume} className={btnSecondary}>
+                  <span className="text-lg">⏯</span> Reanudar
+                </button>
+                <button onClick={stopText} disabled={!showPlaybackStatus} className={btnSecondary}>
+                  <span className="text-lg">⏹</span> Detener
+                </button>
+              </div>
+
+              {sentences.length > 1 && getPosition() && (
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-slate-400">Ir a frase:</span>
+                  <button type="button" onClick={goToPrevSentence} disabled={!canPrevSentence} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
+                    ← Anterior
+                  </button>
+                  <button type="button" onClick={goToNextSentence} disabled={!canNextSentence} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
+                    Siguiente →
+                  </button>
+                  <span className="text-xs text-slate-500">Frase {currentSentenceIndex + 1} de {sentences.length}</span>
+                </div>
+              )}
+
+              <div className="mt-6 pt-6 border-t border-slate-700/50 flex flex-wrap items-end gap-6">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Voz</label>
+                  <select
+                    value={voiceIndex}
+                    onChange={e => setVoiceIndex(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-600/50 text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  >
+                    {voices.length === 0 && <option value="0">Cargando voces…</option>}
+                    {voices.map((v, i) => (
+                      <option key={v.name + i} value={i}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Velocidad: <span className="text-indigo-400 font-semibold">{rate.toFixed(1)}</span>x
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={rate}
+                    onChange={e => setRate(parseFloat(e.target.value))}
+                    className="w-full h-2 rounded-lg appearance-none bg-slate-600 accent-indigo-500 cursor-pointer"
+                  />
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
