@@ -50,9 +50,17 @@
         <div class="max-w-6xl mx-auto px-4 py-6">
             <nav class="flex justify-between items-center">
                 <span class="text-lg font-semibold tracking-tight">Currículum Vitae</span>
-                <a href="index-en.html" class="text-sm text-slate-300 hover:text-white flex items-center gap-1">
-                    <i class="bi bi-translate"></i> English
-                </a>
+                <div class="flex items-center gap-4">
+                    <a href="calculadora_3d.html" class="text-sm text-slate-300 hover:text-white flex items-center gap-1 font-medium transition-colors">
+                        <i class="bi bi-calculator"></i> Calculadora 3D
+                    </a>
+                    <a href="proyectos.html" class="text-sm text-slate-300 hover:text-white flex items-center gap-1 font-medium transition-colors">
+                        <i class="bi bi-folder2-open"></i> Proyectos
+                    </a>
+                    <a href="index-en.html" class="text-sm text-slate-300 hover:text-white flex items-center gap-1 transition-colors">
+                        <i class="bi bi-translate"></i> English
+                    </a>
+                </div>
             </nav>
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-8 pt-8 pb-12">
                 <div class="flex-1">
@@ -263,14 +271,27 @@
             <div class="flex flex-col lg:flex-row lg:items-center gap-8 p-6 lg:p-8 rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
                 <div class="flex-1">
                     <h2 class="text-2xl font-bold text-slate-800 mb-2">Proyectos</h2>
-                    <p class="text-slate-600 mb-6">Proyectos de desarrollo en los que he participado.</p>
-                    <a href="proyectos.html" class="inline-block px-5 py-2.5 bg-teal-700 text-white rounded-full text-sm font-medium hover:bg-teal-800 transition-colors">
-                        Ver proyectos
-                    </a>
+                    <p class="text-slate-600 mb-6">Proyectos de desarrollo y herramientas interactivas en los que he participado.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="proyectos.html" class="inline-block px-5 py-2.5 bg-teal-700 text-white rounded-full text-sm font-medium hover:bg-teal-800 transition-colors">
+                            Ver proyectos
+                        </a>
+                        <a href="calculadora_3d.html" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-full text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
+                            <i class="bi bi-calculator"></i> Calculadora 3D Pro
+                        </a>
+                    </div>
                 </div>
                 <div class="flex-shrink-0">
                     <img class="rounded-xl max-w-full h-auto" src="src/assets/consultamotos.png" alt="Proyectos" width="400">
                 </div>
+            </div>
+
+            <!-- Galería de aplicaciones y herramientas interactivas -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="bi bi-grid-fill text-teal-700"></i> Herramientas y Aplicativos
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="galeria-proyectos"></div>
             </div>
         </div>
     </section>
@@ -304,15 +325,16 @@
     <script>
         // Galería: proyectos de este sitio (páginas HTML del repo)
         const proyectosSitio = [
-            { url: 'edge.html', titulo: 'Lector de texto', descripcion: 'Aplicación de lectura con seguimiento de palabras y guardado en localStorage.', color: 'from-indigo-500 to-slate-800' },
-            { url: 'verbos.html', titulo: 'Verbos', descripcion: 'Página de contenido verbos.', color: 'from-fuchsia-500 to-purple-600' }
+            { url: 'calculadora_3d.html', titulo: 'Calculadora de Precios 3D', descripcion: 'Cotizador y costeo para Bambu Lab P1S + AMS en COP con catálogos dinámicos.', color: 'from-emerald-600 to-slate-900', icon: 'bi-calculator' },
+            { url: 'edge.html', titulo: 'Lector de texto', descripcion: 'Aplicación de lectura con seguimiento de palabras y guardado en localStorage.', color: 'from-indigo-500 to-slate-800', icon: 'bi-window' },
+            { url: 'verbos.html', titulo: 'Verbos', descripcion: 'Página de contenido verbos.', color: 'from-fuchsia-500 to-purple-600', icon: 'bi-translate' }
         ];
         const galeria = document.getElementById('galeria-proyectos');
         if (galeria) {
             galeria.innerHTML = proyectosSitio.map(p => `
                 <a href="${p.url}" target="_blank" rel="noopener" class="group block bg-slate-50 rounded-xl border border-slate-200 overflow-hidden hover:border-teal-300 hover:shadow-lg transition-all duration-300">
                     <div class="aspect-video bg-gradient-to-br ${p.color} flex items-center justify-center">
-                        <i class="bi bi-window text-white/80 text-5xl group-hover:scale-110 transition-transform"></i>
+                        <i class="bi ${p.icon || 'bi-window'} text-white/80 text-5xl group-hover:scale-110 transition-transform"></i>
                     </div>
                     <div class="p-4">
                         <h3 class="font-semibold text-slate-800 group-hover:text-teal-700">${p.titulo}</h3>
