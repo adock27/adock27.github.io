@@ -330,24 +330,49 @@ class CalculatorApp {
   }
 
   /**
-   * Renderiza los botones de presets rápidos (Pills minimalistas)
+   * Renderiza los botones de presets rápidos con botón de borrar
    */
   renderPresets() {
     if (!this.el.presetsShelf) return;
     this.el.presetsShelf.innerHTML = '';
 
-    this.presets.forEach(preset => {
-      const pill = document.createElement('button');
-      pill.type = 'button';
-      pill.className = 'btn btn-sm btn-outline-secondary rounded-pill me-2 mb-2';
-      pill.innerHTML = `<span>${preset.name}</span>`;
-      pill.title = preset.description || '';
+    if (this.presets.length === 0) {
+      this.el.presetsShelf.innerHTML = `<span class="text-muted small fst-italic">Sin presets guardados aún.</span>`;
+      return;
+    }
 
-      pill.addEventListener('click', () => {
-        this.applyPreset(preset);
+    this.presets.forEach(preset => {
+      const wrapper = document.createElement('span');
+      wrapper.className = 'preset-pill-wrapper me-2 mb-2';
+      wrapper.style.cssText = 'display:inline-flex; align-items:center; border:1px solid #dee2e6; border-radius:50px; overflow:hidden; background:#fff;';
+
+      // Botón principal: aplica el preset
+      const applyBtn = document.createElement('button');
+      applyBtn.type = 'button';
+      applyBtn.className = 'btn btn-sm btn-outline-secondary border-0 rounded-0 rounded-start-pill px-3';
+      applyBtn.style.cssText = 'border-right:1px solid #dee2e6 !important;';
+      applyBtn.textContent = preset.name;
+      applyBtn.title = preset.description || 'Aplicar preset';
+      applyBtn.addEventListener('click', () => this.applyPreset(preset));
+
+      // Botón borrar
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn btn-sm btn-outline-danger border-0 rounded-0 rounded-end-pill px-2';
+      delBtn.innerHTML = '<i class="bi bi-x"></i>';
+      delBtn.title = 'Eliminar preset';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`¿Eliminar el preset "${preset.name}"?`)) {
+          this.presets = Storage.deletePreset(preset.id);
+          this.renderPresets();
+          this.showToast(`Preset eliminado`, 'info');
+        }
       });
 
-      this.el.presetsShelf.appendChild(pill);
+      wrapper.appendChild(applyBtn);
+      wrapper.appendChild(delBtn);
+      this.el.presetsShelf.appendChild(wrapper);
     });
   }
 
