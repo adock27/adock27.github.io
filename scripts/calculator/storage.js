@@ -9,8 +9,8 @@ const PRESETS_KEY = 'calc3d_presets_v2';
 export const DEFAULT_CONFIG = {
   version: 2,
   currency: 'COP',
-  electricityRate: 569.53,    // COP / kWh
-  powerKw: 0.15,              // kW promedio Bambu Lab P1S
+  electricityRate: 1000,      // COP / kWh (tarifa residencial Colombia ~2025, estrato 3-4)
+  powerKw: 0.12,              // kW promedio Bambu Lab P1S (rango real: 0.08–0.15 kW según carga)
   wearRatePerHour: 800,       // Desgaste y amortización máquina COP / h
   failureRatePercent: 5,      // Merma y riesgo de fallos (5%)
   purgeWastePercent: 5,       // Purga / desecho de filamento AMS (5%)

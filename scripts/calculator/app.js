@@ -195,14 +195,18 @@ class CalculatorApp {
     this.el.materialSlotsContainer.innerHTML = '';
 
     this.currentJob.materialSlots.forEach((slot, index) => {
+      const selectedMat = this.config.materials.find(m => m.id === slot.materialId) || this.config.materials[0];
+      const matColor = selectedMat?.color || '#6c757d';
+
       const row = document.createElement('div');
       row.className = 'row g-2 align-items-center mb-2 p-2 bg-light rounded-3 border';
 
       const selectHtml = `
-        <div class="col-7 col-sm-6">
+        <div class="col-7 col-sm-6 d-flex align-items-center gap-2">
+          <span class="slot-color-dot flex-shrink-0" style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${matColor}; border:1.5px solid rgba(0,0,0,0.15); flex-shrink:0;"></span>
           <select class="form-select form-select-sm slot-material-select" data-slot-id="${slot.id}">
             ${this.config.materials.map(m => `
-              <option value="${m.id}" ${m.id === slot.materialId ? 'selected' : ''}>
+              <option value="${m.id}" data-color="${m.color || '#6c757d'}" ${m.id === slot.materialId ? 'selected' : ''}>
                 ${m.name} (${Engine.formatMoney(m.pricePerKg)}/kg)
               </option>
             `).join('')}
@@ -237,6 +241,13 @@ class CalculatorApp {
         const slot = this.currentJob.materialSlots.find(s => s.id === slotId);
         if (slot) {
           slot.materialId = e.target.value;
+          // Actualizar el punto de color dinámicamente
+          const dot = e.target.closest('.d-flex')?.querySelector('.slot-color-dot');
+          const selectedOption = e.target.options[e.target.selectedIndex];
+          if (dot && selectedOption) {
+            const mat = this.config.materials.find(m => m.id === e.target.value);
+            dot.style.background = mat?.color || '#6c757d';
+          }
           this.recalculate();
         }
       });
@@ -579,13 +590,14 @@ _Cotización válida por 7 días._`;
     // Tabla Materiales
     if (this.el.materialsTableBody) {
       this.el.materialsTableBody.innerHTML = this.config.materials.map(m => `
-        <tr>
+        <tr data-mat-id="${m.id}">
           <td>
             <div class="d-flex align-items-center gap-2">
-              <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${m.color || '#6c757d'};"></span>
+              <input type="color" class="cat-material-color" data-mat-id="${m.id}" value="${m.color || '#6c757d'}" title="Color del filamento"
+                style="width:28px; height:28px; padding:2px; border-radius:50%; border:1.5px solid #dee2e6; cursor:pointer; flex-shrink:0;">
               <div>
-                <strong class="text-dark">${m.name}</strong>
-                <div class="text-muted" style="font-size:11px;">${m.note || ''}</div>
+                <strong class="text-dark mat-name-display">${m.name}</strong>
+                <div class="text-muted mat-note-display" style="font-size:11px;">${m.note || ''}</div>
               </div>
             </div>
           </td>
@@ -595,7 +607,10 @@ _Cotización válida por 7 días._`;
               <input type="number" class="form-control cat-material-price" data-mat-id="${m.id}" value="${m.pricePerKg}" step="1000">
             </div>
           </td>
-          <td class="text-end">
+          <td class="text-end" style="white-space:nowrap;">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-edit-mat me-1" data-mat-id="${m.id}" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </button>
             <button type="button" class="btn btn-sm btn-outline-danger btn-del-mat" data-mat-id="${m.id}" title="Eliminar">
               <i class="bi bi-trash"></i>
             </button>
@@ -613,6 +628,88 @@ _Cotización válida por 7 días._`;
             this.renderMaterialSlots();
             this.recalculate();
           }
+        });
+      });
+
+      // Cambio de color en tiempo real
+      this.el.materialsTableBody.querySelectorAll('.cat-material-color').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const matId = e.target.dataset.matId;
+          const mat = this.config.materials.find(m => m.id === matId);
+          if (mat) {
+            mat.color = e.target.value;
+            Storage.saveConfig(this.config);
+            this.renderMaterialSlots();
+          }
+        });
+      });
+
+      // Botón editar: muestra fila de edición inline
+      this.el.materialsTableBody.querySelectorAll('.btn-edit-mat').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const matId = e.currentTarget.dataset.matId;
+          const mat = this.config.materials.find(m => m.id === matId);
+          if (!mat) return;
+
+          // Si ya hay una fila de edición abierta para este mat, cerrarla
+          const existingEditRow = this.el.materialsTableBody.querySelector(`tr.edit-row[data-edit-for="${matId}"]`);
+          if (existingEditRow) {
+            existingEditRow.remove();
+            return;
+          }
+          // Cerrar cualquier otra fila de edición abierta
+          this.el.materialsTableBody.querySelectorAll('tr.edit-row').forEach(r => r.remove());
+
+          const mainRow = this.el.materialsTableBody.querySelector(`tr[data-mat-id="${matId}"]`);
+          if (!mainRow) return;
+
+          const editRow = document.createElement('tr');
+          editRow.className = 'edit-row bg-primary-subtle';
+          editRow.dataset.editFor = matId;
+          editRow.innerHTML = `
+            <td colspan="3" class="py-2 px-3">
+              <div class="d-flex flex-wrap gap-2 align-items-end">
+                <div>
+                  <label class="form-label small fw-semibold mb-1 text-secondary">Nombre</label>
+                  <input type="text" class="form-control form-control-sm edit-mat-name" value="${mat.name}" style="min-width:150px;">
+                </div>
+                <div>
+                  <label class="form-label small fw-semibold mb-1 text-secondary">Nota</label>
+                  <input type="text" class="form-control form-control-sm edit-mat-note" value="${mat.note || ''}" style="min-width:150px;" placeholder="Ej: Resistente, Flexible...">
+                </div>
+                <div>
+                  <label class="form-label small fw-semibold mb-1 text-secondary">Color</label><br>
+                  <input type="color" class="edit-mat-color" value="${mat.color || '#6c757d'}" style="width:36px; height:32px; padding:2px; border-radius:6px; border:1.5px solid #dee2e6; cursor:pointer;">
+                </div>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-success btn-sm btn-save-edit-mat px-3"><i class="bi bi-check-lg"></i> Guardar</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm btn-cancel-edit-mat px-2"><i class="bi bi-x-lg"></i></button>
+                </div>
+              </div>
+            </td>
+          `;
+
+          mainRow.insertAdjacentElement('afterend', editRow);
+
+          editRow.querySelector('.btn-cancel-edit-mat').addEventListener('click', () => editRow.remove());
+
+          editRow.querySelector('.btn-save-edit-mat').addEventListener('click', () => {
+            const newName = editRow.querySelector('.edit-mat-name').value.trim();
+            const newNote = editRow.querySelector('.edit-mat-note').value.trim();
+            const newColor = editRow.querySelector('.edit-mat-color').value;
+
+            if (!newName) { this.showToast('El nombre no puede estar vacío', 'error'); return; }
+
+            mat.name = newName;
+            mat.note = newNote;
+            mat.color = newColor;
+            Storage.saveConfig(this.config);
+            editRow.remove();
+            this.renderCatalogTables();
+            this.renderMaterialSlots();
+            this.recalculate();
+            this.showToast(`Material "${newName}" actualizado`, 'success');
+          });
         });
       });
 
@@ -687,26 +784,89 @@ _Cotización válida por 7 días._`;
   }
 
   handleAddNewCatalogMaterial() {
-    const name = prompt('Nombre del nuevo filamento (ej. TPU 95A, PLA Silk):');
-    if (!name || !name.trim()) return;
+    // Generar color aleatorio atractivo
+    const randomColor = '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
 
-    const price = Number(prompt('Precio en COP por kg / bobina:', '60000')) || 60000;
-    const note = prompt('Nota breve (opcional):', 'Resistente') || '';
+    // Crear modal inline
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:1rem;padding:1.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-plus-circle-fill text-success me-2"></i>Agregar Filamento al Catálogo</h6>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-secondary">Nombre del filamento *</label>
+          <input type="text" id="newMatName" class="form-control" placeholder="Ej: PLA Silk, TPU 95A, PETG..." autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-secondary">Precio por kg (COP) *</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" id="newMatPrice" class="form-control" value="60000" step="1000" min="0">
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-secondary">Nota breve (opcional)</label>
+          <input type="text" id="newMatNote" class="form-control" placeholder="Ej: Resistente, Flexible, Premium...">
+        </div>
+        <div class="mb-4 d-flex align-items-center gap-3">
+          <div>
+            <label class="form-label small fw-semibold text-secondary d-block">Color del filamento</label>
+            <input type="color" id="newMatColor" value="${randomColor}" style="width:48px;height:40px;padding:2px;border-radius:8px;border:1.5px solid #dee2e6;cursor:pointer;">
+          </div>
+          <div id="newMatColorPreview" style="flex:1;height:40px;border-radius:8px;background:${randomColor};border:1px solid #dee2e6;transition:background 0.2s;"></div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="button" id="newMatCancel" class="btn btn-outline-secondary rounded-pill px-4">Cancelar</button>
+          <button type="button" id="newMatSave" class="btn btn-success rounded-pill px-4"><i class="bi bi-check-lg me-1"></i>Agregar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
 
-    const newMat = {
-      id: 'mat_' + Date.now(),
-      name: name.trim(),
-      pricePerKg: price,
-      color: '#' + Math.floor(Math.random()*16777215).toString(16),
-      note
-    };
+    const nameInput = overlay.querySelector('#newMatName');
+    const priceInput = overlay.querySelector('#newMatPrice');
+    const noteInput = overlay.querySelector('#newMatNote');
+    const colorInput = overlay.querySelector('#newMatColor');
+    const colorPreview = overlay.querySelector('#newMatColorPreview');
 
-    this.config.materials.push(newMat);
-    Storage.saveConfig(this.config);
-    this.renderCatalogTables();
-    this.renderMaterialSlots();
-    this.recalculate();
-    this.showToast(`Material "${newMat.name}" añadido`, 'success');
+    nameInput.focus();
+
+    colorInput.addEventListener('input', () => {
+      colorPreview.style.background = colorInput.value;
+    });
+
+    const close = () => overlay.remove();
+
+    overlay.querySelector('#newMatCancel').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    overlay.querySelector('#newMatSave').addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      const price = Number(priceInput.value) || 60000;
+      const note = noteInput.value.trim();
+      const color = colorInput.value;
+
+      if (!name) { nameInput.classList.add('is-invalid'); nameInput.focus(); return; }
+
+      const newMat = {
+        id: 'mat_' + Date.now(),
+        name,
+        pricePerKg: price,
+        color,
+        note
+      };
+
+      this.config.materials.push(newMat);
+      Storage.saveConfig(this.config);
+      this.renderCatalogTables();
+      this.renderMaterialSlots();
+      this.recalculate();
+      this.showToast(`Material "${newMat.name}" añadido`, 'success');
+      close();
+    });
+
+    // Guardar con Enter
+    overlay.addEventListener('keydown', (e) => { if (e.key === 'Enter') overlay.querySelector('#newMatSave').click(); if (e.key === 'Escape') close(); });
   }
 
   handleAddNewCatalogExtra() {

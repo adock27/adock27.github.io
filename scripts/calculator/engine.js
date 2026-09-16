@@ -86,7 +86,7 @@ export const Engine = {
    * @param {number} electricityRate Costo por kWh (ej. 569.53 COP)
    * @returns {{ totalKwh: number, energyCost: number }}
    */
-  calculateEnergyCost(totalHours = 0, powerKw = 0.15, electricityRate = 569.53) {
+  calculateEnergyCost(totalHours = 0, powerKw = 0.12, electricityRate = 1000) {
     const hours = Math.max(0, Number(totalHours) || 0);
     const kw = Math.max(0, Number(powerKw) || 0);
     const rate = Math.max(0, Number(electricityRate) || 0);
