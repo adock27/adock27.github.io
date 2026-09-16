@@ -29,6 +29,7 @@ class CalculatorApp {
     this.initTabs();
     this.initEvents();
     this.renderPresets();
+    this.renderFilamentPalette();
     this.renderMaterialSlots();
     this.renderActiveExtras();
     this.renderSettings();
@@ -51,7 +52,7 @@ class CalculatorApp {
       minutes: document.getElementById('printMinutes'),
       laborMinutes: document.getElementById('laborMinutes'),
       materialSlotsContainer: document.getElementById('materialSlotsContainer'),
-      btnAddMaterialSlot: document.getElementById('btnAddMaterialSlot'),
+      filamentPalette: document.getElementById('filamentPalette'),
       extrasContainer: document.getElementById('extrasContainer'),
 
       // Presets
@@ -146,18 +147,6 @@ class CalculatorApp {
         }
       });
 
-    // Añadir ranura de filamento (AMS multi-color)
-    this.el.btnAddMaterialSlot?.addEventListener('click', () => {
-      this.currentJob.materialSlots.push({
-        id: 'slot_' + Date.now(),
-        materialId: this.config.materials[0]?.id || 'pla_std',
-        grams: 20
-      });
-      this.renderMaterialSlots();
-      this.recalculate();
-      this.showToast('Color / filamento adicional añadido', 'info');
-    });
-
     // Guardar preset
     this.el.btnSaveAsPreset?.addEventListener('click', () => this.handleSaveCurrentAsPreset());
 
@@ -188,72 +177,131 @@ class CalculatorApp {
   }
 
   /**
-   * Renderiza las ranuras de material (AMS) con clases Bootstrap
+   * Renderiza la paleta de filamentos arrastrables (panel izquierdo)
+   */
+  renderFilamentPalette() {
+    if (!this.el.filamentPalette) return;
+    this.el.filamentPalette.innerHTML = '';
+
+    // Materiales ya en uso en los slots activos
+    const usedIds = new Set(this.currentJob.materialSlots.map(s => s.materialId));
+    const available = this.config.materials.filter(m => !usedIds.has(m.id));
+
+    if (available.length === 0) {
+      this.el.filamentPalette.innerHTML = `
+        <div class="text-center py-3 text-muted" style="font-size:12px;">
+          <i class="bi bi-check-circle" style="font-size:20px;display:block;margin-bottom:4px;opacity:0.4;"></i>
+          Todos los filamentos en uso
+        </div>
+      `;
+      return;
+    }
+
+    available.forEach(mat => {
+      const chip = document.createElement('div');
+      chip.className = 'filament-chip d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-white';
+      chip.draggable = true;
+      chip.dataset.materialId = mat.id;
+      chip.title = `Arrastra "${mat.name}" al panel AMS`;
+
+      chip.innerHTML = `
+        <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
+        <div style="min-width:0;flex:1;">
+          <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
+          <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
+        </div>
+        <i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>
+      `;
+
+      chip.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('materialId', mat.id);
+        e.dataTransfer.effectAllowed = 'move';
+        chip.classList.add('dragging');
+      });
+
+      chip.addEventListener('dragend', () => {
+        chip.classList.remove('dragging');
+      });
+
+      this.el.filamentPalette.appendChild(chip);
+    });
+  }
+
+  /**
+   * Renderiza la zona de drop AMS (panel derecho)
    */
   renderMaterialSlots() {
     if (!this.el.materialSlotsContainer) return;
-    this.el.materialSlotsContainer.innerHTML = '';
+    const zone = this.el.materialSlotsContainer;
+    zone.innerHTML = '';
 
-    this.currentJob.materialSlots.forEach((slot, index) => {
-      const selectedMat = this.config.materials.find(m => m.id === slot.materialId) || this.config.materials[0];
-      const matColor = selectedMat?.color || '#6c757d';
-
-      const row = document.createElement('div');
-      row.className = 'row g-2 align-items-center mb-2 p-2 bg-light rounded-3 border';
-
-      const selectHtml = `
-        <div class="col-7 col-sm-6 d-flex align-items-center gap-2">
-          <span class="slot-color-dot flex-shrink-0" style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${matColor}; border:1.5px solid rgba(0,0,0,0.15); flex-shrink:0;"></span>
-          <select class="form-select form-select-sm slot-material-select" data-slot-id="${slot.id}">
-            ${this.config.materials.map(m => `
-              <option value="${m.id}" data-color="${m.color || '#6c757d'}" ${m.id === slot.materialId ? 'selected' : ''}>
-                ${m.name} (${Engine.formatMoney(m.pricePerKg)}/kg)
-              </option>
-            `).join('')}
-          </select>
+    // Estado vacío
+    if (this.currentJob.materialSlots.length === 0) {
+      zone.innerHTML = `
+        <div class="text-center py-3 text-muted" style="pointer-events:none;">
+          <i class="bi bi-box-arrow-in-right" style="font-size:22px;display:block;margin-bottom:4px;opacity:0.4;"></i>
+          <span style="font-size:12px;">Arrastra un filamento aquí</span>
         </div>
       `;
+    } else {
+      this.currentJob.materialSlots.forEach(slot => {
+        const mat = this.config.materials.find(m => m.id === slot.materialId)
+          || { name: 'Desconocido', color: '#6c757d', pricePerKg: 0 };
 
-      const gramsHtml = `
-        <div class="col-3 col-sm-4">
-          <div class="input-group input-group-sm">
-            <input type="number" class="form-control slot-grams-input" data-slot-id="${slot.id}" min="0.1" step="0.5" value="${slot.grams}" placeholder="Gramos">
-            <span class="input-group-text">g</span>
+        const card = document.createElement('div');
+        card.className = 'ams-slot-card d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-light';
+        card.dataset.slotId = slot.id;
+
+        card.innerHTML = `
+          <span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
+          <span class="small fw-semibold text-dark text-truncate" style="flex:1;min-width:0;font-size:12px;">${mat.name}</span>
+          <div class="input-group input-group-sm" style="max-width:82px;">
+            <input type="number" class="form-control slot-grams-input" data-slot-id="${slot.id}" min="0.1" step="0.5" value="${slot.grams}" style="font-size:12px;padding:3px 6px;">
+            <span class="input-group-text" style="font-size:11px;padding:3px 5px;">g</span>
           </div>
-        </div>
-      `;
-
-      const removeBtnHtml = this.currentJob.materialSlots.length > 1
-        ? `<div class="col-2 col-sm-2 text-end">
-            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-slot" data-slot-id="${slot.id}" title="Eliminar filamento">
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>`
-        : `<div class="col-2 col-sm-2 text-center text-muted small">Slot ${index + 1}</div>`;
-
-      row.innerHTML = selectHtml + gramsHtml + removeBtnHtml;
-      this.el.materialSlotsContainer.appendChild(row);
-    });
-
-    this.el.materialSlotsContainer.querySelectorAll('.slot-material-select').forEach(select => {
-      select.addEventListener('change', (e) => {
-        const slotId = e.target.dataset.slotId;
-        const slot = this.currentJob.materialSlots.find(s => s.id === slotId);
-        if (slot) {
-          slot.materialId = e.target.value;
-          // Actualizar el punto de color dinámicamente
-          const dot = e.target.closest('.d-flex')?.querySelector('.slot-color-dot');
-          const selectedOption = e.target.options[e.target.selectedIndex];
-          if (dot && selectedOption) {
-            const mat = this.config.materials.find(m => m.id === e.target.value);
-            dot.style.background = mat?.color || '#6c757d';
-          }
-          this.recalculate();
-        }
+          <button type="button" class="btn btn-sm btn-outline-danger btn-remove-slot p-0" data-slot-id="${slot.id}" title="Quitar" style="width:24px;height:24px;line-height:1;flex-shrink:0;">
+            <i class="bi bi-x" style="font-size:14px;"></i>
+          </button>
+        `;
+        zone.appendChild(card);
       });
+    }
+
+    // --- Drag over: resaltar zona ---
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      zone.classList.add('drag-over');
     });
 
-    this.el.materialSlotsContainer.querySelectorAll('.slot-grams-input').forEach(input => {
+    zone.addEventListener('dragleave', (e) => {
+      if (!zone.contains(e.relatedTarget)) {
+        zone.classList.remove('drag-over');
+      }
+    });
+
+    // --- Drop: mover filamento a ranura activa ---
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const materialId = e.dataTransfer.getData('materialId');
+      const matExists = this.config.materials.find(m => m.id === materialId);
+      // Ignorar si ya está en uso
+      const alreadyUsed = this.currentJob.materialSlots.some(s => s.materialId === materialId);
+      if (materialId && matExists && !alreadyUsed) {
+        this.currentJob.materialSlots.push({
+          id: 'slot_' + Date.now(),
+          materialId,
+          grams: 20
+        });
+        this.renderFilamentPalette();
+        this.renderMaterialSlots();
+        this.recalculate();
+      }
+    });
+
+    // --- Inputs de gramos ---
+    zone.querySelectorAll('.slot-grams-input').forEach(input => {
       input.addEventListener('input', (e) => {
         const slotId = e.target.dataset.slotId;
         const slot = this.currentJob.materialSlots.find(s => s.id === slotId);
@@ -264,10 +312,12 @@ class CalculatorApp {
       });
     });
 
-    this.el.materialSlotsContainer.querySelectorAll('.btn-remove-slot').forEach(btn => {
+    // --- Botones de eliminar: devuelve el filamento a la paleta ---
+    zone.querySelectorAll('.btn-remove-slot').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const slotId = e.currentTarget.dataset.slotId;
         this.currentJob.materialSlots = this.currentJob.materialSlots.filter(s => s.id !== slotId);
+        this.renderFilamentPalette();
         this.renderMaterialSlots();
         this.recalculate();
       });
@@ -639,6 +689,7 @@ _Cotización válida por 7 días._`;
           if (mat) {
             mat.color = e.target.value;
             Storage.saveConfig(this.config);
+            this.renderFilamentPalette();
             this.renderMaterialSlots();
           }
         });
@@ -706,6 +757,7 @@ _Cotización válida por 7 días._`;
             Storage.saveConfig(this.config);
             editRow.remove();
             this.renderCatalogTables();
+            this.renderFilamentPalette();
             this.renderMaterialSlots();
             this.recalculate();
             this.showToast(`Material "${newName}" actualizado`, 'success');
@@ -724,6 +776,7 @@ _Cotización válida por 7 días._`;
             this.config.materials = this.config.materials.filter(m => m.id !== matId);
             Storage.saveConfig(this.config);
             this.renderCatalogTables();
+            this.renderFilamentPalette();
             this.renderMaterialSlots();
             this.recalculate();
             this.showToast('Material eliminado', 'info');
@@ -859,6 +912,7 @@ _Cotización válida por 7 días._`;
       this.config.materials.push(newMat);
       Storage.saveConfig(this.config);
       this.renderCatalogTables();
+      this.renderFilamentPalette();
       this.renderMaterialSlots();
       this.recalculate();
       this.showToast(`Material "${newMat.name}" añadido`, 'success');
@@ -909,6 +963,7 @@ _Cotización válida por 7 días._`;
     if (confirm('¿Restablecer configuración a valores de fábrica?')) {
       this.config = Storage.resetConfig();
       this.renderSettings();
+      this.renderFilamentPalette();
       this.renderMaterialSlots();
       this.renderActiveExtras();
       this.recalculate();
@@ -940,6 +995,7 @@ _Cotización válida por 7 días._`;
         this.presets = Storage.loadPresets();
         this.renderSettings();
         this.renderPresets();
+        this.renderFilamentPalette();
         this.renderMaterialSlots();
         this.renderActiveExtras();
         this.recalculate();

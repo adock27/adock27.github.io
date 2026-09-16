@@ -54,6 +54,48 @@
       min-width: 280px;
       max-width: 380px;
     }
+
+    /* === Drag & Drop Filaments === */
+    .filament-chip {
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s;
+    }
+    .filament-chip:hover {
+      transform: translateX(3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .filament-chip.dragging {
+      opacity: 0.45;
+      cursor: grabbing;
+      transform: scale(0.96);
+    }
+    .ams-drop-zone {
+      min-height: 90px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 8px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .ams-drop-zone.drag-over {
+      border-color: #00ae42;
+      background: rgba(0, 174, 66, 0.06);
+    }
+    .ams-slot-card {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      animation: slideInSlot 0.2s ease;
+    }
+    @keyframes slideInSlot {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .filament-palette-panel {
+      max-height: 260px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .filament-palette-panel::-webkit-scrollbar { width: 4px; }
+    .filament-palette-panel::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
   </style>
 </head>
 
@@ -161,18 +203,31 @@
               </div>
             </div>
 
-            <!-- Filamento / AMS Multi-color -->
+            <!-- Filamento / AMS Multi-color (Drag & Drop) -->
             <div class="pt-3 border-top mt-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="small fw-bold text-secondary text-uppercase">
                   <i class="bi bi-palette-fill text-success"></i> Filamento y Ranuras AMS
                 </span>
-                <button type="button" id="btnAddMaterialSlot" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                  <i class="bi bi-plus-lg"></i> Añadir Color (AMS)
-                </button>
+                <span class="badge bg-success-subtle text-success border border-success-subtle small">
+                  <i class="bi bi-hand-index"></i> Arrastra al panel derecho
+                </span>
               </div>
-              <div id="materialSlotsContainer">
-                <!-- Renderizado dinámico -->
+              <div class="row g-2">
+                <!-- Panel izquierdo: paleta de filamentos -->
+                <div class="col-5">
+                  <div class="text-muted mb-1" style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px;">Catálogo</div>
+                  <div id="filamentPalette" class="filament-palette-panel">
+                    <!-- Renderizado dinámico -->
+                  </div>
+                </div>
+                <!-- Panel derecho: zona de drop AMS -->
+                <div class="col-7">
+                  <div class="text-muted mb-1" style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px;">Ranuras AMS activas</div>
+                  <div id="materialSlotsContainer" class="ams-drop-zone">
+                    <!-- Renderizado dinámico -->
+                  </div>
+                </div>
               </div>
             </div>
 
