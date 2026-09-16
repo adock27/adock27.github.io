@@ -424,11 +424,18 @@ class CalculatorApp {
       delBtn.title = 'Eliminar preset';
       delBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (confirm(`¿Eliminar el preset "${preset.name}"?`)) {
-          this.presets = Storage.deletePreset(preset.id);
-          this.renderPresets();
-          this.showToast(`Preset eliminado`, 'info');
+        if (!delBtn.classList.contains('confirming')) {
+          delBtn.classList.add('confirming', 'bg-danger', 'text-white');
+          delBtn.innerHTML = '<i class="bi bi-question-lg"></i>';
+          setTimeout(() => {
+            delBtn.classList.remove('confirming', 'bg-danger', 'text-white');
+            delBtn.innerHTML = '<i class="bi bi-x"></i>';
+          }, 3000);
+          return;
         }
+        this.presets = Storage.deletePreset(preset.id);
+        this.renderPresets();
+        this.showToast(`Preset eliminado`, 'info');
       });
 
       wrapper.appendChild(applyBtn);
@@ -772,15 +779,24 @@ _Cotización válida por 7 días._`;
             this.showToast('Debe haber al menos 1 material en el catálogo', 'error');
             return;
           }
-          if (confirm('¿Eliminar este material del catálogo?')) {
-            this.config.materials = this.config.materials.filter(m => m.id !== matId);
-            Storage.saveConfig(this.config);
-            this.renderCatalogTables();
-            this.renderFilamentPalette();
-            this.renderMaterialSlots();
-            this.recalculate();
-            this.showToast('Material eliminado', 'info');
+          if (!btn.classList.contains('confirming')) {
+            btn.classList.add('confirming', 'btn-danger', 'text-white');
+            btn.classList.remove('btn-outline-danger');
+            btn.innerHTML = '<i class="bi bi-question-lg"></i>';
+            setTimeout(() => {
+              btn.classList.remove('confirming', 'btn-danger', 'text-white');
+              btn.classList.add('btn-outline-danger');
+              btn.innerHTML = '<i class="bi bi-trash"></i>';
+            }, 3000);
+            return;
           }
+          this.config.materials = this.config.materials.filter(m => m.id !== matId);
+          Storage.saveConfig(this.config);
+          this.renderCatalogTables();
+          this.renderFilamentPalette();
+          this.renderMaterialSlots();
+          this.recalculate();
+          this.showToast('Material eliminado', 'info');
         });
       });
     }
@@ -823,14 +839,23 @@ _Cotización válida por 7 días._`;
       this.el.extrasTableBody.querySelectorAll('.btn-del-extra').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const extraId = e.currentTarget.dataset.extraId;
-          if (confirm('¿Eliminar este extra del catálogo?')) {
-            this.config.extrasCatalog = this.config.extrasCatalog.filter(x => x.id !== extraId);
-            Storage.saveConfig(this.config);
-            this.renderCatalogTables();
-            this.renderActiveExtras();
-            this.recalculate();
-            this.showToast('Extra eliminado', 'info');
+          if (!btn.classList.contains('confirming')) {
+            btn.classList.add('confirming', 'btn-danger', 'text-white');
+            btn.classList.remove('btn-outline-danger');
+            btn.innerHTML = '<i class="bi bi-question-lg"></i>';
+            setTimeout(() => {
+              btn.classList.remove('confirming', 'btn-danger', 'text-white');
+              btn.classList.add('btn-outline-danger');
+              btn.innerHTML = '<i class="bi bi-trash"></i>';
+            }, 3000);
+            return;
           }
+          this.config.extrasCatalog = this.config.extrasCatalog.filter(x => x.id !== extraId);
+          Storage.saveConfig(this.config);
+          this.renderCatalogTables();
+          this.renderActiveExtras();
+          this.recalculate();
+          this.showToast('Extra eliminado', 'info');
         });
       });
     }
@@ -960,14 +985,32 @@ _Cotización válida por 7 días._`;
   }
 
   handleResetConfig() {
-    if (confirm('¿Restablecer configuración a valores de fábrica?')) {
-      this.config = Storage.resetConfig();
-      this.renderSettings();
-      this.renderFilamentPalette();
-      this.renderMaterialSlots();
-      this.renderActiveExtras();
-      this.recalculate();
-      this.showToast('Valores restablecidos a fábrica', 'info');
+    const btn = this.el.btnResetConfig;
+    if (btn && !btn.classList.contains('confirming')) {
+      const originalText = btn.innerHTML;
+      btn.classList.add('confirming', 'btn-danger', 'text-white');
+      btn.classList.remove('btn-outline-secondary');
+      btn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ¿Seguro?';
+      setTimeout(() => {
+        btn.classList.remove('confirming', 'btn-danger', 'text-white');
+        btn.classList.add('btn-outline-secondary');
+        btn.innerHTML = originalText;
+      }, 3000);
+      return;
+    }
+
+    this.config = Storage.resetConfig();
+    this.renderSettings();
+    this.renderFilamentPalette();
+    this.renderMaterialSlots();
+    this.renderActiveExtras();
+    this.recalculate();
+    this.showToast('Valores restablecidos a fábrica', 'info');
+
+    if (btn) {
+      btn.classList.remove('confirming', 'btn-danger', 'text-white');
+      btn.classList.add('btn-outline-secondary');
+      btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Valores de Fábrica';
     }
   }
 
