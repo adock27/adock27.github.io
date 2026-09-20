@@ -18,6 +18,7 @@ export class Settings {
       importFileInput: document.getElementById('importFileInput'),
       materialsTableBody: document.getElementById('materialsTableBody'),
       btnAddCatalogMaterial: document.getElementById('btnAddCatalogMaterial'),
+      btnQuickAddMaterial: document.getElementById('btnQuickAddMaterial'),
       extrasTableBody: document.getElementById('extrasTableBody'),
       btnAddCatalogExtra: document.getElementById('btnAddCatalogExtra')
     };
@@ -32,6 +33,7 @@ export class Settings {
     this.el.btnImportBackup?.addEventListener('click', () => this.el.importFileInput?.click());
     this.el.importFileInput?.addEventListener('change', (e) => this.handleImportBackup(e));
     this.el.btnAddCatalogMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
+    this.el.btnQuickAddMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
     this.el.btnAddCatalogExtra?.addEventListener('click', () => this.handleAddNewCatalogExtra());
   }
 
