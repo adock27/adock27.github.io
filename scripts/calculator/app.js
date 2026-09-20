@@ -20,6 +20,8 @@ class CalculatorApp {
       hours: 1,
       minutes: 25,
       laborMinutes: 10,
+      isBatch: false,
+      batchQuantity: 2,
       materialSlots: [
         { id: 'slot_1', materialId: 'pla_std', grams: 50 }
       ],
@@ -32,6 +34,9 @@ class CalculatorApp {
       hours: document.getElementById('printHours'),
       minutes: document.getElementById('printMinutes'),
       laborMinutes: document.getElementById('laborMinutes'),
+      isBatchPrint: document.getElementById('isBatchPrint'),
+      batchQuantity: document.getElementById('batchQuantity'),
+      batchQuantityContainer: document.getElementById('batchQuantityContainer'),
       toastContainer: document.getElementById('toastContainer')
     };
 
@@ -63,10 +68,22 @@ class CalculatorApp {
       this.recalculate();
     };
 
-    [this.el.projectName, this.el.clientName, this.el.hours, this.el.minutes, this.el.laborMinutes]
+    [this.el.projectName, this.el.clientName, this.el.hours, this.el.minutes, this.el.laborMinutes, this.el.isBatchPrint, this.el.batchQuantity]
       .forEach(input => {
         if (input) input.addEventListener('input', triggerRecalc);
       });
+
+    if (this.el.isBatchPrint) {
+      this.el.isBatchPrint.addEventListener('change', () => {
+        if (this.el.batchQuantityContainer) {
+          if (this.el.isBatchPrint.checked) {
+            this.el.batchQuantityContainer.classList.remove('d-none');
+          } else {
+            this.el.batchQuantityContainer.classList.add('d-none');
+          }
+        }
+      });
+    }
   }
 
   syncJobState() {
@@ -75,6 +92,8 @@ class CalculatorApp {
     this.currentJob.hours = Number(this.el.hours?.value) || 0;
     this.currentJob.minutes = Number(this.el.minutes?.value) || 0;
     this.currentJob.laborMinutes = Number(this.el.laborMinutes?.value) || 0;
+    this.currentJob.isBatch = this.el.isBatchPrint?.checked || false;
+    this.currentJob.batchQuantity = Number(this.el.batchQuantity?.value) || 1;
   }
 
   recalculate() {

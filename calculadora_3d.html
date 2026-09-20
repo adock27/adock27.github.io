@@ -127,6 +127,19 @@
               </div>
             </div>
 
+            <div class="row g-3 mb-3">
+              <div class="col-12">
+                <div class="form-check form-switch mb-2">
+                  <input class="form-check-input" type="checkbox" id="isBatchPrint">
+                  <label class="form-check-label small fw-semibold text-secondary" for="isBatchPrint">Impresión en lote (múltiples piezas en la placa)</label>
+                </div>
+                <div id="batchQuantityContainer" class="d-none input-group input-group-sm" style="max-width: 200px;">
+                  <span class="input-group-text">Unidades</span>
+                  <input type="number" id="batchQuantity" class="form-control" min="2" value="2">
+                </div>
+              </div>
+            </div>
+
             <!-- Filamento / AMS Multi-color (Drag & Drop) -->
             <div class="pt-3 border-top mt-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -236,6 +249,9 @@
               <span class="text-muted small fw-semibold text-uppercase">Costo Total de Producción (Base)</span>
               <span class="display-6 fw-bold text-dark my-1" id="statTotalCost">$0 COP</span>
               <small class="text-muted">Insumos + energía + desgaste + contingencia</small>
+              <div id="unitCostContainer" class="mt-2 pt-2 border-top d-none">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-bold" id="statUnitCost">Costo Unitario: $0 COP</span>
+              </div>
             </div>
 
             <!-- Precios Sugeridos por Nivel -->

@@ -11,6 +11,8 @@ export class Results {
       statExtrasCost: document.getElementById('statExtrasCost'),
       statFailureCost: document.getElementById('statFailureCost'),
       statTotalCost: document.getElementById('statTotalCost'),
+      unitCostContainer: document.getElementById('unitCostContainer'),
+      statUnitCost: document.getElementById('statUnitCost'),
       breakdownBar: document.getElementById('breakdownBar'),
       breakdownLegend: document.getElementById('breakdownLegend'),
       tiersContainer: document.getElementById('tiersContainer'),
@@ -26,6 +28,13 @@ export class Results {
     if (this.el.statExtrasCost) this.el.statExtrasCost.textContent = Engine.formatMoney(report.extras.totalExtrasCost);
     if (this.el.statFailureCost) this.el.statFailureCost.textContent = Engine.formatMoney(report.failureBufferCost);
     if (this.el.statTotalCost) this.el.statTotalCost.textContent = Engine.formatMoney(report.totalProductionCost);
+
+    if (this.app.currentJob.isBatch && this.app.currentJob.batchQuantity > 1) {
+      if (this.el.unitCostContainer) this.el.unitCostContainer.classList.remove('d-none');
+      if (this.el.statUnitCost) this.el.statUnitCost.textContent = `Costo Unitario: ${Engine.formatMoney(report.totalProductionCost / this.app.currentJob.batchQuantity)}`;
+    } else {
+      if (this.el.unitCostContainer) this.el.unitCostContainer.classList.add('d-none');
+    }
 
     if (this.el.breakdownBar) {
       this.el.breakdownBar.innerHTML = report.costBreakdown.map(item => `

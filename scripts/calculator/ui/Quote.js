@@ -29,6 +29,12 @@ export class Quote {
     const clientGreeting = this.app.currentJob.clientName ? `Hola ${this.app.currentJob.clientName}! ` : '';
     const printTimeStr = `${this.app.currentJob.hours}h ${this.app.currentJob.minutes}m`;
 
+    let unitPriceText = '';
+    if (this.app.currentJob.isBatch && this.app.currentJob.batchQuantity > 1) {
+      const unitPrice = selectedTier.price / this.app.currentJob.batchQuantity;
+      unitPriceText = `\n_(${Engine.formatMoney(unitPrice)} por unidad)_`;
+    }
+
     const quoteText = 
 `🖨️ *COTIZACIÓN DE IMPRESIÓN 3D*
 ${clientGreeting}Detalles estimados para tu pedido:
@@ -42,7 +48,7 @@ ${materialsText}
 ${extrasText}
 
 ━━━━━━━━━━━━━━━━━━━━
-💰 *PRECIO FINAL:* ${Engine.formatMoney(selectedTier.price)}
+💰 *PRECIO FINAL:* ${Engine.formatMoney(selectedTier.price)}${unitPriceText}
 ━━━━━━━━━━━━━━━━━━━━
 ✅ *Incluye:* Calibración de alta resolución, acabados y post-procesado básico.
 🚀 *Tiempo de entrega:* 24 a 48 horas tras confirmación.
