@@ -19,6 +19,7 @@ export class Settings {
       materialsTableBody: document.getElementById('materialsTableBody'),
       btnAddCatalogMaterial: document.getElementById('btnAddCatalogMaterial'),
       btnSyncApiMaterials: document.getElementById('btnSyncApiMaterials'),
+      btnClearMaterials: document.getElementById('btnClearMaterials'),
       btnQuickAddMaterial: document.getElementById('btnQuickAddMaterial'),
       extrasTableBody: document.getElementById('extrasTableBody'),
       btnAddCatalogExtra: document.getElementById('btnAddCatalogExtra')
@@ -35,6 +36,7 @@ export class Settings {
     this.el.importFileInput?.addEventListener('change', (e) => this.handleImportBackup(e));
     this.el.btnAddCatalogMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
     this.el.btnSyncApiMaterials?.addEventListener('click', () => this.handleSyncApiMaterials());
+    this.el.btnClearMaterials?.addEventListener('click', () => this.handleClearMaterials());
     this.el.btnQuickAddMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
     this.el.btnAddCatalogExtra?.addEventListener('click', () => this.handleAddNewCatalogExtra());
   }
@@ -322,6 +324,31 @@ export class Settings {
     this.app.showToast(`Extra añadido`, 'success');
   }
 
+  handleClearMaterials() {
+    const btn = this.el.btnClearMaterials;
+    if (btn && !btn.classList.contains('confirming')) {
+      const originalText = btn.innerHTML;
+      btn.classList.add('confirming', 'btn-danger', 'text-white');
+      btn.classList.remove('btn-outline-danger');
+      btn.innerHTML = '¿Seguro?';
+      setTimeout(() => {
+        btn.classList.remove('confirming', 'btn-danger', 'text-white');
+        btn.classList.add('btn-outline-danger');
+        btn.innerHTML = originalText;
+      }, 3000);
+      return;
+    }
+
+    this.app.config.materials = [];
+    Storage.saveConfig(this.app.config);
+    this.renderCatalogTables();
+    this.app.filaments.renderPalette();
+    this.app.filaments.renderMaterialSlots();
+    this.app.recalculate();
+    this.app.showToast('Catálogo de filamentos borrado', 'info');
+    if (btn) btn.innerHTML = '<i class="bi bi-trash"></i> Limpiar';
+  }
+
   async handleSyncApiMaterials() {
     const btn = this.el.btnSyncApiMaterials;
     if (btn) {
@@ -352,13 +379,18 @@ export class Settings {
           return colors[c] || ('#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'));
         };
 
-        const newMaterials = data.map((item, index) => {
+        const availableData = data.filter(item => {
+          const estado = (item.Estado || '').toLowerCase().trim();
+          return estado !== 'agotado';
+        });
+
+        const newMaterials = availableData.map((item, index) => {
           return {
             id: 'api_mat_' + Date.now() + '_' + index,
             name: `${item.Marca || ''} ${item.Tipo || ''} ${item.Color || ''}`.trim() || 'Filamento API',
             pricePerKg: Number(item.Valor) || 60000,
             color: item.CodigoColor ? item.CodigoColor : getColorHex(item.Color || ''),
-            note: `Cant: ${item.Cantidad || 0} | ${item.Peso || '1000g'}`
+            note: `${item.Estado || 'Disponible'} | Cant: ${item.Cantidad || 0} | ${item.Peso || '1000g'}`
           };
         });
 
