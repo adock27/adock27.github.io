@@ -25,49 +25,73 @@ export class Filaments {
       return;
     }
 
+    // Agrupar por Marca (o primera palabra del nombre si no hay marca explícita)
+    const grouped = {};
     available.forEach(mat => {
-      const chip = document.createElement('div');
-      chip.className = 'filament-chip d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-white';
-      chip.draggable = true;
-      chip.style.cursor = 'pointer';
-      chip.dataset.materialId = mat.id;
-      chip.title = `Arrastra "${mat.name}" al panel AMS`;
+      const brand = mat.brand || mat.name.split(' ')[0] || 'Otros';
+      if (!grouped[brand]) grouped[brand] = [];
+      grouped[brand].push(mat);
+    });
 
-      chip.innerHTML = `
-        <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
-        <div style="min-width:0;flex:1;">
-          <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
-          <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
-        </div>
-        <i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>
-      `;
+    Object.keys(grouped).sort().forEach(brand => {
+      // Crear cabecera del grupo (Marca)
+      const header = document.createElement('div');
+      header.className = 'text-muted fw-bold mt-2 mb-1 px-1';
+      header.style.fontSize = '10px';
+      header.style.textTransform = 'uppercase';
+      header.style.letterSpacing = '0.5px';
+      header.style.position = 'sticky';
+      header.style.top = '0';
+      header.style.backgroundColor = '#fff';
+      header.style.zIndex = '1';
+      header.innerText = brand;
+      this.filamentPalette.appendChild(header);
 
-      chip.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('materialId', mat.id);
-        e.dataTransfer.effectAllowed = 'move';
-        chip.classList.add('dragging');
+      // Renderizar los chips de esa marca
+      grouped[brand].forEach(mat => {
+        const chip = document.createElement('div');
+        chip.className = 'filament-chip d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-white';
+        chip.draggable = true;
+        chip.style.cursor = 'pointer';
+        chip.dataset.materialId = mat.id;
+        chip.title = `Arrastra "${mat.name}" al panel AMS`;
+
+        chip.innerHTML = `
+          <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
+          <div style="min-width:0;flex:1;">
+            <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
+            <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
+          </div>
+          <i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>
+        `;
+
+        chip.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('materialId', mat.id);
+          e.dataTransfer.effectAllowed = 'move';
+          chip.classList.add('dragging');
+        });
+
+        chip.addEventListener('dragend', () => {
+          chip.classList.remove('dragging');
+        });
+
+        chip.addEventListener('click', () => {
+          const matExists = this.app.config.materials.find(m => m.id === mat.id);
+          const alreadyUsed = this.app.currentJob.materialSlots.some(s => s.materialId === mat.id);
+          if (mat.id && matExists && !alreadyUsed) {
+            this.app.currentJob.materialSlots.push({
+              id: 'slot_' + Date.now(),
+              materialId: mat.id,
+              grams: 20
+            });
+            this.renderPalette();
+            this.renderMaterialSlots();
+            this.app.recalculate();
+          }
+        });
+
+        this.filamentPalette.appendChild(chip);
       });
-
-      chip.addEventListener('dragend', () => {
-        chip.classList.remove('dragging');
-      });
-
-      chip.addEventListener('click', () => {
-        const matExists = this.app.config.materials.find(m => m.id === mat.id);
-        const alreadyUsed = this.app.currentJob.materialSlots.some(s => s.materialId === mat.id);
-        if (mat.id && matExists && !alreadyUsed) {
-          this.app.currentJob.materialSlots.push({
-            id: 'slot_' + Date.now(),
-            materialId: mat.id,
-            grams: 20
-          });
-          this.renderPalette();
-          this.renderMaterialSlots();
-          this.app.recalculate();
-        }
-      });
-
-      this.filamentPalette.appendChild(chip);
     });
   }
 
