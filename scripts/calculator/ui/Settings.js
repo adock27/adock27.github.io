@@ -357,8 +357,8 @@ export class Settings {
             id: 'api_mat_' + Date.now() + '_' + index,
             name: `${item.Marca || ''} ${item.Tipo || ''} ${item.Color || ''}`.trim() || 'Filamento API',
             pricePerKg: Number(item.Valor) || 60000,
-            color: getColorHex(item.Color || ''),
-            note: `Cant: ${item.Cantidad || 0}`
+            color: item.CodigoColor ? item.CodigoColor : getColorHex(item.Color || ''),
+            note: `Cant: ${item.Cantidad || 0} | ${item.Peso || '1000g'}`
           };
         });
 
