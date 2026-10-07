@@ -18,6 +18,7 @@ export class Settings {
       importFileInput: document.getElementById('importFileInput'),
       materialsTableBody: document.getElementById('materialsTableBody'),
       btnAddCatalogMaterial: document.getElementById('btnAddCatalogMaterial'),
+      btnSyncApiMaterials: document.getElementById('btnSyncApiMaterials'),
       btnQuickAddMaterial: document.getElementById('btnQuickAddMaterial'),
       extrasTableBody: document.getElementById('extrasTableBody'),
       btnAddCatalogExtra: document.getElementById('btnAddCatalogExtra')
@@ -33,6 +34,7 @@ export class Settings {
     this.el.btnImportBackup?.addEventListener('click', () => this.el.importFileInput?.click());
     this.el.importFileInput?.addEventListener('change', (e) => this.handleImportBackup(e));
     this.el.btnAddCatalogMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
+    this.el.btnSyncApiMaterials?.addEventListener('click', () => this.handleSyncApiMaterials());
     this.el.btnQuickAddMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
     this.el.btnAddCatalogExtra?.addEventListener('click', () => this.handleAddNewCatalogExtra());
   }
@@ -318,6 +320,77 @@ export class Settings {
     this.app.extras.render();
     this.app.recalculate();
     this.app.showToast(`Extra añadido`, 'success');
+  }
+
+  async handleSyncApiMaterials() {
+    const btn = this.el.btnSyncApiMaterials;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Syncing...';
+    }
+
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ6CTe2fjdl1dDyoUfCtnBUngv5a069JAldSfGakdRdsa5/exec');
+      if (!response.ok) throw new Error('Error de red al conectar con la API');
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        // Función auxiliar para mapear el nombre a un color HEX
+        const getColorHex = (colorName) => {
+          const colors = {
+            'blanco': '#ffffff',
+            'negro': '#000000',
+            'amarillo': '#fbbf24',
+            'rojo': '#ef4444',
+            'azul': '#3b82f6',
+            'verde': '#22c55e',
+            'naranja': '#f97316',
+            'gris': '#6b7280',
+            'transparente': '#e5e7eb'
+          };
+          const c = colorName.toLowerCase().trim();
+          return colors[c] || ('#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'));
+        };
+
+        const newMaterials = data.map((item, index) => {
+          return {
+            id: 'api_mat_' + Date.now() + '_' + index,
+            name: `${item.Marca || ''} ${item.Tipo || ''} ${item.Color || ''}`.trim() || 'Filamento API',
+            pricePerKg: Number(item.Valor) || 60000,
+            color: getColorHex(item.Color || ''),
+            note: `Cant: ${item.Cantidad || 0}`
+          };
+        });
+
+        // Opcional: Reemplazar o combinar. Vamos a combinar, pero evitando duplicados exactos por nombre.
+        const existingNames = new Set(this.app.config.materials.map(m => m.name.toLowerCase()));
+        let addedCount = 0;
+        
+        newMaterials.forEach(m => {
+          if (!existingNames.has(m.name.toLowerCase())) {
+            this.app.config.materials.push(m);
+            addedCount++;
+          }
+        });
+
+        Storage.saveConfig(this.app.config);
+        this.renderCatalogTables();
+        this.app.filaments.renderPalette();
+        this.app.filaments.renderMaterialSlots();
+        this.app.recalculate();
+        this.app.showToast(`Sincronización exitosa: ${addedCount} añadidos`, 'success');
+      } else {
+        throw new Error('Formato de datos no válido');
+      }
+    } catch (err) {
+      console.error(err);
+      this.app.showToast('Error al sincronizar con la API', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-download"></i> Sync';
+      }
+    }
   }
 
   handleSaveMachineConfig() {

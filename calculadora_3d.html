@@ -147,7 +147,7 @@
                   <i class="bi bi-palette-fill text-success"></i> Filamento y Ranuras AMS
                 </span>
                 <span class="badge bg-success-subtle text-success border border-success-subtle small">
-                  <i class="bi bi-hand-index"></i> Arrastra al panel derecho
+                  <i class="bi bi-hand-index"></i> Toca o arrastra para añadir
                 </span>
               </div>
               <div class="row g-2">
@@ -395,14 +395,19 @@ Generando cotización...
         <div class="col-lg-6">
           <!-- Catálogo Filamentos -->
           <div class="card border-0 shadow-sm p-4 bg-white mb-4">
-            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 mb-3 border-bottom">
               <div>
                 <h5 class="fw-bold mb-0 text-dark">🧵 Catálogo de Filamentos</h5>
                 <small class="text-muted">Edita precios por kg o añade nuevos materiales</small>
               </div>
-              <button type="button" id="btnAddCatalogMaterial" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                <i class="bi bi-plus-lg"></i> Añadir
-              </button>
+              <div class="d-flex gap-2 align-self-start align-self-md-auto">
+                <button type="button" id="btnSyncApiMaterials" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" title="Sincronizar con API">
+                  <i class="bi bi-cloud-download"></i> Sync API
+                </button>
+                <button type="button" id="btnAddCatalogMaterial" class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm">
+                  <i class="bi bi-plus-lg"></i> Añadir
+                </button>
+              </div>
             </div>
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
@@ -422,12 +427,12 @@ Generando cotización...
 
           <!-- Catálogo Extras -->
           <div class="card border-0 shadow-sm p-4 bg-white">
-            <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 mb-3 border-bottom">
               <div>
                 <h5 class="fw-bold mb-0 text-dark">🔩 Catálogo de Extras y Herrajes</h5>
                 <small class="text-muted">Insumos complementarios para tus piezas</small>
               </div>
-              <button type="button" id="btnAddCatalogExtra" class="btn btn-sm btn-outline-success rounded-pill px-3">
+              <button type="button" id="btnAddCatalogExtra" class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm align-self-start align-self-md-auto">
                 <i class="bi bi-plus-lg"></i> Añadir
               </button>
             </div>

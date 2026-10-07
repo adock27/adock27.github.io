@@ -29,6 +29,7 @@ export class Filaments {
       const chip = document.createElement('div');
       chip.className = 'filament-chip d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-white';
       chip.draggable = true;
+      chip.style.cursor = 'pointer';
       chip.dataset.materialId = mat.id;
       chip.title = `Arrastra "${mat.name}" al panel AMS`;
 
@@ -51,6 +52,21 @@ export class Filaments {
         chip.classList.remove('dragging');
       });
 
+      chip.addEventListener('click', () => {
+        const matExists = this.app.config.materials.find(m => m.id === mat.id);
+        const alreadyUsed = this.app.currentJob.materialSlots.some(s => s.materialId === mat.id);
+        if (mat.id && matExists && !alreadyUsed) {
+          this.app.currentJob.materialSlots.push({
+            id: 'slot_' + Date.now(),
+            materialId: mat.id,
+            grams: 20
+          });
+          this.renderPalette();
+          this.renderMaterialSlots();
+          this.app.recalculate();
+        }
+      });
+
       this.filamentPalette.appendChild(chip);
     });
   }
@@ -64,7 +80,7 @@ export class Filaments {
       zone.innerHTML = `
         <div class="text-center py-3 text-muted" style="pointer-events:none;">
           <i class="bi bi-box-arrow-in-right" style="font-size:22px;display:block;margin-bottom:4px;opacity:0.4;"></i>
-          <span style="font-size:12px;">Arrastra un filamento aquí</span>
+          <span style="font-size:12px;">Toca o arrastra un filamento aquí</span>
         </div>
       `;
     } else {
