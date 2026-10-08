@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora de Precios 3D — Bambu Lab P1S + AMS</title>
-  <meta name="description" content="Calculadora profesional de costos y precios de impresión 3D optimizada para Bambu Lab P1S y AMS en pesos colombianos (COP).">
+  <meta name="description" content="Calculadora profesional de costos y precios de impresión 3D para Bambu Lab P1S y AMS, con moneda configurable.">
 
   <!-- Bootstrap 5 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -46,6 +46,10 @@
   </nav>
 
   <div class="container py-4">
+    <div id="setupReminder" class="alert alert-info d-none justify-content-between align-items-center gap-3" role="status">
+      <span><i class="bi bi-info-circle me-1"></i> Completa tu configuración inicial para adaptar los costos a tu moneda y tarifas.</span>
+      <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" id="btnOpenSetup">Configurar</button>
+    </div>
     <!-- Presets Rápidos -->
     <div class="mb-4">
       <div class="d-flex align-items-center justify-content-between mb-2">
@@ -193,11 +197,25 @@
 
             <!-- Insumos & Extras -->
             <div class="pt-3 border-top mt-3">
-              <span class="small fw-bold text-secondary text-uppercase d-block mb-2">
-                <i class="bi bi-tools text-primary"></i> Insumos, Herrajes y Extras
-              </span>
-              <div id="extrasContainer">
-                <!-- Renderizado dinámico -->
+              <div class="accordion accordion-flush" id="extrasAccordion">
+                <div class="accordion-item border rounded-3 overflow-hidden">
+                  <h2 class="accordion-header" id="extrasAccordionHeading">
+                    <button class="accordion-button collapsed py-3 px-3 bg-light shadow-none" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#extrasAccordionContent"
+                      aria-expanded="false" aria-controls="extrasAccordionContent">
+                      <span class="small fw-bold text-secondary text-uppercase">
+                        <i class="bi bi-tools text-primary me-1"></i> Insumos, Herrajes y Extras
+                      </span>
+                    </button>
+                  </h2>
+                  <div id="extrasAccordionContent" class="accordion-collapse collapse" aria-labelledby="extrasAccordionHeading">
+                    <div class="accordion-body p-3">
+                      <div id="extrasContainer">
+                        <!-- Renderizado dinámico -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -270,10 +288,10 @@
             <!-- Costo Base Destacado -->
             <div class="card border-0 bg-light p-3 rounded-3 mb-3 text-center border">
               <span class="text-muted small fw-semibold text-uppercase">Costo Total de Producción (Base)</span>
-              <span class="display-6 fw-bold text-dark my-1" id="statTotalCost">$0 COP</span>
+              <span class="display-6 fw-bold text-dark my-1" id="statTotalCost">COP 0</span>
               <small class="text-muted">Insumos + energía + desgaste + contingencia</small>
               <div id="unitCostContainer" class="mt-2 pt-2 border-top d-none">
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-bold" id="statUnitCost">Costo Unitario: $0 COP</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-bold" id="statUnitCost">Costo Unitario: COP 0</span>
               </div>
             </div>
 
@@ -337,12 +355,29 @@ Generando cotización...
           <div class="card border-0 shadow-sm p-4 bg-white mb-4">
             <div class="pb-3 mb-3 border-bottom">
               <h5 class="fw-bold mb-0 text-dark">⚙️ Parámetros de Costo de Máquina</h5>
-              <small class="text-muted">Ajusta según tus tarifas locales en Colombia (COP)</small>
+              <small class="text-muted">Configura tus tarifas locales. Estos valores se guardan en este navegador.</small>
+            </div>
+
+            <div class="mb-3">
+              <label for="cfgCurrency" class="form-label small fw-semibold text-secondary">Moneda de trabajo</label>
+              <select id="cfgCurrency" class="form-select">
+                <option value="COP">COP — Peso colombiano</option>
+                <option value="USD">USD — Dólar estadounidense</option>
+                <option value="MXN">MXN — Peso mexicano</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="PEN">PEN — Sol peruano</option>
+                <option value="CLP">CLP — Peso chileno</option>
+                <option value="ARS">ARS — Peso argentino</option>
+                <option value="BRL">BRL — Real brasileño</option>
+                <option value="CAD">CAD — Dólar canadiense</option>
+                <option value="GBP">GBP — Libra esterlina</option>
+              </select>
+              <div class="form-text">Cambiar la moneda no convierte los importes. Revisa electricidad, materiales, extras y tarifas.</div>
             </div>
 
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label for="cfgElectricity" class="form-label small fw-semibold text-secondary">Electricidad (COP / kWh)</label>
+                <label for="cfgElectricity" class="form-label small fw-semibold text-secondary">Electricidad (<span class="currency-code">COP</span> / kWh)</label>
                 <input type="number" id="cfgElectricity" class="form-control" step="0.1">
               </div>
               <div class="col-6">
@@ -353,11 +388,11 @@ Generando cotización...
 
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label for="cfgWearRate" class="form-label small fw-semibold text-secondary">Desgaste máquina (COP / h)</label>
+                <label for="cfgWearRate" class="form-label small fw-semibold text-secondary">Desgaste máquina (<span class="currency-code">COP</span> / h)</label>
                 <input type="number" id="cfgWearRate" class="form-control" step="100">
               </div>
               <div class="col-6">
-                <label for="cfgLaborRate" class="form-label small fw-semibold text-secondary">Mano de obra (COP / h)</label>
+                <label for="cfgLaborRate" class="form-label small fw-semibold text-secondary">Mano de obra (<span class="currency-code">COP</span> / h)</label>
                 <input type="number" id="cfgLaborRate" class="form-control" step="1000">
               </div>
             </div>
@@ -376,10 +411,10 @@ Generando cotización...
             <div class="mb-4">
               <label for="cfgRoundingStep" class="form-label small fw-semibold text-secondary">Redondeo de Precio</label>
               <select id="cfgRoundingStep" class="form-select">
-                <option value="50">Redondear a la centena más cercana ($50)</option>
-                <option value="100" selected>Redondear a los $100 COP más cercanos</option>
-                <option value="500">Redondear a los $500 COP más cercanos</option>
-                <option value="1000">Redondear a los $1.000 COP más cercanos</option>
+                <option value="50">Redondear a múltiplos de 50</option>
+                <option value="100" selected>Redondear a múltiplos de 100</option>
+                <option value="500">Redondear a múltiplos de 500</option>
+                <option value="1000">Redondear a múltiplos de 1.000</option>
               </select>
             </div>
 
@@ -437,7 +472,7 @@ Generando cotización...
                 <thead class="table-light">
                   <tr class="small text-secondary">
                     <th>Material</th>
-                    <th>COP / kg</th>
+                    <th><span id="materialCurrencyHeader">COP</span> / kg</th>
                     <th class="text-end">Acción</th>
                   </tr>
                 </thead>
@@ -474,6 +509,47 @@ Generando cotización...
               </table>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="initialSetupModal" tabindex="-1" aria-labelledby="initialSetupTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title fw-bold" id="initialSetupTitle"><i class="bi bi-sliders text-success me-2"></i>Configura tu calculadora</h5>
+            <p class="small text-muted mb-0">Estos ajustes se hacen una vez y quedan guardados en este navegador.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-light border small"><strong>¿Qué necesitas?</strong> Tu tarifa eléctrica, consumo de la impresora, costo de uso de máquina y valor de tu tiempo. Puedes cambiarlo después en Configuración.</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="setupCurrency" class="form-label small fw-semibold">Moneda</label>
+              <select id="setupCurrency" class="form-select">
+                <option value="COP">COP — Peso colombiano</option><option value="USD">USD — Dólar estadounidense</option>
+                <option value="MXN">MXN — Peso mexicano</option><option value="EUR">EUR — Euro</option>
+                <option value="PEN">PEN — Sol peruano</option><option value="CLP">CLP — Peso chileno</option>
+                <option value="ARS">ARS — Peso argentino</option><option value="BRL">BRL — Real brasileño</option>
+                <option value="CAD">CAD — Dólar canadiense</option><option value="GBP">GBP — Libra esterlina</option>
+              </select>
+            </div>
+            <div class="col-md-6"><label for="setupElectricity" class="form-label small fw-semibold">Electricidad por kWh (<span class="setupCurrencyCode">COP</span>)</label><input id="setupElectricity" type="number" min="0" step="any" class="form-control"></div>
+            <div class="col-md-6"><label for="setupPower" class="form-label small fw-semibold">Consumo promedio de impresora (kW)</label><input id="setupPower" type="number" min="0" step="0.01" class="form-control"></div>
+            <div class="col-md-6"><label for="setupWear" class="form-label small fw-semibold">Desgaste de máquina por hora (<span class="setupCurrencyCode">COP</span>)</label><input id="setupWear" type="number" min="0" step="any" class="form-control"></div>
+            <div class="col-md-6"><label for="setupLabor" class="form-label small fw-semibold">Valor de tu trabajo por hora (<span class="setupCurrencyCode">COP</span>)</label><input id="setupLabor" type="number" min="0" step="any" class="form-control"></div>
+            <div class="col-md-6"><label for="setupFailure" class="form-label small fw-semibold">Margen para fallos (%)</label><input id="setupFailure" type="number" min="0" max="100" step="any" class="form-control"></div>
+            <div class="col-md-6"><label for="setupPurge" class="form-label small fw-semibold">Merma de purga AMS (%)</label><input id="setupPurge" type="number" min="0" max="100" step="any" class="form-control"></div>
+            <div class="col-md-6"><label for="setupRounding" class="form-label small fw-semibold">Redondear precios a múltiplos de (<span class="setupCurrencyCode">COP</span>)</label><input id="setupRounding" type="number" min="0" step="any" class="form-control"></div>
+          </div>
+          <div class="form-text mt-3">Los valores iniciales son ejemplos en COP. Cambiar moneda no convierte precios: revisa también tus filamentos y extras en los catálogos.</div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">Lo haré después</button>
+          <button type="button" class="btn btn-success rounded-pill px-4" id="btnSaveInitialSetup"><i class="bi bi-check2 me-1"></i>Guardar y empezar</button>
         </div>
       </div>
     </div>

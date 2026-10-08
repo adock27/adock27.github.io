@@ -4,6 +4,7 @@ export class Settings {
   constructor(app) {
     this.app = app;
     this.el = {
+      cfgCurrency: document.getElementById('cfgCurrency'),
       cfgElectricity: document.getElementById('cfgElectricity'),
       cfgPowerKw: document.getElementById('cfgPowerKw'),
       cfgWearRate: document.getElementById('cfgWearRate'),
@@ -29,6 +30,7 @@ export class Settings {
   }
 
   init() {
+    this.el.cfgCurrency?.addEventListener('change', () => this.renderCurrencyLabels(this.el.cfgCurrency.value));
     this.el.btnSaveConfig?.addEventListener('click', () => this.handleSaveMachineConfig());
     this.el.btnResetConfig?.addEventListener('click', () => this.handleResetConfig());
     this.el.btnExportBackup?.addEventListener('click', () => this.handleExportBackup());
@@ -42,6 +44,8 @@ export class Settings {
   }
 
   render() {
+    if (this.el.cfgCurrency) this.el.cfgCurrency.value = this.app.config.currency || 'COP';
+    this.renderCurrencyLabels(this.app.config.currency || 'COP');
     if (this.el.cfgElectricity) this.el.cfgElectricity.value = this.app.config.electricityRate;
     if (this.el.cfgPowerKw) this.el.cfgPowerKw.value = this.app.config.powerKw;
     if (this.el.cfgWearRate) this.el.cfgWearRate.value = this.app.config.wearRatePerHour;
@@ -51,6 +55,12 @@ export class Settings {
     if (this.el.cfgRoundingStep) this.el.cfgRoundingStep.value = this.app.config.roundingStep;
 
     this.renderCatalogTables();
+  }
+
+  renderCurrencyLabels(currency) {
+    document.querySelectorAll('.currency-code').forEach(el => { el.textContent = currency; });
+    const materialCurrencyHeader = document.getElementById('materialCurrencyHeader');
+    if (materialCurrencyHeader) materialCurrencyHeader.textContent = currency;
   }
 
   renderCatalogTables() {
@@ -275,7 +285,7 @@ export class Settings {
           <input type="text" id="newMatName" class="form-control" autofocus>
         </div>
         <div class="mb-3">
-          <label class="form-label small fw-semibold text-secondary">Precio por kg (COP) *</label>
+          <label class="form-label small fw-semibold text-secondary">Precio por kg (${this.app.config.currency || 'COP'}) *</label>
           <input type="number" id="newMatPrice" class="form-control" value="60000">
         </div>
         <div class="mb-4 d-flex align-items-center gap-3">
@@ -315,7 +325,7 @@ export class Settings {
     const name = prompt('Nombre del extra:');
     if (!name || !name.trim()) return;
 
-    const cost = Number(prompt('Costo unitario en COP:', '500')) || 500;
+    const cost = Number(prompt(`Costo unitario en ${this.app.config.currency || 'COP'}:`, '500')) || 500;
     this.app.config.extrasCatalog.push({ id: 'extra_' + Date.now(), name: name.trim(), defaultCost: cost, category: 'General' });
     Storage.saveConfig(this.app.config);
     this.renderCatalogTables();
@@ -426,6 +436,17 @@ export class Settings {
   }
 
   handleSaveMachineConfig() {
+    const previousCurrency = this.app.config.currency || 'COP';
+    const selectedCurrency = this.el.cfgCurrency?.value || 'COP';
+    if (selectedCurrency !== previousCurrency) {
+      const confirmChange = window.confirm(`Cambiar de ${previousCurrency} a ${selectedCurrency} no convierte tus importes. Revisa los precios de filamentos, extras y tarifas locales. ¿Continuar?`);
+      if (!confirmChange) {
+        if (this.el.cfgCurrency) this.el.cfgCurrency.value = previousCurrency;
+        this.renderCurrencyLabels(previousCurrency);
+        return;
+      }
+    }
+    this.app.config.currency = selectedCurrency;
     this.app.config.electricityRate = Number(this.el.cfgElectricity?.value) || DEFAULT_CONFIG.electricityRate;
     this.app.config.powerKw = Number(this.el.cfgPowerKw?.value) || DEFAULT_CONFIG.powerKw;
     this.app.config.wearRatePerHour = Number(this.el.cfgWearRate?.value) || DEFAULT_CONFIG.wearRatePerHour;
@@ -434,7 +455,11 @@ export class Settings {
     this.app.config.laborRatePerHour = Number(this.el.cfgLaborRate?.value) || DEFAULT_CONFIG.laborRatePerHour;
     this.app.config.roundingStep = Number(this.el.cfgRoundingStep?.value) || DEFAULT_CONFIG.roundingStep;
 
+    this.renderCurrencyLabels(this.app.config.currency);
     Storage.saveConfig(this.app.config);
+    this.renderCatalogTables();
+    this.app.filaments.renderPalette();
+    this.app.extras.render();
     this.app.recalculate();
     this.app.showToast('Configuración guardada', 'success');
   }
@@ -453,11 +478,16 @@ export class Settings {
     }
 
     this.app.config = Storage.resetConfig();
+    this.app.config.initialSetupCompleted = false;
+    this.app.config.initialSetupDismissed = false;
     this.render();
     this.app.filaments.renderPalette();
     this.app.filaments.renderMaterialSlots();
     this.app.extras.render();
     this.app.recalculate();
+    document.getElementById('setupReminder')?.classList.remove('d-none');
+    document.getElementById('setupReminder')?.classList.add('d-flex');
+    document.getElementById('btnOpenSetup')?.click();
     this.app.showToast('Restablecido a fábrica', 'info');
     if (btn) btn.innerHTML = 'Valores de Fábrica';
   }

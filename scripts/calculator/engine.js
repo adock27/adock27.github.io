@@ -6,14 +6,23 @@
 
 export const Engine = {
   /**
-   * Formatea un número como moneda colombiana (COP) o formato estándar.
+   * Formatea un valor usando la moneda configurada.
    * @param {number} amount
    * @param {string} currency
    * @returns {string}
    */
   formatMoney(amount, currency = 'COP') {
-    const rounded = Math.round(amount || 0);
-    return `$${rounded.toLocaleString('es-CO')} ${currency}`;
+    const locales = {
+      COP: 'es-CO', USD: 'es-US', MXN: 'es-MX', EUR: 'es-ES', PEN: 'es-PE',
+      CLP: 'es-CL', ARS: 'es-AR', BRL: 'pt-BR', CAD: 'en-CA', GBP: 'en-GB'
+    };
+    try {
+      return new Intl.NumberFormat(locales[currency] || 'es', {
+        style: 'currency', currency, currencyDisplay: 'code', maximumFractionDigits: 2
+      }).format(Number(amount) || 0);
+    } catch {
+      return `${(Number(amount) || 0).toLocaleString('es')} ${currency}`;
+    }
   },
 
   /**

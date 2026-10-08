@@ -72,7 +72,7 @@ export class Filaments {
             <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
             <div style="min-width:0;flex:1;">
               <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
-              <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
+              <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg, this.app.config.currency)}/kg</div>
             </div>
             ${iconHtml}
           `;

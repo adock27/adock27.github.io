@@ -32,7 +32,7 @@ export class Quote {
     let unitPriceText = '';
     if (this.app.currentJob.isBatch && this.app.currentJob.batchQuantity > 1) {
       const unitPrice = selectedTier.price / this.app.currentJob.batchQuantity;
-      unitPriceText = `\n_(${Engine.formatMoney(unitPrice)} por unidad)_`;
+      unitPriceText = `\n_(${Engine.formatMoney(unitPrice, this.app.config.currency)} por unidad)_`;
     }
 
     const quoteText = 
@@ -48,7 +48,7 @@ ${materialsText}
 ${extrasText}
 
 ━━━━━━━━━━━━━━━━━━━━
-💰 *PRECIO FINAL:* ${Engine.formatMoney(selectedTier.price)}${unitPriceText}
+💰 *PRECIO FINAL:* ${Engine.formatMoney(selectedTier.price, this.app.config.currency)}${unitPriceText}
 ━━━━━━━━━━━━━━━━━━━━
 ✅ *Incluye:* Calibración de alta resolución, acabados y post-procesado básico.
 🚀 *Tiempo de entrega:* 24 a 48 horas tras confirmación.

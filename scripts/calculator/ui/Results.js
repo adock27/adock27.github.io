@@ -21,24 +21,25 @@ export class Results {
   }
 
   render(report) {
-    if (this.el.statFilamentCost) this.el.statFilamentCost.textContent = Engine.formatMoney(report.filament.totalFilamentCost);
-    if (this.el.statEnergyCost) this.el.statEnergyCost.textContent = Engine.formatMoney(report.energy.energyCost);
-    if (this.el.statMachineCost) this.el.statMachineCost.textContent = Engine.formatMoney(report.machineWearCost);
-    if (this.el.statLaborCost) this.el.statLaborCost.textContent = Engine.formatMoney(report.laborCost);
-    if (this.el.statExtrasCost) this.el.statExtrasCost.textContent = Engine.formatMoney(report.extras.totalExtrasCost);
-    if (this.el.statFailureCost) this.el.statFailureCost.textContent = Engine.formatMoney(report.failureBufferCost);
-    if (this.el.statTotalCost) this.el.statTotalCost.textContent = Engine.formatMoney(report.totalProductionCost);
+    const currency = this.app.config.currency || 'COP';
+    if (this.el.statFilamentCost) this.el.statFilamentCost.textContent = Engine.formatMoney(report.filament.totalFilamentCost, currency);
+    if (this.el.statEnergyCost) this.el.statEnergyCost.textContent = Engine.formatMoney(report.energy.energyCost, currency);
+    if (this.el.statMachineCost) this.el.statMachineCost.textContent = Engine.formatMoney(report.machineWearCost, currency);
+    if (this.el.statLaborCost) this.el.statLaborCost.textContent = Engine.formatMoney(report.laborCost, currency);
+    if (this.el.statExtrasCost) this.el.statExtrasCost.textContent = Engine.formatMoney(report.extras.totalExtrasCost, currency);
+    if (this.el.statFailureCost) this.el.statFailureCost.textContent = Engine.formatMoney(report.failureBufferCost, currency);
+    if (this.el.statTotalCost) this.el.statTotalCost.textContent = Engine.formatMoney(report.totalProductionCost, currency);
 
     if (this.app.currentJob.isBatch && this.app.currentJob.batchQuantity > 1) {
       if (this.el.unitCostContainer) this.el.unitCostContainer.classList.remove('d-none');
-      if (this.el.statUnitCost) this.el.statUnitCost.textContent = `Costo Unitario: ${Engine.formatMoney(report.totalProductionCost / this.app.currentJob.batchQuantity)}`;
+      if (this.el.statUnitCost) this.el.statUnitCost.textContent = `Costo Unitario: ${Engine.formatMoney(report.totalProductionCost / this.app.currentJob.batchQuantity, currency)}`;
     } else {
       if (this.el.unitCostContainer) this.el.unitCostContainer.classList.add('d-none');
     }
 
     if (this.el.breakdownBar) {
       this.el.breakdownBar.innerHTML = report.costBreakdown.map(item => `
-        <div class="progress-bar" style="width: ${item.percent}%; background-color: ${item.color};" title="${item.label}: ${Engine.formatMoney(item.cost)} (${item.percent.toFixed(1)}%)"></div>
+        <div class="progress-bar" style="width: ${item.percent}%; background-color: ${item.color};" title="${item.label}: ${Engine.formatMoney(item.cost, currency)} (${item.percent.toFixed(1)}%)"></div>
       `).join('');
     }
 
@@ -61,17 +62,18 @@ export class Results {
                 ${tier.tag}
               </span>
               <div class="fw-bold text-dark mb-1">${tier.icon} ${tier.name}</div>
-              <div class="fs-4 fw-bold ${isRec ? 'text-success' : 'text-dark'}">${Engine.formatMoney(tier.price)}</div>
-              <div class="small text-muted mt-1">Ganancia: <strong class="text-dark">${Engine.formatMoney(tier.profit)}</strong></div>
+              <div class="fs-4 fw-bold ${isRec ? 'text-success' : 'text-dark'}">${Engine.formatMoney(tier.price, currency)}</div>
+              <div class="small text-muted mt-1">Ganancia: <strong class="text-dark">${Engine.formatMoney(tier.profit, currency)}</strong></div>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    if (this.el.quoteTierSelect && this.el.quoteTierSelect.children.length === 0) {
+    if (this.el.quoteTierSelect) {
+      const selectedTierId = this.el.quoteTierSelect.value || 'rec';
       this.el.quoteTierSelect.innerHTML = report.tiers.map(t => `
-        <option value="${t.id}" ${t.id === 'rec' ? 'selected' : ''}>${t.name} — ${Engine.formatMoney(t.price)}</option>
+        <option value="${t.id}" ${t.id === selectedTierId ? 'selected' : ''}>${t.name} — ${Engine.formatMoney(t.price, currency)}</option>
       `).join('');
     }
 

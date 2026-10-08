@@ -33,8 +33,8 @@ export class Extras {
           </div>
         </div>
         <div class="col-3 col-sm-4 text-end">
-          <span class="fw-bold small text-dark extra-total-label">${Engine.formatMoney(activeExtra.quantity * extra.defaultCost)}</span>
-          <div class="text-muted" style="font-size: 10px;">${Engine.formatMoney(extra.defaultCost)} c/u</div>
+          <span class="fw-bold small text-dark extra-total-label">${Engine.formatMoney(activeExtra.quantity * extra.defaultCost, this.app.config.currency)}</span>
+          <div class="text-muted" style="font-size: 10px;">${Engine.formatMoney(extra.defaultCost, this.app.config.currency)} c/u</div>
         </div>
       `;
 
@@ -61,7 +61,7 @@ export class Extras {
 
         const label = e.target.closest('.row').querySelector('.extra-total-label');
         if (label && catalogItem) {
-          label.textContent = Engine.formatMoney(qty * catalogItem.defaultCost);
+          label.textContent = Engine.formatMoney(qty * catalogItem.defaultCost, this.app.config.currency);
         }
 
         this.app.recalculate();

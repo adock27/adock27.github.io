@@ -43,6 +43,7 @@ class CalculatorApp {
     this.initUI();
     this.initEvents();
     this.recalculate();
+    this.initInitialSetup();
   }
 
   initUI() {
@@ -84,6 +85,88 @@ class CalculatorApp {
         }
       });
     }
+  }
+
+  initInitialSetup() {
+    const modalEl = document.getElementById('initialSetupModal');
+    const reminder = document.getElementById('setupReminder');
+    if (!modalEl || !window.bootstrap?.Modal) return;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const fields = {
+      currency: document.getElementById('setupCurrency'),
+      electricityRate: document.getElementById('setupElectricity'),
+      powerKw: document.getElementById('setupPower'),
+      wearRatePerHour: document.getElementById('setupWear'),
+      laborRatePerHour: document.getElementById('setupLabor'),
+      failureRatePercent: document.getElementById('setupFailure'),
+      purgeWastePercent: document.getElementById('setupPurge'),
+      roundingStep: document.getElementById('setupRounding')
+    };
+    const updateReminder = () => {
+      const completed = Boolean(this.config.initialSetupCompleted);
+      reminder?.classList.toggle('d-none', completed);
+      reminder?.classList.toggle('d-flex', !completed);
+    };
+    const fillForm = () => {
+      fields.currency.value = this.config.currency || 'COP';
+      fields.electricityRate.value = this.config.electricityRate;
+      fields.powerKw.value = this.config.powerKw;
+      fields.wearRatePerHour.value = this.config.wearRatePerHour;
+      fields.laborRatePerHour.value = this.config.laborRatePerHour;
+      fields.failureRatePercent.value = this.config.failureRatePercent;
+      fields.purgeWastePercent.value = this.config.purgeWastePercent;
+      fields.roundingStep.value = this.config.roundingStep;
+      document.querySelectorAll('.setupCurrencyCode').forEach(el => { el.textContent = fields.currency.value; });
+    };
+
+    fillForm();
+    updateReminder();
+    fields.currency.addEventListener('change', () => {
+      [fields.electricityRate, fields.wearRatePerHour, fields.laborRatePerHour, fields.roundingStep]
+        .forEach(input => { input.value = ''; });
+      document.querySelectorAll('.setupCurrencyCode').forEach(el => { el.textContent = fields.currency.value; });
+    });
+    document.getElementById('btnOpenSetup')?.addEventListener('click', () => {
+      fillForm();
+      modal.show();
+    });
+    document.getElementById('btnSaveInitialSetup')?.addEventListener('click', () => {
+      const currencyInputs = [fields.electricityRate, fields.wearRatePerHour, fields.laborRatePerHour, fields.roundingStep];
+      const missingCurrencyInput = currencyInputs.find(input => input.value.trim() === '');
+      if (missingCurrencyInput) {
+        this.showToast('Completa los importes en la moneda seleccionada para continuar.', 'error');
+        missingCurrencyInput.focus();
+        return;
+      }
+      this.config.currency = fields.currency.value;
+      this.config.electricityRate = Number(fields.electricityRate.value) || 0;
+      this.config.powerKw = Number(fields.powerKw.value) || 0;
+      this.config.wearRatePerHour = Number(fields.wearRatePerHour.value) || 0;
+      this.config.laborRatePerHour = Number(fields.laborRatePerHour.value) || 0;
+      this.config.failureRatePercent = Number(fields.failureRatePercent.value) || 0;
+      this.config.purgeWastePercent = Number(fields.purgeWastePercent.value) || 0;
+      this.config.roundingStep = Number(fields.roundingStep.value) || 0;
+      this.config.initialSetupCompleted = true;
+      this.config.initialSetupDismissed = true;
+      Storage.saveConfig(this.config);
+      this.settings.render();
+      this.filaments.renderPalette();
+      this.extras.render();
+      this.recalculate();
+      updateReminder();
+      modal.hide();
+      this.showToast('Configuración inicial guardada. Revisa los precios de tus catálogos.', 'success');
+    });
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      if (!this.config.initialSetupCompleted) {
+        this.config.initialSetupDismissed = true;
+        Storage.saveConfig(this.config);
+        updateReminder();
+      }
+    });
+
+    if (!this.config.initialSetupCompleted && !this.config.initialSetupDismissed) modal.show();
   }
 
   syncJobState() {

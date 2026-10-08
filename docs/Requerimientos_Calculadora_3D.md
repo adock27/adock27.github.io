@@ -2,7 +2,7 @@
 
 ## 1. Introducción
 ### 1.1 Propósito
-El propósito de este documento es definir los requerimientos funcionales, no funcionales y de interfaz de usuario para la **Calculadora de Precios 3D Pro**, una herramienta web diseñada para estimar los costos y generar cotizaciones precisas de impresión 3D, optimizada para impresoras Bambu Lab P1S con sistema AMS, utilizando moneda local (Pesos Colombianos - COP).
+El propósito de este documento es definir los requerimientos funcionales, no funcionales y de interfaz de usuario para la **Calculadora de Precios 3D Pro**, una herramienta web diseñada para estimar los costos y generar cotizaciones precisas de impresión 3D, optimizada para impresoras Bambu Lab P1S con sistema AMS y con moneda configurable.
 
 ### 1.2 Alcance
 El sistema permitirá a los usuarios (operadores de impresión 3D):
@@ -32,7 +32,7 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 
 ### RF-4: Motor de Cálculo de Costos
 - **RF-4.1:** **Costo de Filamento:** Calcular en base a los gramos consumidos por cada material y su respectivo costo por kg.
-- **RF-4.2:** **Costo de Electricidad:** Calcular en base al tiempo de impresión, el consumo en kW de la máquina (ej. P1S) y la tarifa eléctrica local (COP/kWh).
+- **RF-4.2:** **Costo de Electricidad:** Calcular en base al tiempo de impresión, el consumo en kW de la máquina (ej. P1S) y la tarifa eléctrica local expresada en la moneda configurada por kWh.
 - **RF-4.3:** **Costo de Desgaste (Amortización):** Calcular multiplicando el tiempo de impresión por una tarifa de desgaste por hora.
 - **RF-4.4:** **Costo de Mano de Obra:** Calcular en base a los minutos dedicados (pre y post-procesado) por la tarifa horaria del operador.
 - **RF-4.5:** **Costo de Merma/Fallos:** Calcular un porcentaje extra sobre el costo base para cubrir purgas (AMS) y posibles fallos de impresión.
@@ -44,7 +44,7 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - **RF-5.3:** El sistema debe incluir un botón de "Copiar al portapapeles" diseñado para facilitar el envío de la cotización vía WhatsApp.
 
 ### RF-6: Configuración y Catálogos (CRUD)
-- **RF-6.1:** **Parámetros Máquina:** Modificar tarifas de electricidad, consumo (kW), desgaste (COP/h), mano de obra (COP/h) y porcentajes de fallo.
+- **RF-6.1:** **Parámetros Máquina:** Modificar moneda, tarifas de electricidad, consumo (kW), desgaste y mano de obra en la moneda elegida, además de porcentajes de fallo.
 - **RF-6.2:** **Catálogo Filamentos:** Crear, leer, actualizar y eliminar (CRUD) tipos de filamentos con su costo por kg.
 - **RF-6.3:** **Catálogo Extras:** CRUD de insumos complementarios con su precio unitario.
 - **RF-6.4:** **Redondeo:** Configurar reglas de redondeo para precios finales (ej. a los $100 o $500 más cercanos).
@@ -58,6 +58,9 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - Uso de iconografía clara (Bootstrap Icons) y fuentes legibles (Inter).
 - Interacciones fluidas, priorizando el uso de componentes amigables para móviles (como Bottom Sheets para seleccionar filamentos en lugar de drag-and-drop exclusivo) y retroalimentación visual (toasts) al realizar acciones exitosas o errores.
 - En escritorio, el catálogo de filamentos y la lista de ranuras AMS se limitan a 45vh y tienen scroll vertical propio para evitar que muchos elementos alarguen la página. En móviles, el catálogo se muestra en un panel inferior desplazable; la lista de ranuras conserva el flujo normal de la página.
+- La sección «Insumos, Herrajes y Extras» debe presentarse como un desplegable inicialmente cerrado para mantener compacta la vista de la calculadora; al abrirlo, muestra los controles de cantidades existentes.
+- La moneda de trabajo es configurable (COP, USD, MXN, EUR, PEN, CLP, ARS, BRL, CAD y GBP) y se aplica al resumen, cotizaciones, costos unitarios y catálogos. Cambiar la moneda no convierte los valores guardados; la interfaz debe pedir que se revisen tarifas, filamentos y extras.
+- En el primer uso se ofrece un asistente para configurar moneda, electricidad, consumo de máquina, desgaste, mano de obra, márgenes de fallo y purga y redondeo. La configuración se guarda localmente; si se pospone, se muestra un acceso para retomarla y también se puede editar desde Configuración.
 
 ### RNF-2: Rendimiento
 - Los cálculos matemáticos deben actualizar la interfaz (resumen económico, gráficas) de manera instantánea (en tiempo real) sin necesidad de recargar la página.
