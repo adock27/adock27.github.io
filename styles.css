@@ -74,3 +74,18 @@ body {
 }
 .filament-palette-panel::-webkit-scrollbar { width: 4px; }
 .filament-palette-panel::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+
+/* === Grupos de marcas colapsables en paleta === */
+.brand-group { margin-bottom: 0.25rem; }
+.brand-chips { overflow: hidden; transition: max-height 0.2s ease; }
+.brand-group.collapsed .brand-chips { display: none; }
+.brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.brand-header .toggle-icon { transition: transform 0.2s ease; font-size: 10px; }
+.brand-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+
