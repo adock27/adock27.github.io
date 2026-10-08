@@ -21,7 +21,6 @@ export class Settings {
       btnAddCatalogMaterial: document.getElementById('btnAddCatalogMaterial'),
       btnSyncApiMaterials: document.getElementById('btnSyncApiMaterials'),
       btnClearMaterials: document.getElementById('btnClearMaterials'),
-      btnQuickAddMaterial: document.getElementById('btnQuickAddMaterial'),
       extrasTableBody: document.getElementById('extrasTableBody'),
       btnAddCatalogExtra: document.getElementById('btnAddCatalogExtra')
     };
@@ -39,7 +38,9 @@ export class Settings {
     this.el.btnAddCatalogMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
     this.el.btnSyncApiMaterials?.addEventListener('click', () => this.handleSyncApiMaterials());
     this.el.btnClearMaterials?.addEventListener('click', () => this.handleClearMaterials());
-    this.el.btnQuickAddMaterial?.addEventListener('click', () => this.handleAddNewCatalogMaterial());
+    document.querySelectorAll('#btnQuickAddMaterial, .btnQuickAddMaterial').forEach(button => {
+      button.addEventListener('click', () => this.handleAddNewCatalogMaterial());
+    });
     this.el.btnAddCatalogExtra?.addEventListener('click', () => this.handleAddNewCatalogExtra());
   }
 
