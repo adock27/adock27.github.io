@@ -62,18 +62,8 @@ export class Filaments {
             <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
             <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
           </div>
-          <i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>
+          <i class="bi bi-plus-circle text-success" style="font-size:16px;"></i>
         `;
-
-        chip.addEventListener('dragstart', (e) => {
-          e.dataTransfer.setData('materialId', mat.id);
-          e.dataTransfer.effectAllowed = 'move';
-          chip.classList.add('dragging');
-        });
-
-        chip.addEventListener('dragend', () => {
-          chip.classList.remove('dragging');
-        });
 
         chip.addEventListener('click', () => {
           const matExists = this.app.config.materials.find(m => m.id === mat.id);
@@ -87,6 +77,13 @@ export class Filaments {
             this.renderPalette();
             this.renderMaterialSlots();
             this.app.recalculate();
+            
+            // Cerrar el Offcanvas si existe
+            const offcanvasEl = document.getElementById('offcanvasFilamentPalette');
+            if (offcanvasEl) {
+              const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+              if (bsOffcanvas) bsOffcanvas.hide();
+            }
           }
         });
 
@@ -102,9 +99,9 @@ export class Filaments {
 
     if (this.app.currentJob.materialSlots.length === 0) {
       zone.innerHTML = `
-        <div class="text-center py-3 text-muted" style="pointer-events:none;">
-          <i class="bi bi-box-arrow-in-right" style="font-size:22px;display:block;margin-bottom:4px;opacity:0.4;"></i>
-          <span style="font-size:12px;">Toca o arrastra un filamento aquí</span>
+        <div class="text-center py-4 text-muted border rounded-3 bg-light" style="pointer-events:none;">
+          <i class="bi bi-palette" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.5;"></i>
+          <span style="font-size:13px;">No hay materiales asignados.<br>Haz clic en "Añadir Material".</span>
         </div>
       `;
     } else {
@@ -131,38 +128,7 @@ export class Filaments {
       });
     }
 
-    if (!this._dragEventsBound) {
-      this._dragEventsBound = true;
-      zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        zone.classList.add('drag-over');
-      });
-
-      zone.addEventListener('dragleave', (e) => {
-        if (!zone.contains(e.relatedTarget)) {
-          zone.classList.remove('drag-over');
-        }
-      });
-
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('drag-over');
-        const materialId = e.dataTransfer.getData('materialId');
-        const matExists = this.app.config.materials.find(m => m.id === materialId);
-        const alreadyUsed = this.app.currentJob.materialSlots.some(s => s.materialId === materialId);
-        if (materialId && matExists && !alreadyUsed) {
-          this.app.currentJob.materialSlots.push({
-            id: 'slot_' + Date.now(),
-            materialId,
-            grams: 20
-          });
-          this.renderPalette();
-          this.renderMaterialSlots();
-          this.app.recalculate();
-        }
-      });
-    }
+    // Los eventos de drag and drop han sido removidos en favor del Offcanvas (Tap-to-select)
 
     zone.querySelectorAll('.slot-grams-input').forEach(input => {
       input.addEventListener('input', (e) => {
