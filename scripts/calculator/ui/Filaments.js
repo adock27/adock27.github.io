@@ -3,29 +3,33 @@ import { Engine } from '../engine.js';
 export class Filaments {
   constructor(app) {
     this.app = app;
-    this.filamentPalette = document.getElementById('filamentPalette');
+    this.paletteContainers = document.querySelectorAll('.filament-palette-container');
     this.materialSlotsContainer = document.getElementById('materialSlotsContainer');
     this._dragEventsBound = false;
   }
 
   renderPalette() {
-    if (!this.filamentPalette) return;
-    this.filamentPalette.innerHTML = '';
+    if (!this.paletteContainers || this.paletteContainers.length === 0) return;
+    
+    this.paletteContainers.forEach(container => {
+      container.innerHTML = '';
+    });
 
     const usedIds = new Set(this.app.currentJob.materialSlots.map(s => s.materialId));
     const available = this.app.config.materials.filter(m => !usedIds.has(m.id));
 
     if (available.length === 0) {
-      this.filamentPalette.innerHTML = `
-        <div class="text-center py-3 text-muted" style="font-size:12px;">
-          <i class="bi bi-check-circle" style="font-size:20px;display:block;margin-bottom:4px;opacity:0.4;"></i>
-          Todos los filamentos en uso
-        </div>
-      `;
+      this.paletteContainers.forEach(container => {
+        container.innerHTML = `
+          <div class="text-center py-3 text-muted" style="font-size:12px;">
+            <i class="bi bi-check-circle" style="font-size:20px;display:block;margin-bottom:4px;opacity:0.4;"></i>
+            Todos los filamentos en uso
+          </div>
+        `;
+      });
       return;
     }
 
-    // Agrupar por Marca (o primera palabra del nombre si no hay marca explícita)
     const grouped = {};
     available.forEach(mat => {
       const brand = mat.brand || mat.name.split(' ')[0] || 'Otros';
@@ -33,64 +37,79 @@ export class Filaments {
       grouped[brand].push(mat);
     });
 
-    Object.keys(grouped).sort().forEach(brand => {
-      // Crear cabecera del grupo (Marca)
-      const header = document.createElement('div');
-      header.className = 'text-muted fw-bold mt-2 mb-1 px-1';
-      header.style.fontSize = '10px';
-      header.style.textTransform = 'uppercase';
-      header.style.letterSpacing = '0.5px';
-      header.style.position = 'sticky';
-      header.style.top = '0';
-      header.style.backgroundColor = '#fff';
-      header.style.zIndex = '1';
-      header.innerText = brand;
-      this.filamentPalette.appendChild(header);
+    this.paletteContainers.forEach(container => {
+      Object.keys(grouped).sort().forEach(brand => {
+        const header = document.createElement('div');
+        header.className = 'text-muted fw-bold mt-2 mb-1 px-1';
+        header.style.fontSize = '10px';
+        header.style.textTransform = 'uppercase';
+        header.style.letterSpacing = '0.5px';
+        header.style.position = 'sticky';
+        header.style.top = '0';
+        header.style.backgroundColor = '#fff';
+        header.style.zIndex = '1';
+        header.innerText = brand;
+        container.appendChild(header);
 
-      // Renderizar los chips de esa marca
-      grouped[brand].forEach(mat => {
-        const chip = document.createElement('div');
-        chip.className = 'filament-chip d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-white';
-        chip.draggable = true;
-        chip.style.cursor = 'pointer';
-        chip.dataset.materialId = mat.id;
-        chip.title = `Arrastra "${mat.name}" al panel AMS`;
+        grouped[brand].forEach(mat => {
+          const chip = document.createElement('div');
+          chip.className = 'filament-chip d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-white';
+          chip.draggable = true;
+          chip.style.cursor = 'pointer';
+          chip.dataset.materialId = mat.id;
+          chip.title = `Toca para añadir o Arrastra "${mat.name}" al panel AMS`;
 
-        chip.innerHTML = `
-          <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
-          <div style="min-width:0;flex:1;">
-            <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
-            <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
-          </div>
-          <i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>
-        `;
+          // Icono diferente en móvil vs escritorio
+          const isMobile = container.id === 'filamentPaletteMobile';
+          const iconHtml = isMobile 
+            ? `<i class="bi bi-plus-circle text-success" style="font-size:16px;"></i>`
+            : `<i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>`;
 
-        chip.addEventListener('dragstart', (e) => {
-          e.dataTransfer.setData('materialId', mat.id);
-          e.dataTransfer.effectAllowed = 'move';
-          chip.classList.add('dragging');
-        });
+          chip.innerHTML = `
+            <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
+            <div style="min-width:0;flex:1;">
+              <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
+              <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg)}/kg</div>
+            </div>
+            ${iconHtml}
+          `;
 
-        chip.addEventListener('dragend', () => {
-          chip.classList.remove('dragging');
-        });
-
-        chip.addEventListener('click', () => {
-          const matExists = this.app.config.materials.find(m => m.id === mat.id);
-          const alreadyUsed = this.app.currentJob.materialSlots.some(s => s.materialId === mat.id);
-          if (mat.id && matExists && !alreadyUsed) {
-            this.app.currentJob.materialSlots.push({
-              id: 'slot_' + Date.now(),
-              materialId: mat.id,
-              grams: 20
+          if (!isMobile) {
+            chip.addEventListener('dragstart', (e) => {
+              e.dataTransfer.setData('materialId', mat.id);
+              e.dataTransfer.effectAllowed = 'move';
+              chip.classList.add('dragging');
             });
-            this.renderPalette();
-            this.renderMaterialSlots();
-            this.app.recalculate();
+            chip.addEventListener('dragend', () => {
+              chip.classList.remove('dragging');
+            });
           }
-        });
 
-        this.filamentPalette.appendChild(chip);
+          chip.addEventListener('click', () => {
+            const matExists = this.app.config.materials.find(m => m.id === mat.id);
+            const alreadyUsed = this.app.currentJob.materialSlots.some(s => s.materialId === mat.id);
+            if (mat.id && matExists && !alreadyUsed) {
+              this.app.currentJob.materialSlots.push({
+                id: 'slot_' + Date.now(),
+                materialId: mat.id,
+                grams: 20
+              });
+              this.renderPalette();
+              this.renderMaterialSlots();
+              this.app.recalculate();
+              
+              if (isMobile) {
+                const offcanvasEl = document.getElementById('offcanvasFilamentPalette');
+                if (offcanvasEl) {
+                  const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+                  if (bsOffcanvas) bsOffcanvas.hide();
+                }
+              }
+            }
+          });
+
+          container.appendChild(chip);
+        });
       });
     });
   }
