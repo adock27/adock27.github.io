@@ -57,7 +57,7 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - Se debe utilizar **Bootstrap 5** para garantizar un diseño responsivo (adaptable a móviles y escritorio).
 - Uso de iconografía clara (Bootstrap Icons) y fuentes legibles (Inter).
 - Interacciones fluidas, priorizando el uso de componentes amigables para móviles (como Bottom Sheets para seleccionar filamentos en lugar de drag-and-drop exclusivo) y retroalimentación visual (toasts) al realizar acciones exitosas o errores.
-- El panel de filamentos tiene una altura adaptable: en escritorio se limita a 45vh y en móviles se muestra con scroll, mejorando la experiencia en ambas plataformas.
+- En escritorio, el catálogo de filamentos y la lista de ranuras AMS se limitan a 45vh y tienen scroll vertical propio para evitar que muchos elementos alarguen la página. En móviles, el catálogo se muestra en un panel inferior desplazable; la lista de ranuras conserva el flujo normal de la página.
 
 ### RNF-2: Rendimiento
 - Los cálculos matemáticos deben actualizar la interfaz (resumen económico, gráficas) de manera instantánea (en tiempo real) sin necesidad de recargar la página.
