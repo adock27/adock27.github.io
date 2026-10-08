@@ -50,6 +50,9 @@ export class Filaments {
         header.style.zIndex = '1';
         header.innerText = brand;
         container.appendChild(header);
+        const chipsContainer = document.createElement('div');
+        chipsContainer.className = 'brand-chips';
+        container.appendChild(chipsContainer);
 
         grouped[brand].forEach(mat => {
           const chip = document.createElement('div');
