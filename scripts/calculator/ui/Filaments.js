@@ -108,7 +108,7 @@ export class Filaments {
             }
           });
 
-          container.appendChild(chip);
+          chipsContainer.appendChild(chip);
         });
       });
     });
