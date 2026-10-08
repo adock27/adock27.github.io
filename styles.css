@@ -75,6 +75,26 @@ body {
 .filament-palette-panel::-webkit-scrollbar { width: 4px; }
 .filament-palette-panel::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
 
+/* Mantiene compacta la sección en escritorio cuando hay muchos materiales. */
+@media (min-width: 768px) {
+  #filamentPalette,
+  #materialSlotsContainer {
+    max-height: 45vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  #filamentPalette::-webkit-scrollbar,
+  #materialSlotsContainer::-webkit-scrollbar { width: 6px; }
+
+  #filamentPalette::-webkit-scrollbar-thumb,
+  #materialSlotsContainer::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+  }
+}
+
 /* === Grupos de marcas colapsables en paleta === */
 .brand-group { margin-bottom: 0.25rem; }
 .brand-chips { overflow: hidden; transition: max-height 0.2s ease; }
