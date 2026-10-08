@@ -68,7 +68,7 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 .filament-palette-panel {
-  max-height: 260px;
+  max-height: 45vh; /* altura adaptable a la ventana */
   overflow-y: auto;
   scrollbar-width: thin;
 }
