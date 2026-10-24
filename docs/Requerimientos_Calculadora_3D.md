@@ -68,8 +68,8 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 
 ### RF-9: Gestión de pedidos
 - **RF-9.1:** El usuario puede crear, consultar, editar y eliminar pedidos con número, cliente, fecha, fecha de entrega, producto del inventario o nombre personalizado, cantidad, precio, estado y notas. Un precio unitario de 0 representa un pedido por cotizar.
-- **RF-9.2:** Los estados disponibles son pendiente, en producción, listo, entregado y cancelado; el listado permite buscar y filtrar por estado.
-- **RF-9.3:** Crear un pedido no reserva ni descuenta stock. Un pedido listo vinculado a inventario puede convertirse en venta; la conversión valida existencias, descuenta la cantidad, crea el registro de venta y enlaza ambos registros. Los pedidos personalizados no requieren inventario ni descuentan existencias.
+- **RF-9.2:** Los estados disponibles son pendiente, en producción, listo, entregado y cancelado; el listado permite buscar y filtrar por estado. La vista inicial muestra pedidos activos y el filtro permite consultar el historial.
+- **RF-9.3:** Crear un pedido no reserva ni descuenta stock. Al marcarlo como entregado, se crea y enlaza una venta. Si está vinculado al inventario, la conversión valida existencias y descuenta la cantidad. Los pedidos personalizados generan ventas sin stock asociado y pueden agregar opcionalmente el producto al inventario con existencia 0.
 - **RF-9.4:** Un pedido ya convertido a venta no puede editarse ni eliminarse desde Pedidos para evitar inconsistencias con el historial de ventas.
 
 ## 3. Requerimientos No Funcionales (RNF)

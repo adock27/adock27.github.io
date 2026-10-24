@@ -43,9 +43,9 @@ Al editar una venta se ajustan las existencias del producto anterior y del nuevo
 
 ## Dar seguimiento a pedidos
 
-En **Pedidos**, crea un registro con cliente, producto (del inventario o personalizado), cantidad, precio y fechas. Cada pedido contiene un producto. Si todavía no conoces el precio, déjalo en 0: el pedido aparecerá como **Por cotizar**. Puedes avanzar por los estados **Pendiente**, **En producción** y **Listo**, o marcarlo como **Cancelado**. El listado permite buscar pedidos y filtrar por estado.
+En **Pedidos**, crea un registro con cliente, producto (del inventario o personalizado), cantidad, precio y fechas. Cada pedido contiene un producto. Si todavía no conoces el precio, déjalo en 0: el pedido aparecerá como **Por cotizar**. Puedes avanzar por los estados **Pendiente**, **En producción** y **Listo**, o marcarlo como **Cancelado**. Al entregar un pedido, la app registra la venta automáticamente. El listado muestra primero los pedidos activos; el filtro **Todos los pedidos** permite consultar también entregados y cancelados.
 
-Crear un pedido no descuenta ni reserva existencias. Cuando el pedido está **Listo** y usa un artículo del inventario, puedes registrarlo como venta: la app comprueba las unidades, descuenta el stock, crea la venta y enlaza ambos registros. Para un producto personalizado sin inventario, cambia el estado manualmente a **Entregado** cuando corresponda; ese pedido no descuenta stock ni crea una venta automáticamente. Los pedidos enlazados a una venta quedan bloqueados para edición o eliminación.
+Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado**, la app crea y enlaza su venta. Si el pedido usa un artículo del inventario, valida y descuenta las unidades; si es personalizado, crea la venta sin afectar existencias. En el formulario puedes elegir agregar ese producto personalizado al inventario con existencia 0 para futuras ventas. Los pedidos entregados se conservan en el historial y quedan bloqueados para edición o eliminación, evitando duplicar ventas.
 
 ## Publicar cambios
 

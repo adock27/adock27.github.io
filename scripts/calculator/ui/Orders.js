@@ -33,6 +33,7 @@ export class Orders {
     this.searchInput?.addEventListener('input', () => this.render());
     this.statusFilter?.addEventListener('change', () => this.render());
     document.getElementById('orderInventoryId')?.addEventListener('change', () => this.toggleCustomProduct());
+    document.getElementById('orderStatus')?.addEventListener('change', () => this.toggleCustomProduct());
     document.getElementById('orderModal')?.addEventListener('hide.bs.modal', () => {
       const focusedElement = document.activeElement;
       if (focusedElement && this.modalElement.contains(focusedElement)) focusedElement.blur();
@@ -46,16 +47,18 @@ export class Orders {
   openForm(order = null) {
     this.returnFocusTarget = document.activeElement;
     this.form?.reset();
+    document.getElementById('orderAddCustomToInventory').checked = false;
     document.getElementById('orderId').value = order?.id || '';
-    this.renderInventoryOptions(order?.inventoryId || '__custom__');
-    document.getElementById('orderCustomProductName').value = order?.inventoryId ? '' : (order?.productName || '');
-    this.toggleCustomProduct();
+    const inventoryItemExists = order?.inventoryId && this.app.inventoryModule.items.some(item => String(item.id) === String(order.inventoryId));
+    this.renderInventoryOptions(inventoryItemExists ? order.inventoryId : '__custom__');
+    document.getElementById('orderCustomProductName').value = inventoryItemExists ? '' : (order?.productName || '');
     document.getElementById('orderDate').value = order?.date || localDateInput();
     document.getElementById('orderDueDate').value = order?.dueDate || '';
     document.getElementById('orderClientName').value = order?.clientName || '';
     document.getElementById('orderQuantity').value = order?.quantity ?? 1;
     document.getElementById('orderUnitPrice').value = order?.unitPrice ?? 0;
     document.getElementById('orderStatus').value = order?.status || 'Pendiente';
+    this.toggleCustomProduct();
     document.getElementById('orderPaymentMethod').value = order?.paymentMethod || 'Efectivo';
     document.getElementById('orderNotes').value = order?.notes || '';
     document.getElementById('orderModalTitle').textContent = order ? `Editar pedido ${order.orderNumber || ''}` : 'Nuevo pedido';
@@ -87,8 +90,10 @@ export class Orders {
     const isCustom = document.getElementById('orderInventoryId')?.value === '__custom__';
     const wrap = document.getElementById('orderCustomProductWrap');
     const input = document.getElementById('orderCustomProductName');
+    const addToInventory = document.getElementById('orderAddCustomToInventory');
     wrap?.classList.toggle('d-none', !isCustom);
     if (input) input.required = isCustom;
+    if (addToInventory) addToInventory.disabled = !isCustom || document.getElementById('orderStatus')?.value !== 'Entregado';
   }
 
   updateTotalPreview() {
@@ -117,9 +122,8 @@ export class Orders {
     const existing = index >= 0 ? this.items[index] : null;
     const status = document.getElementById('orderStatus').value;
     if (!ORDER_STATUSES.includes(status)) return this.app.showToast('Selecciona un estado válido para el pedido.', 'error');
-    if (status === 'Entregado' && !existing?.saleId && !isCustom) {
-      return this.app.showToast('Primero cambia el pedido a “Listo” y usa Registrar venta para descontar inventario.', 'error');
-    }
+    if (existing?.saleId) return this.app.showToast('Este pedido ya tiene una venta asociada y no se puede editar.', 'error');
+    if (status === 'Entregado' && unitPrice <= 0) return this.app.showToast('Indica el precio de venta antes de entregar el pedido.', 'error');
     const order = {
       id: id || makeId('order'),
       orderNumber: existing?.orderNumber || `PED-${Date.now().toString().slice(-8)}`,
@@ -136,6 +140,10 @@ export class Orders {
       notes: document.getElementById('orderNotes').value.trim(),
       saleId: existing?.saleId || ''
     };
+    if (status === 'Entregado' && !order.saleId) {
+      const addCustomToInventory = isCustom && document.getElementById('orderAddCustomToInventory').checked;
+      if (!this.createSaleFromOrder(order, addCustomToInventory)) return;
+    }
     if (index >= 0) this.items[index] = order;
     else this.items.push(order);
     this.persist();
@@ -149,21 +157,37 @@ export class Orders {
     this.render();
   }
 
-  convertToSale(order) {
-    if (order.saleId) return this.app.showToast('Este pedido ya tiene una venta registrada.', 'info');
-    if (order.status !== 'Listo') return this.app.showToast('Cambia el estado del pedido a “Listo” antes de registrarlo como venta.', 'error');
-    if (!order.inventoryId) return this.app.showToast('Este pedido personalizado no está vinculado al inventario y no puede descontar existencias.', 'info');
-    const product = this.app.inventoryModule.items.find(item => String(item.id) === String(order.inventoryId));
-    const available = Number(product?.quantity) || 0;
-    if (!product) return this.app.showToast('El producto ya no existe en el inventario.', 'error');
-    if (Number(order.quantity) > available) {
-      return this.app.showToast(`Existencias insuficientes. Disponibles: ${available} ${product.unit || ''}.`, 'error');
+  createSaleFromOrder(order, addCustomToInventory = false) {
+    if (order.saleId) return true;
+    if (Number(order.unitPrice) <= 0) {
+      this.app.showToast('Indica el precio de venta antes de entregar el pedido.', 'error');
+      return false;
+    }
+    const inventory = this.app.inventoryModule.items;
+    const product = order.inventoryId
+      ? inventory.find(item => String(item.id) === String(order.inventoryId))
+      : null;
+    if (order.inventoryId && !product) order.inventoryId = '';
+    if (product && Number(order.quantity) > (Number(product.quantity) || 0)) {
+      this.app.showToast(`Existencias insuficientes. Disponibles: ${Number(product.quantity) || 0} ${product.unit || ''}.`, 'error');
+      return false;
+    }
+    let addedToInventory = false;
+    if (!product && addCustomToInventory) {
+      const alreadyCatalogued = inventory.some(item => String(item.name || '').trim().toLocaleLowerCase() === String(order.productName || '').trim().toLocaleLowerCase());
+      if (!alreadyCatalogued) {
+        inventory.push({
+          id: makeId('stock'), name: order.productName, category: 'General', quantity: 0,
+          unit: 'unidades', minQuantity: 0, unitCost: 0, notes: ''
+        });
+        addedToInventory = true;
+      }
     }
     const sale = {
       id: makeId('sale'),
-      inventoryId: product.id,
+      inventoryId: product?.id || '',
       date: localDateInput(),
-      productName: product.name,
+      productName: product?.name || order.productName,
       clientName: order.clientName,
       quantity: Number(order.quantity),
       unitPrice: Number(order.unitPrice),
@@ -171,14 +195,16 @@ export class Orders {
       paymentMethod: order.paymentMethod || 'Otro',
       notes: `Registrada desde el pedido ${order.orderNumber}. ${order.notes || ''}`.trim()
     };
-    product.quantity = available - sale.quantity;
-    this.app.inventoryModule.persist();
+    if (product) product.quantity = (Number(product.quantity) || 0) - sale.quantity;
+    if (product || addedToInventory) this.app.inventoryModule.persist();
     this.app.salesModule.items.push(sale);
     this.app.salesModule.persist();
     order.saleId = sale.id;
     order.status = 'Entregado';
-    this.persist();
-    this.app.showToast(`Pedido ${order.orderNumber} registrado como venta.`, 'success');
+    this.app.showToast(addedToInventory
+      ? `Pedido ${order.orderNumber} entregado, venta registrada y producto agregado al inventario con stock 0.`
+      : `Pedido ${order.orderNumber} entregado y registrado como venta.`, 'success');
+    return true;
   }
 
   render() {
@@ -194,10 +220,10 @@ export class Orders {
     if (ordersMonthCount) ordersMonthCount.textContent = String(monthCount);
 
     const query = (this.searchInput?.value || '').trim().toLowerCase();
-    const status = this.statusFilter?.value || '';
+    const status = this.statusFilter?.value || '__active__';
     const visible = [...this.items]
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-      .filter(item => (!status || item.status === status) && `${item.orderNumber} ${item.clientName} ${item.productName} ${item.notes || ''}`.toLowerCase().includes(query));
+      .filter(item => (status === '__active__' ? !['Entregado', 'Cancelado'].includes(item.status) : (!status || item.status === status)) && `${item.orderNumber} ${item.clientName} ${item.productName} ${item.notes || ''}`.toLowerCase().includes(query));
     this.tableBody.replaceChildren();
     if (!visible.length) {
       const row = document.createElement('tr');
@@ -221,14 +247,18 @@ export class Orders {
         });
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
-      if (order.status === 'Listo' && !order.saleId && order.inventoryId) {
+      if (order.status === 'Listo' && !order.saleId) {
         const saleButton = document.createElement('button');
         saleButton.type = 'button';
         saleButton.className = 'btn btn-sm btn-outline-success me-1';
-        saleButton.title = 'Registrar como venta y descontar inventario';
-        saleButton.setAttribute('aria-label', 'Registrar como venta y descontar inventario');
+        saleButton.title = 'Entregar pedido y registrar como venta';
+        saleButton.setAttribute('aria-label', 'Entregar pedido y registrar como venta');
         saleButton.innerHTML = '<i class="bi bi-cash-coin"></i>';
-        saleButton.addEventListener('click', () => this.convertToSale(order));
+        saleButton.addEventListener('click', () => {
+          this.openForm(order);
+          document.getElementById('orderStatus').value = 'Entregado';
+          this.toggleCustomProduct();
+        });
         actions.appendChild(saleButton);
       }
       const edit = document.createElement('button');

@@ -62,7 +62,7 @@ El módulo de ventas guarda el ID del artículo de inventario, fecha, nombre del
 {"entity":"ventas","action":"create","token":"TOKEN_DE_SESION","inventoryId":"ID_DEL_ARTICULO","date":"2026-10-23","productName":"Llavero personalizado","clientName":"Ana","quantity":2,"unitPrice":12000,"total":24000,"paymentMethod":"Transferencia","notes":"Pago recibido"}
 ```
 
-Los pedidos se guardan por usuario con número, fechas, producto del inventario o nombre personalizado, cliente, cantidad, precio, estado y notas. Un precio unitario de `0` se muestra como `Por cotizar`. El CRUD de pedidos no cambia existencias. Un pedido vinculado al inventario y en estado `Listo` puede registrarse como venta; esa acción descuenta el inventario y enlaza la venta al pedido. Los pedidos personalizados no requieren una fila de inventario.
+Los pedidos se guardan por usuario con número, fechas, producto del inventario o nombre personalizado, cliente, cantidad, precio, estado y notas. Un precio unitario de `0` se muestra como `Por cotizar`. Crear el pedido no cambia existencias. Al marcarlo como `Entregado`, la interfaz registra y enlaza la venta automáticamente. Si usa inventario, valida y descuenta stock; si es personalizado, registra la venta sin stock asociado y permite agregar el producto al inventario con existencia `0`.
 
 ```json
 {"entity":"pedidos","action":"create","token":"TOKEN_DE_SESION","orderNumber":"PED-12345678","inventoryId":"ID_DEL_ARTICULO","date":"2026-10-24","dueDate":"2026-10-30","productName":"Llavero personalizado","clientName":"Ana","quantity":2,"unitPrice":12000,"total":24000,"status":"Pendiente","paymentMethod":"Transferencia","notes":"Color azul"}
