@@ -98,7 +98,9 @@ export class Orders {
       option.value = item.id;
       option.textContent = item.productType === 'on_demand'
         ? `${item.name} — bajo pedido`
-        : `${item.name} — stock ${Number(item.quantity) || 0} ${item.unit || 'unidades'}`;
+        : item.productType === 'hybrid'
+          ? `${item.name} — ${Number(item.quantity) || 0} en stock + bajo pedido`
+          : `${item.name} — stock ${Number(item.quantity) || 0} ${item.unit || 'unidades'}`;
       option.selected = String(item.id) === String(selectedId);
       select.appendChild(option);
     });
@@ -160,6 +162,8 @@ export class Orders {
       quantity,
       unitPrice,
       total: quantity * unitPrice,
+      quantityFromStock: existing?.quantityFromStock ?? 0,
+      quantityMadeToOrder: existing?.quantityMadeToOrder ?? 0,
       status,
       paymentMethod: document.getElementById('orderPaymentMethod').value,
       notes: document.getElementById('orderNotes').value.trim(),
@@ -194,10 +198,14 @@ export class Orders {
       : null;
     if (order.inventoryId && !product) order.inventoryId = '';
     const productTracksStock = product && product.productType !== 'on_demand';
-    if (productTracksStock && Number(order.quantity) > (Number(product.quantity) || 0)) {
+    const availableStock = productTracksStock ? Math.max(0, Number(product.quantity) || 0) : 0;
+    if (product?.productType === 'stock' && Number(order.quantity) > availableStock) {
       this.app.showToast(`Existencias insuficientes. Disponibles: ${Number(product.quantity) || 0} ${product.unit || ''}.`, 'error');
       return false;
     }
+    const quantityFromStock = !productTracksStock ? 0
+      : product.productType === 'hybrid' ? Math.min(Number(order.quantity), availableStock) : Number(order.quantity);
+    const quantityMadeToOrder = Number(order.quantity) - quantityFromStock;
     let addedToInventory = false;
     if (!product && addCustomToInventory) {
       const alreadyCatalogued = inventory.some(item => String(item.name || '').trim().toLocaleLowerCase() === String(order.productName || '').trim().toLocaleLowerCase());
@@ -216,20 +224,25 @@ export class Orders {
       productName: product?.name || order.productName,
       clientName: order.clientName,
       quantity: Number(order.quantity),
+      quantityFromStock,
+      quantityMadeToOrder,
       unitPrice: Number(order.unitPrice),
       total: Number(order.total),
       paymentMethod: order.paymentMethod || 'Otro',
-      notes: `Registrada desde el pedido ${order.orderNumber}. ${order.notes || ''}`.trim()
+      notes: `Registrada desde el pedido ${order.orderNumber}. ${quantityFromStock} de stock; ${quantityMadeToOrder} bajo pedido. ${order.notes || ''}`.trim()
     };
-    if (productTracksStock) product.quantity = (Number(product.quantity) || 0) - sale.quantity;
+    order.quantityFromStock = quantityFromStock;
+    order.quantityMadeToOrder = quantityMadeToOrder;
+    if (productTracksStock) product.quantity = (Number(product.quantity) || 0) - quantityFromStock;
     if (productTracksStock || addedToInventory) this.app.inventoryModule.persist();
     this.app.salesModule.items.push(sale);
     this.app.salesModule.persist();
     order.saleId = sale.id;
     order.status = 'Entregado';
+    const fulfillment = quantityMadeToOrder > 0 ? ` ${quantityFromStock} de stock y ${quantityMadeToOrder} bajo pedido.` : '';
     this.app.showToast(addedToInventory
-      ? `Pedido ${order.orderNumber} entregado, venta registrada y producto agregado al inventario con stock 0.`
-      : `Pedido ${order.orderNumber} entregado y registrado como venta.`, 'success');
+      ? `Pedido ${order.orderNumber} entregado, venta registrada y producto agregado al inventario con stock 0.${fulfillment}`
+      : `Pedido ${order.orderNumber} entregado y registrado como venta.${fulfillment}`, 'success');
     return true;
   }
 
@@ -266,7 +279,10 @@ export class Orders {
     visible.forEach(order => {
       const row = document.createElement('tr');
       const statusClass = order.status === 'Cancelado' ? 'text-bg-secondary' : order.status === 'Entregado' ? 'text-bg-success' : order.status === 'Listo' ? 'text-bg-primary' : 'text-bg-warning';
-      [order.orderNumber, order.clientName, order.productName, order.dueDate || '—', `${order.quantity}`, Number(order.unitPrice) === 0 ? 'Por cotizar' : this.formatMoney(order.total), order.status]
+      const quantityLabel = Number(order.quantityMadeToOrder) > 0
+        ? `${order.quantity} (${order.quantityFromStock} stock · ${order.quantityMadeToOrder} bajo pedido)`
+        : `${order.quantity}`;
+      [order.orderNumber, order.clientName, order.productName, order.dueDate || '—', quantityLabel, Number(order.unitPrice) === 0 ? 'Por cotizar' : this.formatMoney(order.total), order.status]
         .forEach((value, index) => {
           const cell = document.createElement('td');
           cell.textContent = String(value || '—');

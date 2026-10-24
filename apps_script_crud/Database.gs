@@ -32,8 +32,8 @@ var DB_SCHEMAS = {
   Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
   Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
   Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt', 'productType', 'createdBy', 'createdByEmail'],
-  Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId', 'createdBy', 'createdByEmail'],
-  Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'quantityFromStock', 'quantityMadeToOrder', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId', 'createdBy', 'createdByEmail'],
+  Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'quantityFromStock', 'quantityMadeToOrder', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
   Compras: ['id', 'userId', 'date', 'type', 'itemName', 'materialId', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail']
 };
 

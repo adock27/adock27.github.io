@@ -164,18 +164,22 @@ export class Sales {
       return;
     }
     const previousItem = previousSale ? this.findInventoryItem(previousSale) : null;
-    const previousTracksStock = previousItem && previousItem.productType !== 'on_demand';
+    const previousStockQuantity = this.getQuantityFromStock(previousSale, previousItem);
+    const previousTracksStock = previousItem && previousStockQuantity > 0;
     const selectedTracksStock = selectedItem && selectedItem.productType !== 'on_demand';
-    if (selectedTracksStock) {
-      const sameItem = previousItem && String(previousItem.id) === String(selectedItem.id);
-      const available = Number(selectedItem.quantity || 0) + (sameItem ? Number(previousSale?.quantity || 0) : 0);
-      if (quantity > available) {
-        this.app.showToast(`Existencias insuficientes. Disponibles: ${available} ${selectedItem.unit || ''}.`, 'error');
-        return;
-      }
+    const sameItem = previousItem && selectedItem && String(previousItem.id) === String(selectedItem.id);
+    const available = selectedTracksStock
+      ? Math.max(0, Number(selectedItem.quantity || 0) + (sameItem ? previousStockQuantity : 0))
+      : 0;
+    if (selectedItem?.productType === 'stock' && quantity > available) {
+      this.app.showToast(`Existencias insuficientes. Disponibles: ${available} ${selectedItem.unit || ''}.`, 'error');
+      return;
     }
-    if (previousTracksStock) previousItem.quantity = Number(previousItem.quantity || 0) + Number(previousSale.quantity || 0);
-    if (selectedTracksStock) selectedItem.quantity = Number(selectedItem.quantity || 0) - quantity;
+    const quantityFromStock = !selectedTracksStock ? 0
+      : selectedItem.productType === 'hybrid' ? Math.min(quantity, available) : quantity;
+    const quantityMadeToOrder = quantity - quantityFromStock;
+    if (previousTracksStock) previousItem.quantity = Number(previousItem.quantity || 0) + previousStockQuantity;
+    if (selectedTracksStock) selectedItem.quantity = Number(selectedItem.quantity || 0) - quantityFromStock;
     const sale = {
       id: id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `sale_${Date.now()}`),
       inventoryId: selectedItem?.id || previousSale?.inventoryId || '',
@@ -183,6 +187,8 @@ export class Sales {
       productName: selectedItem?.name || previousSale?.productName || '',
       clientName: document.getElementById('saleClientName').value.trim(),
       quantity,
+      quantityFromStock,
+      quantityMadeToOrder,
       unitPrice,
       total: quantity * unitPrice,
       paymentMethod: document.getElementById('salePaymentMethod').value,
@@ -193,7 +199,8 @@ export class Sales {
     this.persistInventory();
     this.persist();
     this.modal?.hide();
-    this.app.showToast(index >= 0 ? 'Venta actualizada' : 'Venta registrada', 'success');
+    const fulfillment = quantityMadeToOrder > 0 ? ` (${quantityFromStock} de stock · ${quantityMadeToOrder} bajo pedido)` : '';
+    this.app.showToast(`${index >= 0 ? 'Venta actualizada' : 'Venta registrada'}${fulfillment}`, 'success');
   }
 
   persist() {
@@ -213,6 +220,14 @@ export class Sales {
     return productName ? items.find(item => String(item.name || '').trim().toLocaleLowerCase() === productName) || null : null;
   }
 
+  getQuantityFromStock(sale, item = this.findInventoryItem(sale)) {
+    if (!sale) return 0;
+    if (sale.quantityFromStock !== undefined && sale.quantityFromStock !== null && sale.quantityFromStock !== '' && Number.isFinite(Number(sale.quantityFromStock))) {
+      return Math.max(0, Number(sale.quantityFromStock));
+    }
+    return item && item.productType !== 'on_demand' ? Math.max(0, Number(sale.quantity) || 0) : 0;
+  }
+
   renderInventoryOptions(selectedId = '', editingSale = null) {
     const select = document.getElementById('saleInventoryId');
     if (!select) return;
@@ -230,8 +245,11 @@ export class Sales {
       const option = document.createElement('option');
       option.value = item.id;
       const onDemand = item.productType === 'on_demand';
-      option.textContent = onDemand ? `${item.name} — bajo pedido` : `${item.name} — ${Number(item.quantity) || 0} ${item.unit || 'unidades'} disponibles`;
-      option.disabled = !onDemand && Number(item.quantity) <= 0 && String(item.id) !== String(effectiveSelectedId);
+      const hybrid = item.productType === 'hybrid';
+      option.textContent = onDemand ? `${item.name} — bajo pedido`
+        : hybrid ? `${item.name} — ${Number(item.quantity) || 0} en stock + bajo pedido`
+          : `${item.name} — ${Number(item.quantity) || 0} ${item.unit || 'unidades'} disponibles`;
+      option.disabled = !onDemand && !hybrid && Number(item.quantity) <= 0 && String(item.id) !== String(effectiveSelectedId);
       option.selected = String(item.id) === String(effectiveSelectedId);
       select.appendChild(option);
     });
@@ -245,16 +263,21 @@ export class Sales {
     }
     select.disabled = items.length === 0 && !editingSale;
     const help = document.getElementById('saleInventoryHelp');
-    if (help) help.textContent = items.length
-      ? 'Los productos con stock descuentan existencias; los productos bajo pedido no. El precio se ingresa por separado.'
-      : 'Agrega productos al inventario antes de registrar una venta.';
+    const selected = items.find(entry => String(entry.id) === String(select.value));
+    if (help) help.textContent = !items.length
+      ? 'Agrega productos al inventario antes de registrar una venta.'
+      : selected?.productType === 'hybrid'
+        ? `Se descontarán hasta ${Number(selected.quantity) || 0} ${selected.unit || 'unidades'} disponibles; el excedente queda bajo pedido.`
+        : selected?.productType === 'on_demand'
+          ? 'Toda la cantidad se registra como fabricada bajo pedido.'
+          : 'La cantidad vendida se descuenta del stock disponible.';
   }
 
   updateInventoryHint() {
     const select = document.getElementById('saleInventoryId');
     const item = (this.app.inventoryModule?.items || []).find(entry => String(entry.id) === String(select?.value));
     const quantity = document.getElementById('saleQuantity');
-    if (quantity && item && item.productType !== 'on_demand') quantity.max = String(Number(item.quantity || 0) + (this.items.find(sale => sale.id === document.getElementById('saleId').value && String(this.findInventoryItem(sale)?.id) === String(item.id) && item.productType !== 'on_demand')?.quantity || 0));
+    if (quantity && item?.productType === 'stock') quantity.max = String(Number(item.quantity || 0) + this.getQuantityFromStock(this.items.find(sale => sale.id === document.getElementById('saleId').value && String(this.findInventoryItem(sale)?.id) === String(item.id))));
     else if (quantity) quantity.removeAttribute('max');
   }
 
@@ -302,13 +325,20 @@ export class Sales {
       const row = document.createElement('tr'), cell = document.createElement('td');
       cell.className = 'text-center text-secondary py-4';
       cell.textContent = !this.items.length ? 'Aún no hay ventas registradas.' : !periodSales.length ? `No hay ventas para ${periodLabel}.` : 'No hay ventas que coincidan con la búsqueda.';
-      cell.colSpan = 8;
+      cell.colSpan = 9;
       row.appendChild(cell); this.tableBody.appendChild(row); Tables.end(this.tableBody); return;
     }
     visible.forEach(sale => {
       const row = document.createElement('tr');
       const date = new Date(`${sale.date}T00:00:00`);
-      [Number.isNaN(date.getTime()) ? sale.date : date.toLocaleDateString('es-CO'), sale.productName, sale.clientName || '—', sale.createdByEmail || '—', sale.quantity, this.formatMoney(sale.total), sale.paymentMethod || '—']
+      const quantityFromStock = this.getQuantityFromStock(sale);
+      const quantityMadeToOrder = sale.quantityMadeToOrder !== undefined && sale.quantityMadeToOrder !== null && sale.quantityMadeToOrder !== ''
+        ? Number(sale.quantityMadeToOrder) || 0
+        : Math.max(0, (Number(sale.quantity) || 0) - quantityFromStock);
+      const fulfillment = quantityMadeToOrder > 0
+        ? `${quantityFromStock} stock · ${quantityMadeToOrder} bajo pedido`
+        : quantityFromStock > 0 ? 'Desde stock' : 'Bajo pedido';
+      [Number.isNaN(date.getTime()) ? sale.date : date.toLocaleDateString('es-CO'), sale.productName, sale.clientName || '—', sale.createdByEmail || '—', sale.quantity, fulfillment, this.formatMoney(sale.total), sale.paymentMethod || '—']
         .forEach((value, index) => {
           const cell = document.createElement('td'); cell.textContent = String(value);
           if (index === 0) cell.dataset.order = String(sale.date || '');
@@ -326,9 +356,9 @@ export class Sales {
       if (!canManage) remove.title = 'Solo quien registró la venta o un administrador puede eliminarla';
       else remove.addEventListener('click', () => {
         if (!window.confirm(`¿Eliminar la venta de “${sale.productName}”?`)) return;
-        const item = this.app.inventoryModule.items.find(entry => String(entry.id) === String(sale.inventoryId));
-        if (item && item.productType !== 'on_demand') {
-          item.quantity = Number(item.quantity || 0) + Number(sale.quantity || 0);
+        const item = this.findInventoryItem(sale);
+        if (item && this.getQuantityFromStock(sale, item) > 0) {
+          item.quantity = Number(item.quantity || 0) + this.getQuantityFromStock(sale, item);
           this.persistInventory();
         }
         this.items = this.items.filter(current => current.id !== sale.id);

@@ -25,7 +25,7 @@ Una cotización es una propuesta que se comparte con el cliente; no se convierte
 
 ## Administrar el inventario
 
-En **Inventario de productos**, usa **Añadir artículo** para registrar productos terminados. Elige **Producto con stock** para artículos ya fabricados que descuentan existencias al venderse, o **Producto bajo pedido** para artículos que solo se fabrican cuando llega una venta (por ejemplo, un QR personalizado). Los productos bajo pedido no controlan existencia ni aparecen como agotados. Los filamentos, resina y demás compras de insumos se registran en **Compras e inversiones**.
+En **Inventario de productos**, usa **Añadir artículo** para registrar productos terminados. Elige **Solo stock** para artículos ya fabricados que descuentan existencias al venderse; **Bajo pedido** para artículos que siempre se fabrican cuando llega una venta (por ejemplo, un QR personalizado); o **Mixto: stock + bajo pedido** cuando normalmente mantienes algunas unidades y también aceptas producir más. En modo mixto, la venta usa primero las unidades disponibles y el excedente se registra como bajo pedido. Los filamentos, resina y demás compras de insumos se registran en **Compras e inversiones**.
 
 El listado muestra todos los artículos. Los de stock crítico aparecen primero:
 
@@ -33,6 +33,7 @@ El listado muestra todos los artículos. Los de stock crítico aparecen primero:
 - **Stock bajo**: existencia positiva igual o menor que el mínimo configurado.
 - **Disponible**: existencia por encima del mínimo.
 - **Bajo pedido**: se fabrica al venderse; no descuenta stock de producto terminado.
+- **Stock + bajo pedido**: muestra las unidades disponibles y permite vender cantidades mayores; solo descuenta las que existen.
 
 Usa la búsqueda para localizar artículos y los botones de la fila para editar o eliminar.
 Las tablas de inventario, compras, pedidos, ventas y usuarios permiten ordenar columnas y cambiar la cantidad de filas por página. Las solicitudes al backend muestran una ventana bloqueante mientras cargan o guardan los datos.
@@ -40,20 +41,20 @@ Las tablas de inventario, compras, pedidos, ventas y usuarios permiten ordenar c
 ## Registrar una venta
 
 1. Abre **Ventas** y pulsa **Registrar venta**.
-2. Selecciona un producto existente del inventario. Si es **Bajo pedido**, no se valida ni descuenta existencia.
+2. Selecciona un producto existente del inventario. Si es **Bajo pedido**, no se valida ni descuenta existencia. Si es **Mixto**, la app descuenta hasta las unidades disponibles y registra el resto como fabricación bajo pedido.
 3. Si aún no existe, pulsa **Agregar producto** debajo del selector. Completa el nombre y la existencia inicial; puedes añadir categoría, unidad, mínimo y costo. Pulsa **Agregar y seleccionar** para continuar en el formulario de venta.
 4. Indica fecha, cliente, cantidad, precio de venta unitario y medio de pago. El total se calcula automáticamente.
-5. Pulsa **Guardar venta**. La cantidad vendida se descuenta del inventario.
+5. Pulsa **Guardar venta**. El historial muestra cómo se cumplió la cantidad: desde stock, bajo pedido o una combinación de ambas.
 
 El historial incluye la columna **Vendedor**, que muestra el correo de la cuenta que registró la venta.
 
-Al editar una venta se ajustan las existencias del producto anterior y del nuevo según corresponda. Al eliminar una venta, la cantidad vendida se devuelve al inventario. No se permite vender más unidades de las disponibles.
+Al editar o eliminar una venta, se devuelve al inventario únicamente la parte que originalmente salió del stock. Los productos **Solo stock** no permiten vender más unidades de las disponibles; los productos **Mixtos** sí permiten que el excedente quede bajo pedido.
 
 ## Dar seguimiento a pedidos
 
 En **Pedidos**, crea un registro con cliente, producto (del inventario o personalizado), cantidad, precio y fechas. Cada pedido contiene un producto. Si todavía no conoces el precio, déjalo en 0: el pedido aparecerá como **Por cotizar**. Puedes avanzar por los estados **Pendiente**, **En producción** y **Listo**, o marcarlo como **Cancelado**. Al entregar un pedido, la app registra la venta automáticamente. El listado muestra primero los pedidos activos; el filtro **Todos los pedidos** permite consultar también entregados y cancelados.
 
-Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado**, la app crea y enlaza su venta. Si el pedido usa un producto con stock, valida y descuenta las unidades; si usa un producto bajo pedido o personalizado, crea la venta sin afectar existencias. Al entregar un pedido personalizado, un administrador puede guardarlo en el catálogo como producto bajo pedido para futuras ventas. Los pedidos entregados se conservan en el historial y quedan bloqueados para edición o eliminación, evitando duplicar ventas.
+Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado**, la app crea y enlaza su venta. Si usa un producto **Solo stock**, valida y descuenta las unidades; si usa un producto **Mixto**, descuenta las disponibles y registra el excedente bajo pedido; si es bajo pedido o personalizado, no descuenta stock. El detalle queda visible en el historial de pedidos y ventas. Al entregar un pedido personalizado, un administrador puede guardarlo en el catálogo como producto bajo pedido para futuras ventas. Los pedidos entregados se conservan en el historial y quedan bloqueados para edición o eliminación, evitando duplicar ventas.
 
 ## Registrar compras e inversiones
 

@@ -29,7 +29,7 @@ export class Inventory {
     document.getElementById('inventoryItemId').value = item?.id || '';
     document.getElementById('inventoryName').value = item?.name || '';
     document.getElementById('inventoryCategory').value = item?.category || '';
-    document.getElementById('inventoryProductType').value = item?.productType === 'on_demand' ? 'on_demand' : 'stock';
+    document.getElementById('inventoryProductType').value = ['on_demand', 'hybrid'].includes(item?.productType) ? item.productType : 'stock';
     document.getElementById('inventoryQuantity').value = item?.quantity ?? 0;
     document.getElementById('inventoryUnit').value = item?.unit || 'unidades';
     document.getElementById('inventoryMinQuantity').value = item?.minQuantity ?? 0;
@@ -48,7 +48,7 @@ export class Inventory {
       id: id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `stock_${Date.now()}`),
       name: document.getElementById('inventoryName').value.trim(),
       category: document.getElementById('inventoryCategory').value.trim() || 'General',
-      productType: document.getElementById('inventoryProductType').value === 'on_demand' ? 'on_demand' : 'stock',
+      productType: ['on_demand', 'hybrid'].includes(document.getElementById('inventoryProductType').value) ? document.getElementById('inventoryProductType').value : 'stock',
       quantity: document.getElementById('inventoryProductType').value === 'on_demand' ? 0 : (Number(document.getElementById('inventoryQuantity').value) || 0),
       unit: document.getElementById('inventoryUnit').value,
       minQuantity: document.getElementById('inventoryProductType').value === 'on_demand' ? 0 : (Number(document.getElementById('inventoryMinQuantity').value) || 0),
@@ -85,7 +85,7 @@ export class Inventory {
     Tables.begin(this.tableBody);
     const query = (this.searchInput?.value || '').trim().toLowerCase();
     const isLowStock = item => {
-      if (item.productType === 'on_demand') return false;
+      if (item.productType === 'on_demand' || (item.productType === 'hybrid' && !(Number(item.minQuantity) > 0))) return false;
       const quantity = Number(item.quantity) || 0;
       const minimum = Math.max(0, Number(item.minQuantity) || 0);
       return quantity <= 0 || (minimum > 0 && quantity <= minimum);
@@ -122,9 +122,10 @@ export class Inventory {
       const minimum = Math.max(0, Number(item.minQuantity) || 0);
       const exhausted = !onDemand && quantity <= 0;
       const low = isLowStock(item);
-      const status = onDemand ? 'Bajo pedido' : exhausted ? 'Agotado' : low ? 'Stock bajo' : 'Disponible';
-      const statusClass = onDemand ? 'text-bg-info' : exhausted ? 'text-bg-danger' : low ? 'text-bg-warning' : 'text-bg-success';
-      const values = [item.name, item.category || 'General', onDemand ? 'No controla stock' : `${quantity} ${item.unit}`, onDemand ? '—' : `${minimum} ${item.unit}`, this.formatMoney(item.unitCost), status];
+      const hybrid = item.productType === 'hybrid';
+      const status = onDemand ? 'Bajo pedido' : hybrid ? (low ? 'Stock bajo · mixto' : quantity > 0 ? 'Stock + bajo pedido' : 'Bajo pedido') : exhausted ? 'Agotado' : low ? 'Stock bajo' : 'Disponible';
+      const statusClass = onDemand || (hybrid && quantity === 0) ? 'text-bg-info' : exhausted ? 'text-bg-danger' : low ? 'text-bg-warning' : 'text-bg-success';
+      const values = [item.name, item.category || 'General', onDemand ? 'Bajo pedido' : `${quantity} ${item.unit}${hybrid ? ' + bajo pedido' : ''}`, onDemand ? '—' : `${minimum} ${item.unit}`, this.formatMoney(item.unitCost), status];
       values.forEach((text, index) => {
         const cell = document.createElement('td');
         cell.textContent = text;
