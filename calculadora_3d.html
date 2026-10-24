@@ -630,7 +630,26 @@ Generando cotización...
             <div class="col-6"><label for="saleDate" class="form-label small fw-semibold">Fecha *</label><input id="saleDate" type="date" class="form-control" required></div>
             <div class="col-6"><label for="salePaymentMethod" class="form-label small fw-semibold">Medio de pago</label><select id="salePaymentMethod" class="form-select"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
           </div>
-          <div class="mb-3"><label for="saleInventoryId" class="form-label small fw-semibold">Producto del inventario *</label><select id="saleInventoryId" class="form-select" required></select><div class="form-text" id="saleInventoryHelp">Selecciona un producto disponible en inventario.</div></div>
+          <div class="mb-3">
+            <label for="saleInventoryId" class="form-label small fw-semibold">Producto del inventario *</label>
+            <select id="saleInventoryId" class="form-select" required></select>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-1">
+              <div class="form-text" id="saleInventoryHelp">Selecciona un producto disponible en inventario.</div>
+              <button id="btnQuickAddInventory" type="button" class="btn btn-sm btn-outline-success rounded-pill"><i class="bi bi-plus-lg me-1"></i>Agregar producto</button>
+            </div>
+            <div id="quickInventoryPanel" class="border rounded-3 p-3 mt-2 d-none">
+              <div class="small fw-semibold mb-2">Nuevo producto para el inventario</div>
+              <div class="row g-2 mb-2">
+                <div class="col-12"><label for="quickInventoryName" class="form-label small mb-1">Nombre *</label><input id="quickInventoryName" class="form-control form-control-sm" maxlength="100" autocomplete="off"></div>
+                <div class="col-6"><label for="quickInventoryCategory" class="form-label small mb-1">Categoría</label><input id="quickInventoryCategory" class="form-control form-control-sm" maxlength="80" placeholder="General"></div>
+                <div class="col-6"><label for="quickInventoryUnit" class="form-label small mb-1">Unidad</label><select id="quickInventoryUnit" class="form-select form-select-sm"><option>unidades</option><option>gramos</option><option>kg</option><option>metros</option><option>ml</option><option>litros</option></select></div>
+                <div class="col-4"><label for="quickInventoryQuantity" class="form-label small mb-1">Existencia</label><input id="quickInventoryQuantity" type="number" min="0" step="any" class="form-control form-control-sm" value="1"></div>
+                <div class="col-4"><label for="quickInventoryMinimum" class="form-label small mb-1">Mínimo</label><input id="quickInventoryMinimum" type="number" min="0" step="any" class="form-control form-control-sm" value="0"></div>
+                <div class="col-4"><label for="quickInventoryCost" class="form-label small mb-1">Costo unitario</label><input id="quickInventoryCost" type="number" min="0" step="any" class="form-control form-control-sm" value="0"></div>
+              </div>
+              <button id="btnQuickAddInventorySave" type="button" class="btn btn-sm btn-success rounded-pill"><i class="bi bi-check-lg me-1"></i>Agregar y seleccionar</button>
+            </div>
+          </div>
           <div class="mb-3"><label for="saleClientName" class="form-label small fw-semibold">Cliente</label><input id="saleClientName" class="form-control" maxlength="120"></div>
           <div class="row g-3 mb-2">
             <div class="col-4"><label for="saleQuantity" class="form-label small fw-semibold">Cantidad</label><input id="saleQuantity" type="number" min="0.01" step="any" class="form-control" value="1" required></div>

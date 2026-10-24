@@ -35,12 +35,25 @@ export class Sales {
     });
     this.searchInput?.addEventListener('input', () => this.render());
     document.getElementById('saleInventoryId')?.addEventListener('change', () => this.updateInventoryHint());
+    document.getElementById('btnQuickAddInventory')?.addEventListener('click', () => {
+      const panel = document.getElementById('quickInventoryPanel');
+      panel?.classList.toggle('d-none');
+      if (!panel?.classList.contains('d-none')) document.getElementById('quickInventoryName')?.focus();
+    });
+    document.getElementById('btnQuickAddInventorySave')?.addEventListener('click', () => this.quickAddInventoryItem());
     ['saleQuantity', 'saleUnitPrice'].forEach(id => document.getElementById(id)?.addEventListener('input', () => this.updateTotalPreview()));
   }
 
   openForm(sale = null) {
     this.returnFocusTarget = document.activeElement;
     this.form?.reset();
+    document.getElementById('quickInventoryPanel')?.classList.add('d-none');
+    document.getElementById('quickInventoryName').value = '';
+    document.getElementById('quickInventoryCategory').value = '';
+    document.getElementById('quickInventoryUnit').value = 'unidades';
+    document.getElementById('quickInventoryQuantity').value = '1';
+    document.getElementById('quickInventoryMinimum').value = '0';
+    document.getElementById('quickInventoryCost').value = '0';
     this.renderInventoryOptions(sale?.inventoryId || '');
     document.getElementById('saleId').value = sale?.id || '';
     document.getElementById('saleDate').value = sale?.date || localDateInput();
@@ -60,6 +73,42 @@ export class Sales {
     const price = Number(document.getElementById('saleUnitPrice')?.value) || 0;
     const preview = document.getElementById('saleTotalPreview');
     if (preview) preview.textContent = this.formatMoney(quantity * price);
+  }
+
+  quickAddInventoryItem() {
+    const nameInput = document.getElementById('quickInventoryName');
+    const name = nameInput.value.trim();
+    const quantity = Number(document.getElementById('quickInventoryQuantity').value);
+    const minQuantity = Number(document.getElementById('quickInventoryMinimum').value) || 0;
+    const unitCost = Number(document.getElementById('quickInventoryCost').value) || 0;
+    if (!name) {
+      nameInput.focus();
+      this.app.showToast('Escribe el nombre del producto.', 'error');
+      return;
+    }
+    if (!Number.isFinite(quantity) || quantity < 0 || minQuantity < 0 || unitCost < 0) {
+      this.app.showToast('Revisa la existencia, el mínimo y el costo unitario.', 'error');
+      return;
+    }
+    const item = {
+      id: globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `stock_${Date.now()}`,
+      name,
+      category: document.getElementById('quickInventoryCategory').value.trim() || 'General',
+      quantity,
+      unit: document.getElementById('quickInventoryUnit').value,
+      minQuantity,
+      unitCost,
+      notes: ''
+    };
+    this.app.inventoryModule.items.push(item);
+    this.app.inventoryModule.persist();
+    this.renderInventoryOptions(item.id);
+    this.updateInventoryHint();
+    document.getElementById('quickInventoryPanel').classList.add('d-none');
+    document.getElementById('saleQuantity').value = 1;
+    this.updateTotalPreview();
+    document.getElementById('saleQuantity').focus();
+    this.app.showToast('Producto agregado al inventario y seleccionado.', 'success');
   }
 
   saveSale(event) {
