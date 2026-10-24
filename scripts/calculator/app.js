@@ -259,6 +259,34 @@ class CalculatorApp {
 
 document.addEventListener('DOMContentLoaded', async () => {
   Auth.init();
+  let loadingCloseTimer;
+  const apiNames = { configuracion: 'configuración', materiales: 'materiales', extras: 'extras', presets: 'plantillas', inventario: 'inventario', ventas: 'ventas', pedidos: 'pedidos', compras: 'compras e inversiones', usuarios: 'cuentas' };
+  const apiActions = { list: 'Consultando', get: 'Consultando', login: 'Validando acceso a', create: 'Guardando', createuser: 'Creando', save: 'Guardando', update: 'Guardando', setrole: 'Actualizando', setactive: 'Actualizando', resetpassword: 'Actualizando', delete: 'Eliminando' };
+  window.addEventListener('calculator-api-request-start', event => {
+    clearTimeout(loadingCloseTimer);
+    if (!window.Swal) return;
+    const { entity, action } = event.detail || {};
+    const verb = apiActions[action] || 'Procesando';
+    const noun = apiNames[entity] || 'datos';
+    const title = `${verb} ${noun}…`;
+    if (window.Swal.isVisible()) window.Swal.update({ title });
+    else window.Swal.fire({
+      title,
+      text: 'Conectando con el backend. Espera un momento.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      heightAuto: false,
+      didOpen: () => window.Swal.showLoading()
+    });
+  });
+  window.addEventListener('calculator-api-request-end', event => {
+    if (event.detail?.activeRequests !== 0 || !window.Swal) return;
+    clearTimeout(loadingCloseTimer);
+    loadingCloseTimer = setTimeout(() => {
+      if (window.Swal.isVisible()) window.Swal.close();
+    }, 180);
+  });
   if (!ApiSync.getSession()?.token) return;
   const saveStatus = document.getElementById('backendSaveStatus');
   const saveStatusText = document.getElementById('backendSaveStatusText');

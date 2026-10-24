@@ -4,20 +4,28 @@ const SESSION_KEY = 'calc3d_session_v1';
 const LEGACY_KEYS = ['calc3d_config_v2', 'calc3d_presets_v2', 'calc3d_inventory_v1', 'calc3d_sales_v1', 'calc3d_orders_v1'];
 let syncTimer = null;
 let syncing = Promise.resolve();
+let activeApiRequests = 0;
 const pendingScopes = new Set();
 let snapshot = { config: null, presets: null, inventory: null, sales: null, orders: null, purchases: null };
 
 async function request(entity, action, fields = {}) {
   const session = ApiSync.getSession();
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ entity, action, ...fields, ...(session?.token ? { token: session.token } : {}) })
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const result = await response.json();
-  if (!result.ok) throw new Error(result.error || 'La API rechazó la solicitud.');
-  return result.data;
+  activeApiRequests += 1;
+  window.dispatchEvent(new CustomEvent('calculator-api-request-start', { detail: { entity, action, activeRequests: activeApiRequests } }));
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ entity, action, ...fields, ...(session?.token ? { token: session.token } : {}) })
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const result = await response.json();
+    if (!result.ok) throw new Error(result.error || 'La API rechazó la solicitud.');
+    return result.data;
+  } finally {
+    activeApiRequests = Math.max(0, activeApiRequests - 1);
+    window.dispatchEvent(new CustomEvent('calculator-api-request-end', { detail: { entity, action, activeRequests: activeApiRequests } }));
+  }
 }
 
 async function replaceCollection(entity, items) {

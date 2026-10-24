@@ -1,4 +1,5 @@
 import { Storage } from '../storage.js';
+import { Tables } from './Tables.js';
 
 const PURCHASE_TYPES = {
   equipo: 'Equipo',
@@ -549,6 +550,7 @@ export class Purchases {
 
   renderTable() {
     if (!this.tableBody) return;
+    Tables.begin(this.tableBody);
     const query = (this.searchInput?.value || '').trim().toLocaleLowerCase();
     const items = [...this.items]
       .filter(item => `${this.getItemName(item)} ${PURCHASE_TYPES[item.type] || ''} ${item.supplier || ''} ${item.notes || ''}`.toLocaleLowerCase().includes(query))
@@ -562,6 +564,7 @@ export class Purchases {
       cell.textContent = this.items.length ? 'No hay compras que coincidan con la búsqueda.' : 'Aún no has registrado compras o inversiones.';
       row.appendChild(cell);
       this.tableBody.appendChild(row);
+      Tables.end(this.tableBody);
       return;
     }
     items.forEach(item => {
@@ -572,6 +575,7 @@ export class Purchases {
       [this.formatDate(item.date), PURCHASE_TYPES[item.type] || 'Compra', this.getItemName(item), qty, item.supplier || '—', this.formatMoney(item.totalCost)].forEach((value, index) => {
         const cell = document.createElement('td');
         cell.textContent = value;
+        if (index === 0) cell.dataset.order = String(item.date || '');
         if (index === 2) cell.classList.add('fw-semibold');
         row.appendChild(cell);
       });
@@ -617,6 +621,7 @@ export class Purchases {
       row.appendChild(actions);
       this.tableBody.appendChild(row);
     });
+    Tables.end(this.tableBody);
   }
 
   setText(id, value) {

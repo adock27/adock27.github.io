@@ -1,4 +1,5 @@
 import { ApiSync } from '../api-sync.js';
+import { Tables } from './Tables.js';
 
 export class Users {
   constructor(app) {
@@ -26,6 +27,7 @@ export class Users {
 
   async render() {
     if (!this.body) return;
+    Tables.begin(this.body);
     this.body.replaceChildren();
     const loading = document.createElement('tr');
     const cell = document.createElement('td'); cell.colSpan = 4; cell.className = 'text-secondary text-center py-3'; cell.textContent = 'Cargando usuarios…'; loading.appendChild(cell); this.body.appendChild(loading);
@@ -37,6 +39,7 @@ export class Users {
         const row = document.createElement('tr'), empty = document.createElement('td');
         empty.colSpan = 4; empty.className = 'text-secondary text-center py-3'; empty.textContent = 'No hay cuentas registradas.'; row.appendChild(empty); this.body.appendChild(row);
       }
+      Tables.end(this.body, { searching: true });
     } catch (error) {
       this.body.replaceChildren();
       const row = document.createElement('tr'), cell = document.createElement('td');

@@ -1,4 +1,5 @@
 import { Storage } from '../storage.js';
+import { Tables } from './Tables.js';
 
 const ORDER_STATUSES = ['Pendiente', 'En producción', 'Listo', 'Entregado', 'Cancelado'];
 
@@ -234,6 +235,7 @@ export class Orders {
 
   render() {
     if (!this.tableBody) return;
+    Tables.begin(this.tableBody);
     const currentMonth = localDateInput().slice(0, 7);
     const open = this.items.filter(item => !['Entregado', 'Cancelado'].includes(item.status));
     const monthCount = this.items.filter(item => String(item.date || '').slice(0, 7) === currentMonth).length;
@@ -258,6 +260,7 @@ export class Orders {
       cell.textContent = this.items.length ? 'No hay pedidos que coincidan con la búsqueda.' : 'Aún no hay pedidos registrados.';
       row.appendChild(cell);
       this.tableBody.appendChild(row);
+      Tables.end(this.tableBody);
       return;
     }
     visible.forEach(order => {
@@ -267,6 +270,7 @@ export class Orders {
         .forEach((value, index) => {
           const cell = document.createElement('td');
           cell.textContent = String(value || '—');
+          if (index === 3) cell.dataset.order = String(order.dueDate || '');
           if (index === 6) cell.innerHTML = `<span class="badge ${statusClass}">${String(value || 'Pendiente')}</span>`;
           row.appendChild(cell);
         });
@@ -308,6 +312,7 @@ export class Orders {
       row.appendChild(actions);
       this.tableBody.appendChild(row);
     });
+    Tables.end(this.tableBody);
   }
 
   formatMoney(value) {

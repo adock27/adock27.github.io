@@ -35,6 +35,7 @@ El listado muestra todos los artículos. Los de stock crítico aparecen primero:
 - **Bajo pedido**: se fabrica al venderse; no descuenta stock de producto terminado.
 
 Usa la búsqueda para localizar artículos y los botones de la fila para editar o eliminar.
+Las tablas de inventario, compras, pedidos, ventas y usuarios permiten ordenar columnas y cambiar la cantidad de filas por página. Las solicitudes al backend muestran una ventana bloqueante mientras cargan o guardan los datos.
 
 ## Registrar una venta
 
@@ -43,6 +44,8 @@ Usa la búsqueda para localizar artículos y los botones de la fila para editar 
 3. Si aún no existe, pulsa **Agregar producto** debajo del selector. Completa el nombre y la existencia inicial; puedes añadir categoría, unidad, mínimo y costo. Pulsa **Agregar y seleccionar** para continuar en el formulario de venta.
 4. Indica fecha, cliente, cantidad, precio de venta unitario y medio de pago. El total se calcula automáticamente.
 5. Pulsa **Guardar venta**. La cantidad vendida se descuenta del inventario.
+
+El historial incluye la columna **Vendedor**, que muestra el correo de la cuenta que registró la venta.
 
 Al editar una venta se ajustan las existencias del producto anterior y del nuevo según corresponda. Al eliminar una venta, la cantidad vendida se devuelve al inventario. No se permite vender más unidades de las disponibles.
 

@@ -1,4 +1,5 @@
 import { Storage } from '../storage.js';
+import { Tables } from './Tables.js';
 
 function localDateInput() {
   const now = new Date();
@@ -239,6 +240,7 @@ export class Sales {
 
   render() {
     if (!this.tableBody) return;
+    Tables.begin(this.tableBody);
     const monthKey = localDateInput().slice(0, 7);
     const monthSales = this.items.filter(sale => String(sale.date || '').slice(0, 7) === monthKey);
     const monthTotal = monthSales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0);
@@ -256,17 +258,18 @@ export class Sales {
     this.tableBody.replaceChildren();
     if (!visible.length) {
       const row = document.createElement('tr'), cell = document.createElement('td');
-      cell.colSpan = 7;
       cell.className = 'text-center text-secondary py-4';
       cell.textContent = this.items.length ? 'No hay ventas que coincidan con la búsqueda.' : 'Aún no hay ventas registradas.';
-      row.appendChild(cell); this.tableBody.appendChild(row); return;
+      cell.colSpan = 8;
+      row.appendChild(cell); this.tableBody.appendChild(row); Tables.end(this.tableBody); return;
     }
     visible.forEach(sale => {
       const row = document.createElement('tr');
       const date = new Date(`${sale.date}T00:00:00`);
-      [Number.isNaN(date.getTime()) ? sale.date : date.toLocaleDateString('es-CO'), sale.productName, sale.clientName || '—', sale.quantity, this.formatMoney(sale.total), sale.paymentMethod || '—']
+      [Number.isNaN(date.getTime()) ? sale.date : date.toLocaleDateString('es-CO'), sale.productName, sale.clientName || '—', sale.createdByEmail || '—', sale.quantity, this.formatMoney(sale.total), sale.paymentMethod || '—']
         .forEach((value, index) => {
           const cell = document.createElement('td'); cell.textContent = String(value);
+          if (index === 0) cell.dataset.order = String(sale.date || '');
           if (index === 1) cell.classList.add('fw-semibold');
           row.appendChild(cell);
         });
@@ -291,6 +294,7 @@ export class Sales {
       });
       actions.append(edit, remove); row.appendChild(actions); this.tableBody.appendChild(row);
     });
+    Tables.end(this.tableBody);
   }
 
   formatMoney(value) {

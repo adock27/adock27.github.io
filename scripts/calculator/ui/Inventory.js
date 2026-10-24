@@ -1,4 +1,5 @@
 import { Storage } from '../storage.js';
+import { Tables } from './Tables.js';
 
 export class Inventory {
   constructor(app) {
@@ -81,6 +82,7 @@ export class Inventory {
 
   render() {
     if (!this.tableBody) return;
+    Tables.begin(this.tableBody);
     const query = (this.searchInput?.value || '').trim().toLowerCase();
     const isLowStock = item => {
       if (item.productType === 'on_demand') return false;
@@ -110,6 +112,7 @@ export class Inventory {
       cell.textContent = this.items.length ? 'No hay artículos que coincidan con la búsqueda.' : 'Aún no tienes artículos en el inventario.';
       row.appendChild(cell);
       this.tableBody.appendChild(row);
+      Tables.end(this.tableBody);
       return;
     }
     visibleItems.forEach(item => {
@@ -150,6 +153,7 @@ export class Inventory {
       row.appendChild(actions);
       this.tableBody.appendChild(row);
     });
+    Tables.end(this.tableBody);
   }
 
   formatMoney(amount) {

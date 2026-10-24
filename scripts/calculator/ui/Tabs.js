@@ -1,3 +1,5 @@
+import { Tables } from './Tables.js';
+
 export class Tabs {
   constructor(app) {
     this.app = app;
@@ -49,5 +51,6 @@ export class Tabs {
     if (targetId === 'tab-quote' && this.app.quote) {
       this.app.quote.updateQuotePreview();
     }
+    requestAnimationFrame(() => Tables.adjustVisible());
   }
 }
