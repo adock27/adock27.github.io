@@ -80,6 +80,25 @@ export class Inventory {
     });
   }
 
+  quickSell(item) {
+    const sales = this.app.salesModule;
+    if (!sales) return this.app.showToast('El módulo de ventas todavía no está disponible.', 'error');
+    sales.openForm();
+    const select = document.getElementById('saleInventoryId');
+    if (select) select.value = String(item.id);
+    sales.updateInventoryHint();
+    sales.updateTotalPreview();
+  }
+
+  quickOrder(item) {
+    const orders = this.app.ordersModule;
+    if (!orders) return this.app.showToast('El módulo de pedidos todavía no está disponible.', 'error');
+    orders.openForm();
+    const select = document.getElementById('orderInventoryId');
+    if (select) select.value = String(item.id);
+    orders.toggleCustomProduct();
+  }
+
   render() {
     if (!this.tableBody) return;
     Tables.begin(this.tableBody);
@@ -136,6 +155,21 @@ export class Inventory {
       });
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
+      const sell = document.createElement('button');
+      sell.type = 'button';
+      sell.className = 'btn btn-sm btn-outline-success me-1';
+      sell.title = 'Registrar venta de este producto';
+      sell.setAttribute('aria-label', `Vender ${item.name}`);
+      sell.innerHTML = '<i class="bi bi-cash-coin" aria-hidden="true"></i>';
+      sell.disabled = item.productType === 'stock' && quantity <= 0;
+      sell.addEventListener('click', () => this.quickSell(item));
+      const order = document.createElement('button');
+      order.type = 'button';
+      order.className = 'btn btn-sm btn-outline-primary me-1';
+      order.title = 'Crear pedido de este producto';
+      order.setAttribute('aria-label', `Crear pedido para ${item.name}`);
+      order.innerHTML = '<i class="bi bi-clipboard-plus" aria-hidden="true"></i>';
+      order.addEventListener('click', () => this.quickOrder(item));
       const edit = document.createElement('button');
       edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.title = 'Editar'; edit.innerHTML = '<i class="bi bi-pencil"></i>';
       edit.classList.toggle('d-none', !this.app.isAdmin);
@@ -150,7 +184,7 @@ export class Inventory {
         this.persist();
         this.app.showToast('Artículo eliminado', 'info');
       });
-      actions.append(edit, remove);
+      actions.append(sell, order, edit, remove);
       row.appendChild(actions);
       this.tableBody.appendChild(row);
     });
