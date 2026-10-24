@@ -10,11 +10,13 @@ import { Extras } from './ui/Extras.js';
 import { Results } from './ui/Results.js';
 import { Quote } from './ui/Quote.js';
 import { Settings } from './ui/Settings.js';
+import { Inventory } from './ui/Inventory.js';
 
 class CalculatorApp {
   constructor(initialData = {}) {
     this.config = initialData.config || Storage.loadConfig();
     this.presets = initialData.presets || Storage.loadPresets();
+    this.inventory = initialData.inventory || Storage.loadInventory();
     
     this.currentJob = {
       projectName: 'Llavero Personalizado',
@@ -56,6 +58,7 @@ class CalculatorApp {
     this.results = new Results(this);
     this.quote = new Quote(this);
     this.settings = new Settings(this);
+    this.inventoryModule = new Inventory(this);
 
     // Initial renders
     this.presetsComponent.render();
@@ -235,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!ApiSync.getSession()?.token) return;
   const localConfig = Storage.loadConfig();
   const localPresets = Storage.loadPresets();
-  const remote = await ApiSync.load(localConfig, localPresets);
+  const remote = await ApiSync.load(localConfig, localPresets, Storage.loadInventory());
   window.calcApp = new CalculatorApp(remote);
   if (!remote.connected) window.calcApp.showToast('Conexión al backend no disponible; usando datos locales.', 'info');
   window.addEventListener('calculator-api-sync-error', () => {

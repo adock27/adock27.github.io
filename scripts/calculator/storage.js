@@ -7,6 +7,7 @@ import { ApiSync } from './api-sync.js';
 
 const STORAGE_KEY = 'calc3d_config_v2';
 const PRESETS_KEY = 'calc3d_presets_v2';
+const INVENTORY_KEY = 'calc3d_inventory_v1';
 
 export const DEFAULT_CONFIG = {
   version: 2,
@@ -126,7 +127,7 @@ export const Storage = {
   saveConfig(config) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      ApiSync.schedule();
+      ApiSync.schedule('config');
       return true;
     } catch (e) {
       console.error('Error guardando configuración:', e);
@@ -141,7 +142,7 @@ export const Storage = {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CONFIG));
-      ApiSync.schedule();
+      ApiSync.schedule('config');
       return { ...DEFAULT_CONFIG };
     } catch (e) {
       console.error(e);
@@ -164,6 +165,29 @@ export const Storage = {
     }
   },
 
+  loadInventory() {
+    try {
+      const raw = localStorage.getItem(INVENTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Error cargando inventario:', e);
+      return [];
+    }
+  },
+
+  saveInventory(items) {
+    try {
+      localStorage.setItem(INVENTORY_KEY, JSON.stringify(items));
+      ApiSync.schedule('inventory');
+      return true;
+    } catch (e) {
+      console.error('Error guardando inventario:', e);
+      return false;
+    }
+  },
+
   /**
    * Guarda un nuevo preset o actualiza uno existente.
    * @param {Object} preset
@@ -181,7 +205,7 @@ export const Storage = {
         });
       }
       localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-      ApiSync.schedule();
+      ApiSync.schedule('presets');
       return presets;
     } catch (e) {
       console.error('Error guardando preset:', e);
@@ -197,7 +221,7 @@ export const Storage = {
     try {
       const presets = this.loadPresets().filter(p => p.id !== presetId);
       localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-      ApiSync.schedule();
+      ApiSync.schedule('presets');
       return presets;
     } catch (e) {
       console.error('Error eliminando preset:', e);
@@ -213,7 +237,8 @@ export const Storage = {
       version: 2,
       exportDate: new Date().toISOString(),
       config: this.loadConfig(),
-      presets: this.loadPresets()
+      presets: this.loadPresets(),
+      inventory: this.loadInventory()
     }, null, 2);
   },
 
@@ -227,6 +252,8 @@ export const Storage = {
       if (!data || typeof data !== 'object') throw new Error('Formato inválido');
       if (data.config) this.saveConfig(data.config);
       if (Array.isArray(data.presets)) localStorage.setItem(PRESETS_KEY, JSON.stringify(data.presets));
+      if (Array.isArray(data.inventory)) this.saveInventory(data.inventory);
+      ApiSync.schedule('all');
       return true;
     } catch (e) {
       console.error('Error importando copia de seguridad:', e);

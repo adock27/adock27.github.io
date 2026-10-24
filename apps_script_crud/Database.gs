@@ -27,7 +27,8 @@ var DB_SCHEMAS = {
   Extras: ['id', 'userId', 'name', 'defaultCost', 'category', 'createdAt', 'updatedAt'],
   Presets: ['id', 'userId', 'name', 'description', 'materialId', 'grams', 'hours', 'minutes', 'laborMinutes', 'extrasJson', 'createdAt', 'updatedAt'],
   Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt'],
-  Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt']
+  Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt'],
+  Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt']
 };
 
 function getSpreadsheet_() {
@@ -109,6 +110,7 @@ function doPost(e) {
     else if (entity === 'presets') result = handlePresets_(body);
     else if (entity === 'configuracion') result = handleConfig_(body);
     else if (entity === 'cotizaciones') result = handleQuotes_(body);
+    else if (entity === 'inventario') result = handleInventory_(body);
     else throw new Error('Entidad inválida.');
     return jsonResponse_({ ok: true, data: result });
   } catch (err) {

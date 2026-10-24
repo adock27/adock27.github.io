@@ -113,6 +113,11 @@
             <i class="bi bi-gear me-1"></i> Configuración & Catálogos
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-inventory">
+            <i class="bi bi-box-seam me-1"></i> Inventario
+          </a>
+        </li>
       </ul>
     </div>
 
@@ -545,6 +550,59 @@ Generando cotización...
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- VISTA 4: INVENTARIO -->
+  <div id="tab-inventory" class="tab-pane-view d-none">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-box-seam text-success me-2"></i>Inventario</h4>
+        <p class="text-secondary small mb-0">Controla insumos, existencias, costos y niveles mínimos de stock.</p>
+      </div>
+      <button type="button" id="btnAddInventoryItem" class="btn btn-success rounded-pill px-4">
+        <i class="bi bi-plus-lg me-1"></i> Añadir artículo
+      </button>
+    </div>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Artículos</div><div id="inventoryItemCount" class="fs-3 fw-bold">0</div></div></div>
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Artículos con stock bajo</div><div id="inventoryLowCount" class="fs-3 fw-bold text-warning">0</div></div></div>
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Valor estimado del inventario</div><div id="inventoryTotalValue" class="fs-3 fw-bold">$0</div></div></div>
+    </div>
+    <div class="card border-0 shadow-sm p-3 p-md-4 bg-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <h5 class="fw-bold mb-0">Artículos y existencias</h5>
+        <input type="search" id="inventorySearch" class="form-control form-control-sm" placeholder="Buscar artículo…" style="max-width: 280px;">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr class="small text-secondary"><th>Artículo</th><th>Categoría</th><th>Existencia</th><th>Mínimo</th><th>Costo unitario</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+          <tbody id="inventoryTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="inventoryItemModal" tabindex="-1" aria-labelledby="inventoryModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+      <form id="inventoryItemForm">
+        <div class="modal-header"><h5 class="modal-title fw-bold" id="inventoryModalTitle">Añadir artículo</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="inventoryItemId">
+          <div class="mb-3"><label for="inventoryName" class="form-label small fw-semibold">Nombre *</label><input id="inventoryName" class="form-control" maxlength="100" required></div>
+          <div class="row g-3 mb-3">
+            <div class="col-6"><label for="inventoryCategory" class="form-label small fw-semibold">Categoría</label><input id="inventoryCategory" class="form-control" placeholder="Filamento, herrajes…"></div>
+            <div class="col-6"><label for="inventoryUnit" class="form-label small fw-semibold">Unidad</label><select id="inventoryUnit" class="form-select"><option>unidades</option><option>gramos</option><option>kg</option><option>metros</option><option>ml</option><option>litros</option></select></div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-4"><label for="inventoryQuantity" class="form-label small fw-semibold">Existencia</label><input id="inventoryQuantity" type="number" min="0" step="any" class="form-control" value="0" required></div>
+            <div class="col-4"><label for="inventoryMinQuantity" class="form-label small fw-semibold">Stock mínimo</label><input id="inventoryMinQuantity" type="number" min="0" step="any" class="form-control" value="0"></div>
+            <div class="col-4"><label for="inventoryUnitCost" class="form-label small fw-semibold">Costo c/u</label><input id="inventoryUnitCost" type="number" min="0" step="any" class="form-control" value="0"></div>
+          </div>
+          <div><label for="inventoryNotes" class="form-label small fw-semibold">Notas</label><textarea id="inventoryNotes" class="form-control" rows="2" maxlength="300"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success rounded-pill px-4">Guardar</button></div>
+      </form>
+    </div></div>
   </div>
 
   <div class="modal fade" id="initialSetupModal" tabindex="-1" aria-labelledby="initialSetupTitle" aria-hidden="true">
