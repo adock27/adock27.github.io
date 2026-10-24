@@ -18,6 +18,11 @@ export const Auth = {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const message = document.getElementById('authMessage');
+    document.getElementById('authRetry')?.addEventListener('click', () => window.location.reload());
+    document.getElementById('authClearSession')?.addEventListener('click', () => {
+      ApiSync.clearSession();
+      window.location.reload();
+    });
     const showMessage = (text, type = 'danger') => {
       if (!message) return;
       message.className = `alert alert-${type} py-2 small`;
@@ -36,18 +41,10 @@ export const Auth = {
     });
     document.getElementById('btnLogout')?.addEventListener('click', () => {
       ApiSync.clearSession();
-      localStorage.removeItem('calc3d_config_v2');
-      localStorage.removeItem('calc3d_presets_v2');
-      localStorage.removeItem('calc3d_inventory_v1');
-      localStorage.removeItem('calc3d_sales_v1');
       window.location.reload();
     });
     window.addEventListener('calculator-auth-expired', () => {
       ApiSync.clearSession();
-      localStorage.removeItem('calc3d_config_v2');
-      localStorage.removeItem('calc3d_presets_v2');
-      localStorage.removeItem('calc3d_inventory_v1');
-      localStorage.removeItem('calc3d_sales_v1');
       window.location.reload();
     });
 
@@ -82,5 +79,18 @@ export const Auth = {
         showMessage(error.message || 'No se pudo crear la cuenta.');
       } finally { button.disabled = false; }
     });
+  },
+
+  showConnectionError(error) {
+    document.getElementById('calculatorAppShell')?.classList.add('d-none');
+    document.getElementById('authScreen')?.classList.remove('d-none');
+    document.getElementById('loginForm')?.classList.add('d-none');
+    document.getElementById('registerForm')?.classList.add('d-none');
+    const message = document.getElementById('authMessage');
+    if (message) {
+      message.className = 'alert alert-danger py-2 small';
+      message.textContent = `No se pudieron cargar tus datos desde el backend. ${error?.message || 'Verifica la conexión y la implementación de Apps Script.'}`;
+    }
+    document.getElementById('authConnectionActions')?.classList.remove('d-none');
   }
 };

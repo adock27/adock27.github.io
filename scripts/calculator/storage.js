@@ -5,10 +5,8 @@ import { ApiSync } from './api-sync.js';
  * Maneja persistencia, catálogos dinámicos (materiales, extras), presets y copias de seguridad.
  */
 
-const STORAGE_KEY = 'calc3d_config_v2';
-const PRESETS_KEY = 'calc3d_presets_v2';
-const INVENTORY_KEY = 'calc3d_inventory_v1';
-const SALES_KEY = 'calc3d_sales_v1';
+const cloneData = value => JSON.parse(JSON.stringify(value));
+const runtimeData = { config: null, presets: null, inventory: null, sales: null };
 
 export const DEFAULT_CONFIG = {
   version: 2,
@@ -98,27 +96,17 @@ export const DEFAULT_PRESETS = [
 ];
 
 export const Storage = {
+  setSnapshot(snapshot = {}) {
+    ['config', 'presets', 'inventory', 'sales'].forEach(key => {
+      if (Object.prototype.hasOwnProperty.call(snapshot, key)) runtimeData[key] = cloneData(snapshot[key]);
+    });
+  },
+
   /**
-   * Carga la configuración combinando defaults y valores en localStorage.
+   * Devuelve configuración cargada en memoria desde backend, o valores iniciales antes de autenticar.
    */
   loadConfig() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { ...DEFAULT_CONFIG };
-
-      const parsed = JSON.parse(raw);
-      // Migración o combinación limpia de arrays
-      return {
-        ...DEFAULT_CONFIG,
-        ...parsed,
-        materials: (parsed.materials && parsed.materials.length > 0) ? parsed.materials : DEFAULT_CONFIG.materials,
-        extrasCatalog: (parsed.extrasCatalog && parsed.extrasCatalog.length > 0) ? parsed.extrasCatalog : DEFAULT_CONFIG.extrasCatalog,
-        pricingTiers: (parsed.pricingTiers && parsed.pricingTiers.length > 0) ? parsed.pricingTiers : DEFAULT_CONFIG.pricingTiers
-      };
-    } catch (e) {
-      console.error('Error cargando configuración, usando defaults:', e);
-      return { ...DEFAULT_CONFIG };
-    }
+    return runtimeData.config === null ? cloneData(DEFAULT_CONFIG) : cloneData(runtimeData.config);
   },
 
   /**
@@ -126,90 +114,49 @@ export const Storage = {
    * @param {Object} config
    */
   saveConfig(config) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      ApiSync.schedule('config');
-      return true;
-    } catch (e) {
-      console.error('Error guardando configuración:', e);
-      return false;
-    }
+    runtimeData.config = cloneData(config);
+    ApiSync.setSnapshot({ config: runtimeData.config });
+    ApiSync.schedule('config');
+    return true;
   },
 
   /**
    * Restablece la configuración original de fábrica.
    */
   resetConfig() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CONFIG));
-      ApiSync.schedule('config');
-      return { ...DEFAULT_CONFIG };
-    } catch (e) {
-      console.error(e);
-      return { ...DEFAULT_CONFIG };
-    }
+    runtimeData.config = cloneData(DEFAULT_CONFIG);
+    ApiSync.setSnapshot({ config: runtimeData.config });
+    ApiSync.schedule('config');
+    return cloneData(runtimeData.config);
   },
 
   /**
    * Carga la lista de presets guardados.
    */
   loadPresets() {
-    try {
-      const raw = localStorage.getItem(PRESETS_KEY);
-      if (!raw) return [...DEFAULT_PRESETS];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : [...DEFAULT_PRESETS];
-    } catch (e) {
-      console.error('Error cargando presets:', e);
-      return [...DEFAULT_PRESETS];
-    }
+    return runtimeData.presets === null ? cloneData(DEFAULT_PRESETS) : cloneData(runtimeData.presets);
   },
 
   loadInventory() {
-    try {
-      const raw = localStorage.getItem(INVENTORY_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.error('Error cargando inventario:', e);
-      return [];
-    }
+    return runtimeData.inventory === null ? [] : cloneData(runtimeData.inventory);
   },
 
   saveInventory(items) {
-    try {
-      localStorage.setItem(INVENTORY_KEY, JSON.stringify(items));
-      ApiSync.schedule('inventory');
-      return true;
-    } catch (e) {
-      console.error('Error guardando inventario:', e);
-      return false;
-    }
+    runtimeData.inventory = cloneData(items);
+    ApiSync.setSnapshot({ inventory: runtimeData.inventory });
+    ApiSync.schedule('inventory');
+    return true;
   },
 
   loadSales() {
-    try {
-      const raw = localStorage.getItem(SALES_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.error('Error cargando ventas:', e);
-      return [];
-    }
+    return runtimeData.sales === null ? [] : cloneData(runtimeData.sales);
   },
 
   saveSales(items) {
-    try {
-      localStorage.setItem(SALES_KEY, JSON.stringify(items));
-      ApiSync.schedule('sales');
-      return true;
-    } catch (e) {
-      console.error('Error guardando ventas:', e);
-      return false;
-    }
+    runtimeData.sales = cloneData(items);
+    ApiSync.setSnapshot({ sales: runtimeData.sales });
+    ApiSync.schedule('sales');
+    return true;
   },
 
   /**
@@ -217,24 +164,14 @@ export const Storage = {
    * @param {Object} preset
    */
   savePreset(preset) {
-    try {
-      const presets = this.loadPresets();
-      const existingIdx = presets.findIndex(p => p.id === preset.id);
-      if (existingIdx >= 0) {
-        presets[existingIdx] = preset;
-      } else {
-        presets.push({
-          ...preset,
-          id: preset.id || 'preset_' + Date.now()
-        });
-      }
-      localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-      ApiSync.schedule('presets');
-      return presets;
-    } catch (e) {
-      console.error('Error guardando preset:', e);
-      return null;
-    }
+    const presets = this.loadPresets();
+    const existingIdx = presets.findIndex(p => p.id === preset.id);
+    if (existingIdx >= 0) presets[existingIdx] = preset;
+    else presets.push({ ...preset, id: preset.id || 'preset_' + Date.now() });
+    runtimeData.presets = presets;
+    ApiSync.setSnapshot({ presets });
+    ApiSync.schedule('presets');
+    return presets;
   },
 
   /**
@@ -242,28 +179,25 @@ export const Storage = {
    * @param {string} presetId
    */
   deletePreset(presetId) {
-    try {
-      const presets = this.loadPresets().filter(p => p.id !== presetId);
-      localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-      ApiSync.schedule('presets');
-      return presets;
-    } catch (e) {
-      console.error('Error eliminando preset:', e);
-      return null;
-    }
+    const presets = this.loadPresets().filter(p => p.id !== presetId);
+    runtimeData.presets = presets;
+    ApiSync.setSnapshot({ presets });
+    ApiSync.schedule('presets');
+    return presets;
   },
 
   /**
    * Exporta toda la configuración y presets en un JSON.
    */
   exportBackup() {
+    const data = ApiSync.getSnapshot();
     return JSON.stringify({
       version: 2,
       exportDate: new Date().toISOString(),
-      config: this.loadConfig(),
-      presets: this.loadPresets(),
-      inventory: this.loadInventory(),
-      sales: this.loadSales()
+      config: data.config || this.loadConfig(),
+      presets: data.presets || this.loadPresets(),
+      inventory: data.inventory || this.loadInventory(),
+      sales: data.sales || this.loadSales()
     }, null, 2);
   },
 
@@ -275,10 +209,15 @@ export const Storage = {
     try {
       const data = JSON.parse(jsonString);
       if (!data || typeof data !== 'object') throw new Error('Formato inválido');
-      if (data.config) this.saveConfig(data.config);
-      if (Array.isArray(data.presets)) localStorage.setItem(PRESETS_KEY, JSON.stringify(data.presets));
-      if (Array.isArray(data.inventory)) this.saveInventory(data.inventory);
-      if (Array.isArray(data.sales)) this.saveSales(data.sales);
+      const current = ApiSync.getSnapshot();
+      const next = {
+        config: data.config || current.config,
+        presets: Array.isArray(data.presets) ? data.presets : current.presets,
+        inventory: Array.isArray(data.inventory) ? data.inventory : current.inventory,
+        sales: Array.isArray(data.sales) ? data.sales : current.sales
+      };
+      this.setSnapshot(next);
+      ApiSync.setSnapshot(next);
       ApiSync.schedule('all');
       return true;
     } catch (e) {

@@ -241,10 +241,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!ApiSync.getSession()?.token) return;
   const localConfig = Storage.loadConfig();
   const localPresets = Storage.loadPresets();
-  const remote = await ApiSync.load(localConfig, localPresets, Storage.loadInventory(), Storage.loadSales());
+  let remote;
+  try {
+    remote = await ApiSync.load({
+      config: localConfig,
+      presets: localPresets,
+      inventory: Storage.loadInventory(),
+      sales: Storage.loadSales()
+    });
+  } catch (error) {
+    Auth.showConnectionError(error);
+    return;
+  }
+  Storage.setSnapshot(remote);
   window.calcApp = new CalculatorApp(remote);
-  if (!remote.connected) window.calcApp.showToast('Conexión al backend no disponible; usando datos locales.', 'info');
+  const saveStatus = document.getElementById('backendSaveStatus');
+  const setSaveStatus = (label, state) => {
+    if (!saveStatus) return;
+    saveStatus.textContent = label;
+    saveStatus.className = `badge rounded-pill d-none d-md-inline ${state === 'error' ? 'text-bg-danger' : state === 'pending' ? 'text-bg-warning' : 'text-bg-success'}`;
+  };
+  window.addEventListener('calculator-api-sync-start', () => setSaveStatus('Guardando…', 'pending'));
+  window.addEventListener('calculator-api-sync-success', () => setSaveStatus('Guardado en backend', 'success'));
   window.addEventListener('calculator-api-sync-error', () => {
-    window.calcApp?.showToast('No se pudo sincronizar con Apps Script; los cambios siguen guardados localmente.', 'error');
+    setSaveStatus('Error al guardar', 'error');
+    window.calcApp?.showToast('No se pudo guardar en el backend. Revisa la conexión antes de continuar.', 'error');
   });
 });

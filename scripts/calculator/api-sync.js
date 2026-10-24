@@ -1,13 +1,11 @@
-// Sincronización con Google Apps Script; localStorage conserva una copia local.
+// Persistencia remota de todos los datos de la calculadora en Google Apps Script.
 const API_URL = 'https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ6CTe2fjdl1dDyoUfCtnBUngv5a069JAldSfGakdRdsa5/exec';
-const CONFIG_KEY = 'calc3d_config_v2';
-const PRESETS_KEY = 'calc3d_presets_v2';
-const INVENTORY_KEY = 'calc3d_inventory_v1';
-const SALES_KEY = 'calc3d_sales_v1';
 const SESSION_KEY = 'calc3d_session_v1';
+const LEGACY_KEYS = ['calc3d_config_v2', 'calc3d_presets_v2', 'calc3d_inventory_v1', 'calc3d_sales_v1'];
 let syncTimer = null;
 let syncing = Promise.resolve();
 const pendingScopes = new Set();
+let snapshot = { config: null, presets: null, inventory: null, sales: null };
 
 async function request(entity, action, fields = {}) {
   const session = ApiSync.getSession();
@@ -22,36 +20,55 @@ async function request(entity, action, fields = {}) {
   return result.data;
 }
 
-function localSnapshot() {
-  let config = {}, presets = [], inventory = [], sales = [];
-  try { config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch (_) { /* usa defaults */ }
-  try { presets = JSON.parse(localStorage.getItem(PRESETS_KEY) || '[]'); } catch (_) { /* usa lista vacía */ }
-  try { inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '[]'); } catch (_) { /* usa lista vacía */ }
-  try { sales = JSON.parse(localStorage.getItem(SALES_KEY) || '[]'); } catch (_) { /* usa lista vacía */ }
-  return { config, presets, inventory, sales };
-}
-
 async function replaceCollection(entity, items) {
   const userId = ApiSync.getSession()?.id;
   const remote = await request(entity, 'list', { userId });
   const remoteById = new Map(remote.map(item => [String(item.id), item]));
-  const localIds = new Set();
+  const currentIds = new Set();
   for (const item of items) {
     const id = String(item.id || '');
     if (!id) continue;
-    localIds.add(id);
+    currentIds.add(id);
     if (remoteById.has(id)) await request(entity, 'update', { ...item, userId, id });
     else await request(entity, 'create', { ...item, userId, id });
   }
   for (const item of remote) {
-    if (!localIds.has(String(item.id))) await request(entity, 'delete', { id: item.id, userId });
+    if (!currentIds.has(String(item.id))) await request(entity, 'delete', { id: item.id, userId });
   }
 }
 
-async function pushSnapshot(scopes) {
-  const { config, presets, inventory, sales } = localSnapshot();
+function readLegacyData(defaults) {
+  const read = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; }
+    catch (_) { return fallback; }
+  };
+  const oldConfig = read(LEGACY_KEYS[0], null);
+  const config = oldConfig && typeof oldConfig === 'object' ? {
+    ...defaults.config,
+    ...oldConfig,
+    materials: Array.isArray(oldConfig.materials) && oldConfig.materials.length ? oldConfig.materials : defaults.config.materials,
+    extrasCatalog: Array.isArray(oldConfig.extrasCatalog) && oldConfig.extrasCatalog.length ? oldConfig.extrasCatalog : defaults.config.extrasCatalog,
+    pricingTiers: Array.isArray(oldConfig.pricingTiers) && oldConfig.pricingTiers.length ? oldConfig.pricingTiers : defaults.config.pricingTiers
+  } : defaults.config;
+  const oldPresets = read(LEGACY_KEYS[1], defaults.presets);
+  const oldInventory = read(LEGACY_KEYS[2], defaults.inventory);
+  const oldSales = read(LEGACY_KEYS[3], defaults.sales);
+  return {
+    config,
+    presets: Array.isArray(oldPresets) && oldPresets.length ? oldPresets : defaults.presets,
+    inventory: Array.isArray(oldInventory) ? oldInventory : defaults.inventory,
+    sales: Array.isArray(oldSales) ? oldSales : defaults.sales
+  };
+}
+
+function clearLegacyData() {
+  LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
+}
+
+async function pushSnapshot(scopes, current = snapshot) {
+  const { config, presets, inventory, sales } = current;
   const userId = ApiSync.getSession()?.id;
-  if (!userId) throw new Error('Inicia sesión para sincronizar.');
+  if (!userId) throw new Error('Inicia sesión para guardar los datos.');
   const all = scopes.has('all');
   if (all || scopes.has('config')) {
     await request('configuracion', 'save', { userId, data: config });
@@ -67,6 +84,12 @@ export const ApiSync = {
   getSession() {
     try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); }
     catch (_) { return null; }
+  },
+
+  getSnapshot() { return JSON.parse(JSON.stringify(snapshot)); },
+
+  setSnapshot(data = {}) {
+    snapshot = { ...snapshot, ...JSON.parse(JSON.stringify(data)) };
   },
 
   saveSession(session) { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); },
@@ -88,7 +111,7 @@ export const ApiSync = {
     return request('materiales', 'list', { userId: this.getSession()?.id });
   },
 
-  async load(localConfig, localPresets, localInventory = [], localSales = []) {
+  async load(defaults) {
     try {
       const userId = this.getSession()?.id;
       if (!userId) throw new Error('Inicia sesión para cargar tus datos.');
@@ -103,31 +126,35 @@ export const ApiSync = {
       const remoteConfig = remoteConfigRecord?.data;
       const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length);
       if (!hasRemoteData) {
-        localStorage.setItem(CONFIG_KEY, JSON.stringify(localConfig));
-        localStorage.setItem(PRESETS_KEY, JSON.stringify(localPresets));
-        localStorage.setItem(INVENTORY_KEY, JSON.stringify(localInventory));
-        localStorage.setItem(SALES_KEY, JSON.stringify(localSales));
-        this.schedule(); // Migra los datos locales iniciales a la cuenta.
-        return { config: localConfig, presets: localPresets, inventory: localInventory, sales: localSales, connected: true };
+        const initial = readLegacyData(defaults);
+        this.setSnapshot(initial);
+        await pushSnapshot(new Set(['all']), this.getSnapshot());
+        clearLegacyData();
+        return { ...this.getSnapshot(), connected: true };
       }
+      const legacy = remoteConfigRecord ? defaults : readLegacyData(defaults);
       const config = {
-        ...localConfig,
+        ...legacy.config,
         ...(remoteConfig || {}),
-        materials: remoteConfigRecord ? materials : (materials.length ? materials : localConfig.materials),
-        extrasCatalog: remoteConfigRecord ? extras : (extras.length ? extras : localConfig.extrasCatalog)
+        materials: remoteConfigRecord ? materials : (materials.length ? materials : legacy.config.materials),
+        extrasCatalog: remoteConfigRecord ? extras : (extras.length ? extras : legacy.config.extrasCatalog)
       };
-      const finalPresets = remoteConfigRecord ? presets : (presets.length ? presets : localPresets);
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-      localStorage.setItem(PRESETS_KEY, JSON.stringify(finalPresets));
-      localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-      localStorage.setItem(SALES_KEY, JSON.stringify(sales));
-      return { config, presets: finalPresets, inventory, sales, connected: true };
+      const loaded = {
+        config,
+        presets: remoteConfigRecord ? presets : (presets.length ? presets : legacy.presets),
+        inventory: remoteConfigRecord || inventory.length ? inventory : legacy.inventory,
+        sales: remoteConfigRecord || sales.length ? sales : legacy.sales
+      };
+      this.setSnapshot(loaded);
+      if (!remoteConfigRecord) await pushSnapshot(new Set(['all']), this.getSnapshot());
+      clearLegacyData();
+      return { ...this.getSnapshot(), connected: true };
     } catch (error) {
-      console.warn('Apps Script no disponible; se usará el almacenamiento local.', error);
+      console.error('No se pudieron cargar los datos desde Apps Script.', error);
       if (/sesión|cuenta ya no existe|no autorizado/i.test(error.message || '')) {
         window.dispatchEvent(new Event('calculator-auth-expired'));
       }
-      return { config: localConfig, presets: localPresets, inventory: localInventory, sales: localSales, connected: false };
+      throw error;
     }
   },
 
@@ -137,8 +164,12 @@ export const ApiSync = {
     syncTimer = setTimeout(() => {
       const scopes = new Set(pendingScopes);
       pendingScopes.clear();
-      syncing = syncing.then(() => pushSnapshot(scopes)).catch(error => {
-        console.warn('No se pudo sincronizar con Apps Script.', error);
+      syncing = syncing.then(async () => {
+        window.dispatchEvent(new Event('calculator-api-sync-start'));
+        await pushSnapshot(scopes);
+        window.dispatchEvent(new Event('calculator-api-sync-success'));
+      }).catch(error => {
+        console.error('No se pudo guardar en Apps Script.', error);
         window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: error }));
       });
     }, 700);

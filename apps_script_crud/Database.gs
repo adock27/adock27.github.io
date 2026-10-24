@@ -79,7 +79,11 @@ function writeRecord_(sheetName, rowNumber, record) {
 function publicRecord_(sheetName, record) {
   var output = {};
   Object.keys(record).forEach(function (key) {
-    if (key.charAt(0) !== '_' && key !== 'passwordHash' && key !== 'salt' && key !== 'dataJson' && key !== 'payloadJson' && key !== 'extrasJson') output[key] = record[key];
+    if (key.charAt(0) !== '_' && key !== 'passwordHash' && key !== 'salt' && key !== 'dataJson' && key !== 'payloadJson' && key !== 'extrasJson') {
+      output[key] = sheetName === 'Ventas' && key === 'date' && record[key] instanceof Date
+        ? Utilities.formatDate(record[key], Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        : record[key];
+    }
   });
   if (record.dataJson) output.data = parseJson_(record.dataJson, {});
   if (record.payloadJson) output.data = parseJson_(record.payloadJson, {});

@@ -61,6 +61,6 @@ El módulo de ventas guarda fecha, producto/servicio, cliente, cantidad, precio 
 
 ## Conexión con el frontend
 
-La calculadora ahora usa `scripts/calculator/api-sync.js` para cargar configuración, materiales, extras, presets, inventario y ventas desde Apps Script y sincronizar cambios. Allí se configura `API_URL`; sustituye su valor por la URL `/exec` de tu implementación si cambia. El frontend conserva `localStorage` como respaldo.
+La calculadora carga y guarda configuración, materiales, extras, presets, inventario y ventas directamente en Apps Script. `sessionStorage` solo mantiene el token de acceso de la sesión. Al primer acceso, la app migra cualquier dato legado de `localStorage` a una cuenta vacía y luego elimina esas claves; el uso normal no persiste datos de negocio en el navegador. Si el backend falla, muestra el error y no confirma los cambios como guardados.
 
 Después de copiar o actualizar los archivos `.gs`, crea una **nueva versión** de la aplicación web. Luego publica los cambios del frontend en tu sitio. Los cambios de la API no estarán activos en la URL `/exec` hasta actualizar la implementación.

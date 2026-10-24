@@ -10,7 +10,7 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - Gestionar materiales y sus propiedades (colores, precio por kg) con soporte multi-color (AMS).
 - Administrar costos de insumos extra (imanes, tornillos, empaques).
 - Generar cotizaciones estructuradas y listas para compartir con clientes (ej. vía WhatsApp).
-- Configurar y guardar preferencias y catálogos en el navegador o exportarlos como respaldo (JSON).
+- Configurar y guardar preferencias, catálogos, presets, inventario y ventas en Google Sheets mediante Apps Script, con exportación e importación JSON como respaldo manual.
 
 ## 2. Requerimientos Funcionales (RF)
 
@@ -60,14 +60,14 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - En escritorio, el catálogo de filamentos y la lista de ranuras AMS se limitan a 45vh y tienen scroll vertical propio para evitar que muchos elementos alarguen la página. En móviles, el catálogo se muestra en un panel inferior desplazable; la lista de ranuras conserva el flujo normal de la página.
 - La sección «Insumos, Herrajes y Extras» debe presentarse como un desplegable inicialmente cerrado para mantener compacta la vista de la calculadora; al abrirlo, muestra los controles de cantidades existentes.
 - La moneda de trabajo es configurable (COP, USD, MXN, EUR, PEN, CLP, ARS, BRL, CAD y GBP) y se aplica al resumen, cotizaciones, costos unitarios y catálogos. Cambiar la moneda no convierte los valores guardados; la interfaz debe pedir que se revisen tarifas, filamentos y extras.
-- En el primer uso se ofrece un asistente para configurar moneda, electricidad, consumo de máquina, desgaste, mano de obra, márgenes de fallo y purga y redondeo. La configuración se guarda localmente; si se pospone, se muestra un acceso para retomarla y también se puede editar desde Configuración.
+- En el primer uso se ofrece un asistente para configurar moneda, electricidad, consumo de máquina, desgaste, mano de obra, márgenes de fallo y purga y redondeo. La configuración se guarda en el backend; si se pospone, se muestra un acceso para retomarla y también se puede editar desde Configuración.
 
 ### RNF-2: Rendimiento
 - Los cálculos matemáticos deben actualizar la interfaz (resumen económico, gráficas) de manera instantánea (en tiempo real) sin necesidad de recargar la página.
 
 ### RNF-3: Persistencia de Datos
-- La aplicación funcionará del lado del cliente (Client-side).
-- Los datos (catálogos, configuraciones, presets) deben persistir localmente en el navegador usando `localStorage` o `IndexedDB` para no perder la información entre sesiones.
+- La aplicación usa Google Apps Script como backend y Google Sheets como almacenamiento persistente por usuario.
+- Los datos de negocio se guardan en Apps Script/Google Sheets, no en el navegador. Los datos legados del navegador se migran una sola vez al backend en una cuenta vacía. La sesión autenticada se mantiene en `sessionStorage`.
 
 ### RNF-4: Mantenibilidad
 - El código debe estar modularizado utilizando módulos ES6 (ej. `app.js` como controlador central).
