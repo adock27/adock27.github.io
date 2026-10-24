@@ -30,12 +30,28 @@ async function replaceCollection(entity, items) {
     const id = String(item.id || '');
     if (!id) continue;
     currentIds.add(id);
-    if (remoteById.has(id)) await request(entity, 'update', { ...item, userId, id });
+    if (remoteById.has(id)) {
+      const existing = remoteById.get(id);
+      const canUpdate = session?.role === 'admin'
+        || (entity === 'inventario' && session?.role === 'employee')
+        || (['cotizaciones', 'ventas', 'pedidos'].includes(entity) && String(existing.createdBy || '') === String(session?.id || ''));
+      if (canUpdate && comparableRecord(item) !== comparableRecord(existing)) await request(entity, 'update', { ...item, userId, id });
+    }
     else await request(entity, 'create', { ...item, userId, id });
   }
   for (const item of remote) {
-    if (!currentIds.has(String(item.id))) await request(entity, 'delete', { id: item.id, userId });
+    const canDelete = session?.role === 'admin' || (['cotizaciones', 'ventas', 'pedidos'].includes(entity) && String(item.createdBy || '') === String(session?.id || ''));
+    if (canDelete && !currentIds.has(String(item.id))) await request(entity, 'delete', { id: item.id, userId });
   }
+}
+
+function comparableRecord(record) {
+  const comparable = { ...record };
+  ['userId', 'createdBy', 'createdByEmail', 'createdAt', 'updatedAt'].forEach(key => delete comparable[key]);
+  return JSON.stringify(Object.keys(comparable).sort().reduce((sorted, key) => {
+    sorted[key] = comparable[key];
+    return sorted;
+  }, {}));
 }
 
 function readLegacyData(defaults) {
@@ -148,6 +164,7 @@ export const ApiSync = {
       const remoteConfig = remoteConfigRecord?.data;
       const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length || orders.length || purchases.length);
       if (!hasRemoteData) {
+        if (session.role !== 'admin') throw new Error('El administrador debe inicializar primero los datos del negocio.');
         const initial = readLegacyData(defaults);
         this.setSnapshot(initial);
         await pushSnapshot(new Set(['all']), this.getSnapshot());

@@ -31,12 +31,12 @@ La API recibe JSON por `POST`, con `entity` y `action`. Todas las respuestas usa
 
 Campos `id`, `createdAt` y `updatedAt` se generan automáticamente cuando corresponda. `create` y `login` son las únicas acciones públicas; la primera cuenta queda como administrador y el registro público se cierra después. El administrador crea las cuentas de empleados desde **Usuarios**. Todas las cuentas del negocio comparten los datos mediante el `businessId` del administrador; los demás negocios siguen aislados. Ejecuta `setupDatabase` para agregar columnas de roles, migrar las cuentas existentes como administradores de sus propios datos y generar `AUTH_SECRET`.
 
-Los productos de `Inventario` incluyen `productType`: `stock` controla existencias y `on_demand` identifica productos que se fabrican al recibir una venta. Al desplegar este campo por primera vez, ejecuta `setupDatabase` para agregar la columna a la hoja; los registros existentes se interpretan como `stock`.
+Los registros de negocio incluyen `createdBy` (ID de cuenta) y `createdByEmail` (correo del creador). Al desplegar estos campos, ejecuta `setupDatabase`: los datos antiguos se atribuyen a la cuenta cuyo ID coincide con el `userId` del registro. En ventas, pedidos y cotizaciones, un empleado solo puede editar o borrar registros creados por su cuenta; un administrador puede gestionar todos los del negocio. Los productos de `Inventario` incluyen `productType`: `stock` controla existencias y `on_demand` identifica productos que se fabrican al recibir una venta. Los registros existentes se interpretan como `stock`.
 
 ### Roles y permisos
 
 - **Administrador:** acceso a todos los módulos, compras e inversiones, configuración, catálogos y administración de usuarios.
-- **Empleado:** acceso a Calculadora, Cotizador, Inventario de productos, Pedidos y Ventas. Puede consultar existencias y registrar operaciones; no ve costos unitarios del inventario, no administra catálogo/configuración y no accede a compras ni cuentas.
+- **Empleado:** acceso a Calculadora, Cotizador, Inventario de productos, Pedidos y Ventas. Puede consultar existencias y registrar operaciones; en ventas, pedidos y cotizaciones solo puede editar o borrar los registros que creó. No ve costos unitarios del inventario, no administra catálogo/configuración y no accede a compras ni cuentas.
 - El backend valida el rol en cada petición. El personal puede actualizar cantidades de inventario para reflejar ventas, pero no crear ni eliminar artículos. La configuración y los catálogos son de solo lectura para que la calculadora y el cotizador puedan funcionar.
 
 El administrador crea cuentas con una contraseña temporal desde **Usuarios** y puede cambiar roles, activar/desactivar cuentas, restablecer contraseñas o eliminar empleados. Cambiar o desactivar una cuenta surte efecto en su siguiente petición autenticada. Conserva al menos un administrador activo por negocio.

@@ -140,6 +140,10 @@ export class Orders {
     }
     const index = this.items.findIndex(item => item.id === id);
     const existing = index >= 0 ? this.items[index] : null;
+    if (existing && !this.app.canManageRecord(existing)) {
+      this.app.showToast('Solo quien registró el pedido o un administrador puede editarlo.', 'error');
+      return;
+    }
     const status = document.getElementById('orderStatus').value;
     if (!ORDER_STATUSES.includes(status)) return this.app.showToast('Selecciona un estado válido para el pedido.', 'error');
     if (existing?.saleId) return this.app.showToast('Este pedido ya tiene una venta asociada y no se puede editar.', 'error');
@@ -268,7 +272,8 @@ export class Orders {
         });
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
-      if (order.status === 'Listo' && !order.saleId) {
+      const canManage = this.app.canManageRecord(order);
+      if (canManage && order.status === 'Listo' && !order.saleId) {
         const saleButton = document.createElement('button');
         saleButton.type = 'button';
         saleButton.className = 'btn btn-sm btn-outline-success me-1';
@@ -284,13 +289,15 @@ export class Orders {
       }
       const edit = document.createElement('button');
       edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.title = 'Editar'; edit.innerHTML = '<i class="bi bi-pencil"></i>';
-      edit.disabled = Boolean(order.saleId);
+      edit.disabled = Boolean(order.saleId) || !canManage;
       if (order.saleId) edit.title = 'El pedido ya está registrado como venta';
+      else if (!canManage) edit.title = 'Solo quien registró el pedido o un administrador puede editarlo';
       else edit.addEventListener('click', () => this.openForm(order));
       const remove = document.createElement('button');
       remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-danger'; remove.title = 'Eliminar'; remove.innerHTML = '<i class="bi bi-trash"></i>';
-      remove.disabled = Boolean(order.saleId);
+      remove.disabled = Boolean(order.saleId) || !canManage;
       if (order.saleId) remove.title = 'El pedido ya está registrado como venta';
+      else if (!canManage) remove.title = 'Solo quien registró el pedido o un administrador puede eliminarlo';
       else remove.addEventListener('click', () => {
         if (!window.confirm(`¿Eliminar el pedido ${order.orderNumber}?`)) return;
         this.items = this.items.filter(item => item.id !== order.id);

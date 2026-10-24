@@ -128,6 +128,10 @@ export class Sales {
     const selectedItem = inventory.find(item => String(item.id) === String(inventoryId));
     const index = this.items.findIndex(current => current.id === id);
     const previousSale = index >= 0 ? this.items[index] : null;
+    if (previousSale && !this.app.canManageRecord(previousSale)) {
+      this.app.showToast('Solo quien registró la venta o un administrador puede editarla.', 'error');
+      return;
+    }
     if (!selectedItem && !(missingInventoryItem && previousSale)) {
       this.app.showToast('Selecciona un producto del inventario.', 'error');
       return;
@@ -268,9 +272,14 @@ export class Sales {
         });
       const actions = document.createElement('td'); actions.className = 'text-end text-nowrap';
       const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.title = 'Editar'; edit.innerHTML = '<i class="bi bi-pencil"></i>';
-      edit.addEventListener('click', () => this.openForm(sale));
+      const canManage = this.app.canManageRecord(sale);
+      edit.disabled = !canManage;
+      if (!canManage) edit.title = 'Solo quien registró la venta o un administrador puede editarla';
+      else edit.addEventListener('click', () => this.openForm(sale));
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-danger'; remove.title = 'Eliminar'; remove.innerHTML = '<i class="bi bi-trash"></i>';
-      remove.addEventListener('click', () => {
+      remove.disabled = !canManage;
+      if (!canManage) remove.title = 'Solo quien registró la venta o un administrador puede eliminarla';
+      else remove.addEventListener('click', () => {
         if (!window.confirm(`¿Eliminar la venta de “${sale.productName}”?`)) return;
         const item = this.app.inventoryModule.items.find(entry => String(entry.id) === String(sale.inventoryId));
         if (item && item.productType !== 'on_demand') {

@@ -83,6 +83,10 @@ class CalculatorApp {
     this.settings.render();
   }
 
+  canManageRecord(record) {
+    return this.isAdmin || String(record?.createdBy || '') === String(this.session?.id || '');
+  }
+
   initEvents() {
     const triggerRecalc = () => {
       this.syncJobState();

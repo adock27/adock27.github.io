@@ -5,6 +5,7 @@ function genericCrud_(sheetName, body, fields, normalize) {
   var userId = String(body.userId || '');
   var allowedFields = fields;
   function owned(r) { return String(r.userId || '') === userId; }
+  var creatorManagedEntities = ['Cotizaciones', 'Ventas', 'Pedidos'];
   if (sheetName === 'Inventario' && body.authRole === 'employee') {
     if (action === 'update') allowedFields = ['quantity'];
     else if (action === 'create' || action === 'delete') throw new Error('El personal no puede crear ni eliminar artículos del inventario.');
@@ -16,19 +17,25 @@ function genericCrud_(sheetName, body, fields, normalize) {
     return safeCrudRecord_(sheetName, found, body);
   }
   if (action === 'create') {
-    var record = { id: body.id || undefined, userId: userId };
+    var record = { id: body.id || undefined, userId: userId, createdBy: String(body.authUserId || ''), createdByEmail: String(body.authUserEmail || '') };
     allowedFields.forEach(function (key) { if (body[key] != null) record[key] = body[key]; });
     if (normalize) normalize(record);
     return publicRecord_(sheetName, appendRecord_(sheetName, record));
   }
   if (action === 'update') {
     if (!found) throw new Error('Registro no encontrado.');
+    if (body.authRole === 'employee' && creatorManagedEntities.indexOf(sheetName) !== -1 && String(found.createdBy || found.userId || '') !== String(body.authUserId || '')) {
+      throw new Error('Solo puedes editar tus propios registros.');
+    }
     allowedFields.forEach(function (key) { if (body[key] != null) found[key] = body[key]; });
     if (normalize) normalize(found);
     return publicRecord_(sheetName, writeRecord_(sheetName, found._row, found));
   }
   if (action === 'delete') {
     if (!found) throw new Error('Registro no encontrado.');
+    if (body.authRole === 'employee' && creatorManagedEntities.indexOf(sheetName) !== -1 && String(found.createdBy || found.userId || '') !== String(body.authUserId || '')) {
+      throw new Error('Solo puedes eliminar tus propios registros.');
+    }
     sheet.deleteRow(found._row);
     return { id: found.id, message: 'Registro eliminado.' };
   }

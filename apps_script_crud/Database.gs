@@ -19,21 +19,22 @@ function setupDatabase() {
     sheet.setFrozenRows(1);
   });
   migrateUserRoles_();
+  migrateRecordCreators_();
   repairMisalignedSalesRows_(ss.getSheetByName('Ventas'));
   return 'Base de datos lista';
 }
 
 var DB_SCHEMAS = {
   Usuarios: ['id', 'email', 'passwordHash', 'salt', 'role', 'businessId', 'active', 'createdAt', 'updatedAt'],
-  Materiales: ['id', 'userId', 'name', 'pricePerKg', 'color', 'note', 'createdAt', 'updatedAt'],
-  Extras: ['id', 'userId', 'name', 'defaultCost', 'category', 'createdAt', 'updatedAt'],
-  Presets: ['id', 'userId', 'name', 'description', 'materialId', 'grams', 'hours', 'minutes', 'laborMinutes', 'extrasJson', 'createdAt', 'updatedAt'],
-  Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt'],
-  Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt'],
-  Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt', 'productType'],
-  Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId'],
-  Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt'],
-  Compras: ['id', 'userId', 'date', 'type', 'itemName', 'materialId', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
+  Materiales: ['id', 'userId', 'name', 'pricePerKg', 'color', 'note', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Extras: ['id', 'userId', 'name', 'defaultCost', 'category', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Presets: ['id', 'userId', 'name', 'description', 'materialId', 'grams', 'hours', 'minutes', 'laborMinutes', 'extrasJson', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt', 'productType', 'createdBy', 'createdByEmail'],
+  Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId', 'createdBy', 'createdByEmail'],
+  Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail'],
+  Compras: ['id', 'userId', 'date', 'type', 'itemName', 'materialId', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'createdBy', 'createdByEmail']
 };
 
 function getSpreadsheet_() {
@@ -143,6 +144,8 @@ function doPost(e) {
     } else if (entity !== 'usuarios') {
       auth = authenticateRequest_(body);
       body.authRole = auth.role;
+      body.authUserId = auth.id;
+      body.authUserEmail = auth.email;
       body.userId = auth.businessId;
       authorizeEntityRequest_(auth, entity, String(body.action || '').toLowerCase());
     }
@@ -197,6 +200,31 @@ function migrateUserRoles_() {
     if (!user.businessId) { user.businessId = user.id; changed = true; }
     if (user.active === '' || user.active == null) { user.active = true; changed = true; }
     if (changed) writeRecord_('Usuarios', user._row, user);
+  });
+}
+
+/** Asigna registros históricos al administrador dueño del negocio. */
+function migrateRecordCreators_() {
+  var emailsById = {};
+  rowsFor_(sheetFor_('Usuarios')).forEach(function (user) {
+    emailsById[String(user.id)] = user.email || '';
+  });
+  Object.keys(DB_SCHEMAS).filter(function (name) { return name !== 'Usuarios'; }).forEach(function (name) {
+    var sheet = sheetFor_(name);
+    rowsFor_(sheet).forEach(function (record) {
+      var changed = false;
+      if (!record.createdBy) {
+        record.createdBy = record.userId || '';
+        changed = true;
+      }
+      if (!record.createdByEmail) {
+        record.createdByEmail = emailsById[String(record.createdBy || '')] || '';
+        changed = true;
+      }
+      if (changed) {
+        writeRecord_(name, record._row, record);
+      }
+    });
   });
 }
 

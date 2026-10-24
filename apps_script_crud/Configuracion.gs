@@ -7,7 +7,7 @@ function handleConfig_(body) {
   if (action === 'get') return found ? publicRecord_('Configuracion', found) : null;
   if (action === 'save') {
     if (!body.data || typeof body.data !== 'object') throw new Error('data debe ser un objeto de configuración.');
-    var record = { id: found ? found.id : Utilities.getUuid(), userId: userId, dataJson: JSON.stringify(body.data), createdAt: found ? found.createdAt : undefined };
+    var record = { id: found ? found.id : Utilities.getUuid(), userId: userId, dataJson: JSON.stringify(body.data), createdAt: found ? found.createdAt : undefined, createdBy: found ? (found.createdBy || body.authUserId) : body.authUserId, createdByEmail: found ? (found.createdByEmail || body.authUserEmail) : body.authUserEmail };
     record = found ? writeRecord_('Configuracion', found._row, record) : appendRecord_('Configuracion', record);
     return publicRecord_('Configuracion', record);
   }
