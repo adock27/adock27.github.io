@@ -7,6 +7,7 @@ export class Results {
       statFilamentCost: document.getElementById('statFilamentCost'),
       statEnergyCost: document.getElementById('statEnergyCost'),
       statMachineCost: document.getElementById('statMachineCost'),
+      statPrinterDebtCost: document.getElementById('statPrinterDebtCost'),
       statLaborCost: document.getElementById('statLaborCost'),
       statExtrasCost: document.getElementById('statExtrasCost'),
       statFailureCost: document.getElementById('statFailureCost'),
@@ -25,6 +26,7 @@ export class Results {
     if (this.el.statFilamentCost) this.el.statFilamentCost.textContent = Engine.formatMoney(report.filament.totalFilamentCost, currency);
     if (this.el.statEnergyCost) this.el.statEnergyCost.textContent = Engine.formatMoney(report.energy.energyCost, currency);
     if (this.el.statMachineCost) this.el.statMachineCost.textContent = Engine.formatMoney(report.machineWearCost, currency);
+    if (this.el.statPrinterDebtCost) this.el.statPrinterDebtCost.textContent = Engine.formatMoney(report.printerDebtCost, currency);
     if (this.el.statLaborCost) this.el.statLaborCost.textContent = Engine.formatMoney(report.laborCost, currency);
     if (this.el.statExtrasCost) this.el.statExtrasCost.textContent = Engine.formatMoney(report.extras.totalExtrasCost, currency);
     if (this.el.statFailureCost) this.el.statFailureCost.textContent = Engine.formatMoney(report.failureBufferCost, currency);
@@ -54,7 +56,7 @@ export class Results {
 
     if (this.el.tiersContainer) {
       this.el.tiersContainer.innerHTML = report.tiers.map(tier => {
-        const isRec = tier.id === 'rec';
+        const isRec = tier.id === 'customer';
         return `
           <div class="col-12 col-md-4">
             <div class="card h-100 rounded-3 ${isRec ? 'border-success shadow-sm bg-success-subtle' : 'border shadow-sm bg-white'} p-3 text-center">
@@ -63,7 +65,7 @@ export class Results {
               </span>
               <div class="fw-bold text-dark mb-1">${tier.icon} ${tier.name}</div>
               <div class="fs-4 fw-bold ${isRec ? 'text-success' : 'text-dark'}">${Engine.formatMoney(tier.price, currency)}</div>
-              <div class="small text-muted mt-1">Ganancia: <strong class="text-dark">${Engine.formatMoney(tier.profit, currency)}</strong></div>
+              <div class="small text-muted mt-1">${tier.profitLabel}: <strong class="text-dark">${Engine.formatMoney(tier.profit, currency)}</strong></div>
             </div>
           </div>
         `;
@@ -71,10 +73,11 @@ export class Results {
     }
 
     if (this.el.quoteTierSelect) {
-      const selectedTierId = this.el.quoteTierSelect.value || 'rec';
-      this.el.quoteTierSelect.innerHTML = report.tiers.map(t => `
-        <option value="${t.id}" ${t.id === selectedTierId ? 'selected' : ''}>${t.name} — ${Engine.formatMoney(t.price, currency)}</option>
+      this.el.quoteTierSelect.innerHTML = report.tiers.filter(t => t.id === 'customer').map(t => `
+        <option value="${t.id}" selected>${t.name} — ${Engine.formatMoney(t.price, currency)}</option>
       `).join('');
+      this.el.quoteTierSelect.value = 'customer';
+      this.el.quoteTierSelect.disabled = true;
     }
 
     if (this.app.quote) {

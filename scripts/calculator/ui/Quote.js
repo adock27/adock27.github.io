@@ -18,8 +18,8 @@ export class Quote {
   updateQuotePreview() {
     if (!this.quotePreview || !this.app.latestReport) return;
 
-    const tierId = this.quoteTierSelect?.value || 'rec';
-    const selectedTier = this.app.latestReport.tiers.find(t => t.id === tierId) || this.app.latestReport.tiers[1] || this.app.latestReport.tiers[0];
+    const tierId = this.quoteTierSelect?.value || 'customer';
+    const selectedTier = this.app.latestReport.tiers.find(t => t.id === tierId) || this.app.latestReport.tiers.find(t => t.id === 'customer') || this.app.latestReport.tiers[0];
 
     const materialsText = this.app.latestReport.filament.items.map(item => `  • ${item.materialName}: ~${item.grams}g`).join('\n');
     const extrasText = this.app.latestReport.extras.items.length > 0

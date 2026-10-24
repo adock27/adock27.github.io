@@ -9,6 +9,10 @@ export class Settings {
       cfgElectricity: document.getElementById('cfgElectricity'),
       cfgPowerKw: document.getElementById('cfgPowerKw'),
       cfgWearRate: document.getElementById('cfgWearRate'),
+      cfgPrinterMonthlyPayment: document.getElementById('cfgPrinterMonthlyPayment'),
+      cfgProductiveHoursPerMonth: document.getElementById('cfgProductiveHoursPerMonth'),
+      cfgOwnerMargin: document.getElementById('cfgOwnerMargin'),
+      cfgSellerMargin: document.getElementById('cfgSellerMargin'),
       cfgFailureRate: document.getElementById('cfgFailureRate'),
       cfgPurgeWaste: document.getElementById('cfgPurgeWaste'),
       cfgLaborRate: document.getElementById('cfgLaborRate'),
@@ -51,6 +55,10 @@ export class Settings {
     if (this.el.cfgElectricity) this.el.cfgElectricity.value = this.app.config.electricityRate;
     if (this.el.cfgPowerKw) this.el.cfgPowerKw.value = this.app.config.powerKw;
     if (this.el.cfgWearRate) this.el.cfgWearRate.value = this.app.config.wearRatePerHour;
+    if (this.el.cfgPrinterMonthlyPayment) this.el.cfgPrinterMonthlyPayment.value = this.app.config.printerMonthlyPayment ?? DEFAULT_CONFIG.printerMonthlyPayment;
+    if (this.el.cfgProductiveHoursPerMonth) this.el.cfgProductiveHoursPerMonth.value = this.app.config.productiveHoursPerMonth ?? DEFAULT_CONFIG.productiveHoursPerMonth;
+    if (this.el.cfgOwnerMargin) this.el.cfgOwnerMargin.value = this.app.config.ownerMarginPercent ?? DEFAULT_CONFIG.ownerMarginPercent;
+    if (this.el.cfgSellerMargin) this.el.cfgSellerMargin.value = this.app.config.sellerMarginPercent ?? DEFAULT_CONFIG.sellerMarginPercent;
     if (this.el.cfgFailureRate) this.el.cfgFailureRate.value = this.app.config.failureRatePercent;
     if (this.el.cfgPurgeWaste) this.el.cfgPurgeWaste.value = this.app.config.purgeWastePercent;
     if (this.el.cfgLaborRate) this.el.cfgLaborRate.value = this.app.config.laborRatePerHour;
@@ -398,6 +406,20 @@ export class Settings {
   }
 
   handleSaveMachineConfig() {
+    const ownerRaw = this.el.cfgOwnerMargin?.value?.trim() ?? '';
+    const sellerRaw = this.el.cfgSellerMargin?.value?.trim() ?? '';
+    const ownerMargin = Number(ownerRaw);
+    const sellerMargin = Number(sellerRaw);
+    const printerPayment = Number(this.el.cfgPrinterMonthlyPayment?.value) || 0;
+    const productiveHours = Number(this.el.cfgProductiveHoursPerMonth?.value) || 0;
+    if (!ownerRaw || !sellerRaw || ![ownerMargin, sellerMargin].every(value => Number.isFinite(value) && value >= 0 && value < 100)) {
+      this.app.showToast('Los márgenes del dueño y vendedor deben estar entre 0% y 99%.', 'error');
+      return;
+    }
+    if (printerPayment < 0 || (printerPayment > 0 && productiveHours <= 0)) {
+      this.app.showToast('La cuota no puede ser negativa y, si es mayor que 0, debes indicar horas productivas mensuales.', 'error');
+      return;
+    }
     const previousCurrency = this.app.config.currency || 'COP';
     const selectedCurrency = this.el.cfgCurrency?.value || 'COP';
     if (selectedCurrency !== previousCurrency) {
@@ -412,6 +434,10 @@ export class Settings {
     this.app.config.electricityRate = Number(this.el.cfgElectricity?.value) || DEFAULT_CONFIG.electricityRate;
     this.app.config.powerKw = Number(this.el.cfgPowerKw?.value) || DEFAULT_CONFIG.powerKw;
     this.app.config.wearRatePerHour = Number(this.el.cfgWearRate?.value) || DEFAULT_CONFIG.wearRatePerHour;
+    this.app.config.printerMonthlyPayment = printerPayment;
+    this.app.config.productiveHoursPerMonth = productiveHours || DEFAULT_CONFIG.productiveHoursPerMonth;
+    this.app.config.ownerMarginPercent = ownerMargin;
+    this.app.config.sellerMarginPercent = sellerMargin;
     this.app.config.failureRatePercent = Number(this.el.cfgFailureRate?.value) || DEFAULT_CONFIG.failureRatePercent;
     this.app.config.purgeWastePercent = Number(this.el.cfgPurgeWaste?.value) || DEFAULT_CONFIG.purgeWastePercent;
     this.app.config.laborRatePerHour = Number(this.el.cfgLaborRate?.value) || DEFAULT_CONFIG.laborRatePerHour;

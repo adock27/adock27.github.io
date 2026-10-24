@@ -16,6 +16,10 @@ export const DEFAULT_CONFIG = {
   electricityRate: 1000,      // Valor de ejemplo por kWh en la moneda seleccionada
   powerKw: 0.12,              // kW promedio Bambu Lab P1S (rango real: 0.08–0.15 kW según carga)
   wearRatePerHour: 800,       // Desgaste y amortización máquina por hora
+  printerMonthlyPayment: 0,   // Cuota mensual de la impresora que se recupera con producción
+  productiveHoursPerMonth: 100, // Horas productivas facturables estimadas al mes
+  ownerMarginPercent: 25,     // Margen bruto del dueño sobre el precio al vendedor
+  sellerMarginPercent: 30,    // Margen bruto del vendedor sobre el precio al cliente
   failureRatePercent: 5,      // Merma y riesgo de fallos (5%)
   purgeWastePercent: 5,       // Purga / desecho de filamento AMS (5%)
   laborRatePerHour: 10000,    // Tarifa mano de obra por hora

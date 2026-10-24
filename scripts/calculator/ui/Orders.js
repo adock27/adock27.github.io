@@ -7,6 +7,22 @@ function localDateInput() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
+function normalizeDateInput(value) {
+  if (value == null || value === '') return '';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+  }
+  const text = String(value).trim();
+  const isoDate = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoDate) return `${isoDate[1]}-${isoDate[2].padStart(2, '0')}-${isoDate[3].padStart(2, '0')}`;
+  if (/^\d{4,6}(\.\d+)?$/.test(text)) {
+    const serialDate = new Date(Date.UTC(1899, 11, 30) + Number(text) * 86400000);
+    return `${serialDate.getUTCFullYear()}-${String(serialDate.getUTCMonth() + 1).padStart(2, '0')}-${String(serialDate.getUTCDate()).padStart(2, '0')}`;
+  }
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? '' : `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+}
+
 function makeId(prefix) {
   return globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${prefix}_${Date.now()}`;
 }
@@ -52,8 +68,8 @@ export class Orders {
     const inventoryItemExists = order?.inventoryId && this.app.inventoryModule.items.some(item => String(item.id) === String(order.inventoryId));
     this.renderInventoryOptions(inventoryItemExists ? order.inventoryId : '__custom__');
     document.getElementById('orderCustomProductName').value = inventoryItemExists ? '' : (order?.productName || '');
-    document.getElementById('orderDate').value = order?.date || localDateInput();
-    document.getElementById('orderDueDate').value = order?.dueDate || '';
+    document.getElementById('orderDate').value = normalizeDateInput(order?.date) || localDateInput();
+    document.getElementById('orderDueDate').value = normalizeDateInput(order?.dueDate);
     document.getElementById('orderClientName').value = order?.clientName || '';
     document.getElementById('orderQuantity').value = order?.quantity ?? 1;
     document.getElementById('orderUnitPrice').value = order?.unitPrice ?? 0;

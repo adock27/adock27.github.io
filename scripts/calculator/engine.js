@@ -190,6 +190,13 @@ export const Engine = {
     // 3. Desgaste de máquina
     const machineWearCost = this.calculateMachineWearCost(totalHours, config.wearRatePerHour);
 
+    // Recuperación de cuota de impresora distribuida entre horas facturables del mes.
+    const monthlyPrinterPayment = Math.max(0, Number(config.printerMonthlyPayment) || 0);
+    const productiveHoursPerMonth = Math.max(0, Number(config.productiveHoursPerMonth) || 0);
+    const printerDebtCost = productiveHoursPerMonth > 0
+      ? (monthlyPrinterPayment / productiveHoursPerMonth) * totalHours
+      : 0;
+
     // 4. Mano de obra
     const laborCost = this.calculateLaborCost(params.laborMinutes, config.laborRatePerHour);
 
@@ -197,7 +204,7 @@ export const Engine = {
     const extras = this.calculateExtrasCost(params.extras);
 
     // Subtotal directo de producción
-    const directCost = filament.totalFilamentCost + energy.energyCost + machineWearCost + laborCost + extras.totalExtrasCost;
+    const directCost = filament.totalFilamentCost + energy.energyCost + machineWearCost + printerDebtCost + laborCost + extras.totalExtrasCost;
 
     // 6. Margen de fallo / riesgo de impresión (scrap buffer)
     const failureRate = Math.max(0, Number(config.failureRatePercent) || 0) / 100;
@@ -206,34 +213,24 @@ export const Engine = {
     // Costo base total de producción
     const totalProductionCost = directCost + failureBufferCost;
 
-    // 7. Niveles de precios (Tiers)
+    // 7. Precios encadenados: base -> precio al vendedor -> sugerido al cliente.
     const roundingStep = Number(config.roundingStep) || 100;
-    const tiers = (config.pricingTiers || [
-      { id: 'min', name: 'Mínimo', margin: 30, icon: '📉', tag: 'Margen base' },
-      { id: 'rec', name: 'Recomendado', margin: 50, icon: '⭐', tag: 'Mejor balance' },
-      { id: 'pre', name: 'Premium / Urgente', margin: 100, icon: '🚀', tag: 'Alta exigencia' }
-    ]).map(tier => {
-      const marginPercent = Number(tier.margin) || 0;
-      const rawPrice = totalProductionCost * (1 + marginPercent / 100);
-      const roundedPrice = this.roundUp(rawPrice, roundingStep);
-      const profit = Math.max(0, roundedPrice - totalProductionCost);
-      const effectiveMargin = totalProductionCost > 0 ? (profit / totalProductionCost) * 100 : 0;
-
-      return {
-        ...tier,
-        marginPercent,
-        rawPrice,
-        price: roundedPrice,
-        profit,
-        effectiveMargin
-      };
-    });
+    const ownerMarginPercent = Math.min(99, Math.max(0, Number(config.ownerMarginPercent ?? 25) || 0));
+    const sellerMarginPercent = Math.min(99, Math.max(0, Number(config.sellerMarginPercent ?? 30) || 0));
+    const sellerPrice = this.roundUp(totalProductionCost / (1 - ownerMarginPercent / 100), roundingStep);
+    const customerPrice = this.roundUp(sellerPrice / (1 - sellerMarginPercent / 100), roundingStep);
+    const tiers = [
+      { id: 'base', name: 'Base de producción', icon: '🧾', tag: 'Costo completo', price: totalProductionCost, profit: 0, profitLabel: 'Sin margen', marginPercent: 0 },
+      { id: 'seller', name: 'Precio al vendedor', icon: '🤝', tag: `Margen dueño ${ownerMarginPercent}%`, price: sellerPrice, profit: Math.max(0, sellerPrice - totalProductionCost), profitLabel: 'Retorno dueño', marginPercent: ownerMarginPercent },
+      { id: 'customer', name: 'Precio sugerido al cliente', icon: '🏷️', tag: `Margen vendedor ${sellerMarginPercent}%`, price: customerPrice, profit: Math.max(0, customerPrice - sellerPrice), profitLabel: 'Retorno vendedor', marginPercent: sellerMarginPercent }
+    ];
 
     // Desglose porcentual para gráfico o barra visual
     const costBreakdown = [
       { label: 'Filamento', cost: filament.totalFilamentCost, color: '#10b981' },
       { label: 'Energía', cost: energy.energyCost, color: '#f59e0b' },
       { label: 'Máquina', cost: machineWearCost, color: '#6366f1' },
+      { label: 'Cuota impresora', cost: printerDebtCost, color: '#8b5cf6' },
       { label: 'Extras', cost: extras.totalExtrasCost, color: '#ec4899' },
       { label: 'Mano de Obra', cost: laborCost, color: '#06b6d4' },
       { label: 'Fallo/Merma', cost: failureBufferCost, color: '#ef4444' }
@@ -247,6 +244,7 @@ export const Engine = {
       filament,
       energy,
       machineWearCost,
+      printerDebtCost,
       laborCost,
       extras,
       directCost,

@@ -7,7 +7,7 @@ El propósito de este documento es definir los requerimientos funcionales, no fu
 ### 1.2 Alcance
 El sistema permitirá a los usuarios (operadores de impresión 3D):
 - Crear una cuenta e iniciar sesión, manteniendo aislados los datos de cada usuario.
-- Calcular costos operativos (filamento, electricidad, desgaste, mano de obra, mermas/fallos).
+- Calcular costos operativos (filamento, electricidad, desgaste, recuperación proporcional de la cuota de impresora, mano de obra, mermas/fallos).
 - Gestionar materiales y sus propiedades (colores, precio por kg) con soporte multi-color (AMS).
 - Administrar costos de insumos extra (imanes, tornillos, empaques).
 - Generar cotizaciones estructuradas y listas para compartir con clientes (ej. vía WhatsApp).
@@ -41,12 +41,13 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - **RF-4.6:** El sistema debe mostrar el desglose total y unitario (si es impresión en lote) en tiempo real.
 
 ### RF-5: Estrategia de Precios y Cotizaciones
-- **RF-5.1:** El sistema debe sugerir diferentes niveles o *tiers* de precios de venta (ej. Amigo, Comercial, Premium) basados en márgenes de ganancia predefinidos sobre el costo base.
+- **RF-5.1:** El sistema debe mostrar la base completa de producción, el precio al vendedor con margen bruto configurable del dueño y el precio sugerido al cliente con margen bruto configurable del vendedor.
+- **RF-5.1.1:** Los márgenes se expresan sobre cada precio de venta; la cuota mensual de la impresora se distribuye por hora entre las horas productivas facturables estimadas del mes.
 - **RF-5.2:** El sistema debe permitir seleccionar un nivel de precio y generar automáticamente un texto de cotización profesional.
 - **RF-5.3:** El sistema debe incluir un botón de "Copiar al portapapeles" diseñado para facilitar el envío de la cotización vía WhatsApp.
 
 ### RF-6: Configuración y Catálogos (CRUD)
-- **RF-6.1:** **Parámetros Máquina:** Modificar moneda, tarifas de electricidad, consumo (kW), desgaste y mano de obra en la moneda elegida, además de porcentajes de fallo.
+- **RF-6.1:** **Parámetros Máquina:** Modificar moneda, tarifas de electricidad, consumo (kW), desgaste, cuota mensual de impresora, horas productivas estimadas, mano de obra y porcentajes de fallo y márgenes.
 - **RF-6.2:** **Catálogo Filamentos:** Crear, leer, actualizar y eliminar (CRUD) tipos de filamentos con su costo por kg.
 - **RF-6.3:** **Catálogo Extras:** CRUD de insumos complementarios con su precio unitario.
 - **RF-6.4:** **Redondeo:** Configurar reglas de redondeo para precios finales (ej. a los $100 o $500 más cercanos).

@@ -15,7 +15,11 @@ La calculadora estima costos de impresión, genera cotizaciones y administra inv
 2. Selecciona uno o varios materiales y asigna los gramos consumidos. Agrega extras si corresponden.
 3. Revisa el desglose de costos y los precios sugeridos.
 4. En **Cotizador para Clientes**, elige el nivel de precio y copia el mensaje para compartirlo. La impresión del navegador permite guardar la cotización como PDF.
-5. Ajusta moneda, consumo de máquina, tarifas y márgenes en **Configuración & Catálogos**.
+5. Ajusta moneda, consumo de máquina, tarifas, cuota de impresora y márgenes en **Configuración & Catálogos**.
+
+La calculadora presenta tres importes encadenados: **Base de producción** (costo completo del trabajo), **Precio al vendedor** (base más el margen bruto del dueño) y **Precio sugerido al cliente** (precio al vendedor más el margen bruto del vendedor). La cotización para compartir usa por defecto el precio sugerido al cliente. Los márgenes son porcentajes sobre el precio de venta, no recargos sobre el costo.
+
+En Configuración puedes definir la cuota mensual de la impresora y las horas productivas facturables estimadas al mes. La app asigna al trabajo la parte proporcional de esa cuota según sus horas de impresión. Mientras recuperas una deuda de la impresora, configura **Desgaste máquina** como costo de mantenimiento para no contabilizar dos veces la compra; al terminar de pagarla, puedes dejar la cuota en cero y ajustar desgaste para reservar la reposición futura.
 
 Una cotización es una propuesta que se comparte con el cliente; no se convierte automáticamente en un pedido.
 

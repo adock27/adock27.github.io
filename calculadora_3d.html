@@ -298,6 +298,12 @@
               </div>
               <div class="col-6">
                 <div class="p-2 bg-light rounded-3 border">
+                  <small class="text-muted d-block" style="font-size: 11px;">Recuperación impresora</small>
+                  <strong class="text-dark" id="statPrinterDebtCost">$0</strong>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 bg-light rounded-3 border">
                   <small class="text-muted d-block" style="font-size: 11px;">Mano de Obra</small>
                   <strong class="text-dark" id="statLaborCost">$0</strong>
                 </div>
@@ -320,14 +326,14 @@
             <div class="card border-0 bg-light p-3 rounded-3 mb-3 text-center border">
               <span class="text-muted small fw-semibold text-uppercase">Costo Total de Producción (Base)</span>
               <span class="display-6 fw-bold text-dark my-1" id="statTotalCost">COP 0</span>
-              <small class="text-muted">Insumos + energía + desgaste + contingencia</small>
+              <small class="text-muted">Insumos + energía + desgaste + mano de obra + merma + recuperación de impresora</small>
               <div id="unitCostContainer" class="mt-2 pt-2 border-top d-none">
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-bold" id="statUnitCost">Costo Unitario: COP 0</span>
               </div>
             </div>
 
             <!-- Precios Sugeridos por Nivel -->
-            <h6 class="fw-bold text-dark text-uppercase small mb-2">🎯 Precios de Venta Sugeridos</h6>
+            <h6 class="fw-bold text-dark text-uppercase small mb-2">🎯 Base y precios por canal de venta</h6>
             <div class="row g-2 mb-3" id="tiersContainer">
               <!-- Renderizado dinámico -->
             </div>
@@ -353,7 +359,7 @@
             </div>
 
             <div class="mb-3" style="max-width: 320px;">
-              <label for="quoteTierSelect" class="form-label small fw-semibold text-secondary">Nivel de precio a incluir:</label>
+              <label for="quoteTierSelect" class="form-label small fw-semibold text-secondary">Precio para compartir con el cliente:</label>
               <select id="quoteTierSelect" class="form-select form-select-sm">
                 <!-- Renderizado dinámico -->
               </select>
@@ -426,6 +432,38 @@ Generando cotización...
                 <label for="cfgLaborRate" class="form-label small fw-semibold text-secondary">Mano de obra (<span class="currency-code">COP</span> / h)</label>
                 <input type="number" id="cfgLaborRate" class="form-control" step="1000">
               </div>
+            </div>
+
+            <div class="border rounded-3 p-3 mb-3 bg-light">
+              <div class="fw-semibold small text-dark mb-2">Recuperación de la impresora</div>
+              <div class="row g-3">
+                <div class="col-6">
+                  <label for="cfgPrinterMonthlyPayment" class="form-label small fw-semibold text-secondary">Cuota mensual (<span class="currency-code">COP</span>)</label>
+                  <input type="number" id="cfgPrinterMonthlyPayment" class="form-control" min="0" step="1000">
+                </div>
+                <div class="col-6">
+                  <label for="cfgProductiveHoursPerMonth" class="form-label small fw-semibold text-secondary">Horas productivas facturables / mes</label>
+                  <input type="number" id="cfgProductiveHoursPerMonth" class="form-control" min="1" step="10">
+                </div>
+              </div>
+              <div class="form-text">La cuota se reparte entre las horas estimadas de producción del mes. Para evitar contar dos veces la impresora, configura Desgaste máquina solo para mantenimiento mientras pagas la cuota.</div>
+            </div>
+
+            <div class="border rounded-3 p-3 mb-3">
+              <div class="fw-semibold small text-dark mb-2">Márgenes por canal de venta</div>
+              <div class="row g-3">
+                <div class="col-6">
+                  <label for="cfgOwnerMargin" class="form-label small fw-semibold text-secondary">Margen dueño (%)</label>
+                  <input type="number" id="cfgOwnerMargin" class="form-control" min="0" max="99" step="1">
+                  <div class="form-text">Se aplica entre la base y el precio al vendedor.</div>
+                </div>
+                <div class="col-6">
+                  <label for="cfgSellerMargin" class="form-label small fw-semibold text-secondary">Margen vendedor (%)</label>
+                  <input type="number" id="cfgSellerMargin" class="form-control" min="0" max="99" step="1">
+                  <div class="form-text">Se aplica entre el precio al vendedor y el sugerido al cliente.</div>
+                </div>
+              </div>
+              <div class="form-text">Los porcentajes representan margen sobre el precio de venta. La base incluye materiales, energía, desgaste, mano de obra, merma y cuota asignada.</div>
             </div>
 
             <div class="row g-3 mb-3">
