@@ -8,6 +8,7 @@ import { ApiSync } from './api-sync.js';
 const STORAGE_KEY = 'calc3d_config_v2';
 const PRESETS_KEY = 'calc3d_presets_v2';
 const INVENTORY_KEY = 'calc3d_inventory_v1';
+const SALES_KEY = 'calc3d_sales_v1';
 
 export const DEFAULT_CONFIG = {
   version: 2,
@@ -188,6 +189,29 @@ export const Storage = {
     }
   },
 
+  loadSales() {
+    try {
+      const raw = localStorage.getItem(SALES_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Error cargando ventas:', e);
+      return [];
+    }
+  },
+
+  saveSales(items) {
+    try {
+      localStorage.setItem(SALES_KEY, JSON.stringify(items));
+      ApiSync.schedule('sales');
+      return true;
+    } catch (e) {
+      console.error('Error guardando ventas:', e);
+      return false;
+    }
+  },
+
   /**
    * Guarda un nuevo preset o actualiza uno existente.
    * @param {Object} preset
@@ -238,7 +262,8 @@ export const Storage = {
       exportDate: new Date().toISOString(),
       config: this.loadConfig(),
       presets: this.loadPresets(),
-      inventory: this.loadInventory()
+      inventory: this.loadInventory(),
+      sales: this.loadSales()
     }, null, 2);
   },
 
@@ -253,6 +278,7 @@ export const Storage = {
       if (data.config) this.saveConfig(data.config);
       if (Array.isArray(data.presets)) localStorage.setItem(PRESETS_KEY, JSON.stringify(data.presets));
       if (Array.isArray(data.inventory)) this.saveInventory(data.inventory);
+      if (Array.isArray(data.sales)) this.saveSales(data.sales);
       ApiSync.schedule('all');
       return true;
     } catch (e) {

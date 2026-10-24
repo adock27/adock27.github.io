@@ -23,6 +23,7 @@ La API recibe JSON por `POST`, con `entity` y `action`. Todas las respuestas usa
 | `configuracion` | Configuracion | `get`, `save`, `delete` |
 | `cotizaciones` | Cotizaciones | `create`, `list`, `get`, `update`, `delete` |
 | `inventario` | Inventario | `create`, `list`, `get`, `update`, `delete` |
+| `ventas` | Ventas | `create`, `list`, `get`, `update`, `delete` |
 
 Campos `id`, `createdAt` y `updatedAt` se generan automáticamente cuando corresponda. `create` y `login` son operaciones públicas; las demás requieren el token firmado que devuelve `login`. Los datos de calculadora se limitan al usuario autenticado. Ejecuta `setupDatabase` después de agregar estos archivos para generar `AUTH_SECRET` en las propiedades del script.
 
@@ -40,10 +41,10 @@ Iniciar sesión:
 {"entity":"usuarios","action":"login","email":"ana@example.com","password":"UnaClaveLarga"}
 ```
 
-Crear material con los campos compatibles con `storage.js`:
+Crear material con los campos compatibles con `storage.js` (requiere un token de sesión):
 
 ```json
-{"entity":"materiales","action":"create","userId":"ID_USUARIO","name":"PLA mate","pricePerKg":60000,"color":"#10b981","note":"Acabado mate"}
+{"entity":"materiales","action":"create","token":"TOKEN_DE_SESION","name":"PLA mate","pricePerKg":60000,"color":"#10b981","note":"Acabado mate"}
 ```
 
 Tras iniciar sesión, las llamadas privadas deben incluir el `sessionToken` devuelto como `token`; la API obtiene el usuario desde ese token. Leer una entidad por ID requiere `id`. Configuración guarda el objeto enviado en `data`:
@@ -52,8 +53,14 @@ Tras iniciar sesión, las llamadas privadas deben incluir el `sessionToken` devu
 {"entity":"configuracion","action":"save","token":"TOKEN_DE_SESION","data":{"currency":"COP","powerKw":0.12,"materials":[],"extrasCatalog":[],"pricingTiers":[]}}
 ```
 
+El módulo de ventas guarda fecha, producto/servicio, cliente, cantidad, precio unitario, total, medio de pago y notas:
+
+```json
+{"entity":"ventas","action":"create","token":"TOKEN_DE_SESION","date":"2026-10-23","productName":"Llavero personalizado","clientName":"Ana","quantity":2,"unitPrice":12000,"total":24000,"paymentMethod":"Transferencia","notes":"Pago recibido"}
+```
+
 ## Conexión con el frontend
 
-La calculadora ahora usa `scripts/calculator/api-sync.js` para cargar configuración, materiales, extras, presets e inventario desde Apps Script y sincronizar cambios. Allí se configura `API_URL`; sustituye su valor por la URL `/exec` de tu implementación si cambia. El frontend conserva `localStorage` como respaldo.
+La calculadora ahora usa `scripts/calculator/api-sync.js` para cargar configuración, materiales, extras, presets, inventario y ventas desde Apps Script y sincronizar cambios. Allí se configura `API_URL`; sustituye su valor por la URL `/exec` de tu implementación si cambia. El frontend conserva `localStorage` como respaldo.
 
 Después de copiar o actualizar los archivos `.gs`, crea una **nueva versión** de la aplicación web. Luego publica los cambios del frontend en tu sitio. Los cambios de la API no estarán activos en la URL `/exec` hasta actualizar la implementación.

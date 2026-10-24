@@ -3,6 +3,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ
 const CONFIG_KEY = 'calc3d_config_v2';
 const PRESETS_KEY = 'calc3d_presets_v2';
 const INVENTORY_KEY = 'calc3d_inventory_v1';
+const SALES_KEY = 'calc3d_sales_v1';
 const SESSION_KEY = 'calc3d_session_v1';
 let syncTimer = null;
 let syncing = Promise.resolve();
@@ -22,11 +23,12 @@ async function request(entity, action, fields = {}) {
 }
 
 function localSnapshot() {
-  let config = {}, presets = [], inventory = [];
+  let config = {}, presets = [], inventory = [], sales = [];
   try { config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch (_) { /* usa defaults */ }
   try { presets = JSON.parse(localStorage.getItem(PRESETS_KEY) || '[]'); } catch (_) { /* usa lista vacía */ }
   try { inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '[]'); } catch (_) { /* usa lista vacía */ }
-  return { config, presets, inventory };
+  try { sales = JSON.parse(localStorage.getItem(SALES_KEY) || '[]'); } catch (_) { /* usa lista vacía */ }
+  return { config, presets, inventory, sales };
 }
 
 async function replaceCollection(entity, items) {
@@ -47,7 +49,7 @@ async function replaceCollection(entity, items) {
 }
 
 async function pushSnapshot(scopes) {
-  const { config, presets, inventory } = localSnapshot();
+  const { config, presets, inventory, sales } = localSnapshot();
   const userId = ApiSync.getSession()?.id;
   if (!userId) throw new Error('Inicia sesión para sincronizar.');
   const all = scopes.has('all');
@@ -58,6 +60,7 @@ async function pushSnapshot(scopes) {
   }
   if (all || scopes.has('presets')) await replaceCollection('presets', presets || []);
   if (all || scopes.has('inventory')) await replaceCollection('inventario', inventory || []);
+  if (all || scopes.has('sales')) await replaceCollection('ventas', sales || []);
 }
 
 export const ApiSync = {
@@ -85,25 +88,27 @@ export const ApiSync = {
     return request('materiales', 'list', { userId: this.getSession()?.id });
   },
 
-  async load(localConfig, localPresets, localInventory = []) {
+  async load(localConfig, localPresets, localInventory = [], localSales = []) {
     try {
       const userId = this.getSession()?.id;
       if (!userId) throw new Error('Inicia sesión para cargar tus datos.');
-      const [remoteConfigRecord, materials, extras, presets, inventory] = await Promise.all([
+      const [remoteConfigRecord, materials, extras, presets, inventory, sales] = await Promise.all([
         request('configuracion', 'get', { userId }),
         request('materiales', 'list', { userId }),
         request('extras', 'list', { userId }),
         request('presets', 'list', { userId }),
-        request('inventario', 'list', { userId })
+        request('inventario', 'list', { userId }),
+        request('ventas', 'list', { userId })
       ]);
       const remoteConfig = remoteConfigRecord?.data;
-      const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length);
+      const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length);
       if (!hasRemoteData) {
         localStorage.setItem(CONFIG_KEY, JSON.stringify(localConfig));
         localStorage.setItem(PRESETS_KEY, JSON.stringify(localPresets));
         localStorage.setItem(INVENTORY_KEY, JSON.stringify(localInventory));
+        localStorage.setItem(SALES_KEY, JSON.stringify(localSales));
         this.schedule(); // Migra los datos locales iniciales a la cuenta.
-        return { config: localConfig, presets: localPresets, inventory: localInventory, connected: true };
+        return { config: localConfig, presets: localPresets, inventory: localInventory, sales: localSales, connected: true };
       }
       const config = {
         ...localConfig,
@@ -115,13 +120,14 @@ export const ApiSync = {
       localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
       localStorage.setItem(PRESETS_KEY, JSON.stringify(finalPresets));
       localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-      return { config, presets: finalPresets, inventory, connected: true };
+      localStorage.setItem(SALES_KEY, JSON.stringify(sales));
+      return { config, presets: finalPresets, inventory, sales, connected: true };
     } catch (error) {
       console.warn('Apps Script no disponible; se usará el almacenamiento local.', error);
       if (/sesión|cuenta ya no existe|no autorizado/i.test(error.message || '')) {
         window.dispatchEvent(new Event('calculator-auth-expired'));
       }
-      return { config: localConfig, presets: localPresets, inventory: localInventory, connected: false };
+      return { config: localConfig, presets: localPresets, inventory: localInventory, sales: localSales, connected: false };
     }
   },
 

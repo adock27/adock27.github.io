@@ -118,6 +118,11 @@
             <i class="bi bi-box-seam me-1"></i> Inventario
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-sales">
+            <i class="bi bi-cash-coin me-1"></i> Ventas
+          </a>
+        </li>
       </ul>
     </div>
 
@@ -580,6 +585,58 @@ Generando cotización...
         </table>
       </div>
     </div>
+  </div>
+
+  <!-- VISTA 5: VENTAS -->
+  <div id="tab-sales" class="tab-pane-view d-none">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-cash-coin text-success me-2"></i>Ventas</h4>
+        <p class="text-secondary small mb-0">Registra tus ventas y consulta el resumen del mes.</p>
+      </div>
+      <button type="button" id="btnAddSale" class="btn btn-success rounded-pill px-4"><i class="bi bi-plus-lg me-1"></i> Registrar venta</button>
+    </div>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Ventas del mes</div><div id="salesMonthTotal" class="fs-3 fw-bold">$0</div></div></div>
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Operaciones del mes</div><div id="salesMonthCount" class="fs-3 fw-bold">0</div></div></div>
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Promedio por venta</div><div id="salesMonthAverage" class="fs-3 fw-bold">$0</div></div></div>
+    </div>
+    <div class="card border-0 shadow-sm p-3 p-md-4 bg-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <h5 class="fw-bold mb-0">Historial de ventas</h5>
+        <input type="search" id="salesSearch" class="form-control form-control-sm" placeholder="Buscar venta…" style="max-width: 280px;">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr class="small text-secondary"><th>Fecha</th><th>Producto / servicio</th><th>Cliente</th><th>Cantidad</th><th>Total</th><th>Pago</th><th class="text-end">Acciones</th></tr></thead>
+          <tbody id="salesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+      <form id="saleForm">
+        <div class="modal-header"><h5 class="modal-title fw-bold" id="saleModalTitle">Registrar venta</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="saleId">
+          <div class="row g-3 mb-3">
+            <div class="col-6"><label for="saleDate" class="form-label small fw-semibold">Fecha *</label><input id="saleDate" type="date" class="form-control" required></div>
+            <div class="col-6"><label for="salePaymentMethod" class="form-label small fw-semibold">Medio de pago</label><select id="salePaymentMethod" class="form-select"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
+          </div>
+          <div class="mb-3"><label for="saleProductName" class="form-label small fw-semibold">Producto o servicio *</label><input id="saleProductName" class="form-control" maxlength="120" required></div>
+          <div class="mb-3"><label for="saleClientName" class="form-label small fw-semibold">Cliente</label><input id="saleClientName" class="form-control" maxlength="120"></div>
+          <div class="row g-3 mb-2">
+            <div class="col-4"><label for="saleQuantity" class="form-label small fw-semibold">Cantidad</label><input id="saleQuantity" type="number" min="0.01" step="any" class="form-control" value="1" required></div>
+            <div class="col-8"><label for="saleUnitPrice" class="form-label small fw-semibold">Precio unitario (<span class="currency-code">COP</span>)</label><input id="saleUnitPrice" type="number" min="0" step="any" class="form-control" value="0" required></div>
+          </div>
+          <div class="d-flex justify-content-between border-top pt-2 mb-3"><span class="fw-semibold">Total</span><strong id="saleTotalPreview">$0</strong></div>
+          <div><label for="saleNotes" class="form-label small fw-semibold">Notas</label><textarea id="saleNotes" class="form-control" rows="2" maxlength="300"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success rounded-pill px-4">Guardar venta</button></div>
+      </form>
+    </div></div>
   </div>
 
   <div class="modal fade" id="inventoryItemModal" tabindex="-1" aria-labelledby="inventoryModalTitle" aria-hidden="true">

@@ -39,6 +39,7 @@ export const Auth = {
       localStorage.removeItem('calc3d_config_v2');
       localStorage.removeItem('calc3d_presets_v2');
       localStorage.removeItem('calc3d_inventory_v1');
+      localStorage.removeItem('calc3d_sales_v1');
       window.location.reload();
     });
     window.addEventListener('calculator-auth-expired', () => {
@@ -46,6 +47,7 @@ export const Auth = {
       localStorage.removeItem('calc3d_config_v2');
       localStorage.removeItem('calc3d_presets_v2');
       localStorage.removeItem('calc3d_inventory_v1');
+      localStorage.removeItem('calc3d_sales_v1');
       window.location.reload();
     });
 

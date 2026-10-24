@@ -423,6 +423,7 @@ export class Settings {
     this.app.filaments.renderPalette();
     this.app.extras.render();
     this.app.inventoryModule.render();
+    this.app.salesModule.render();
     this.app.recalculate();
     this.app.showToast('Configuración guardada', 'success');
   }
@@ -478,10 +479,13 @@ export class Settings {
         this.app.config = Storage.loadConfig();
         this.app.presets = Storage.loadPresets();
         this.app.inventory = Storage.loadInventory();
+        this.app.sales = Storage.loadSales();
         this.render();
         this.app.presetsComponent.render();
         this.app.inventoryModule.items = this.app.inventory;
         this.app.inventoryModule.render();
+        this.app.salesModule.items = this.app.sales;
+        this.app.salesModule.render();
         this.app.filaments.renderPalette();
         this.app.filaments.renderMaterialSlots();
         this.app.extras.render();
