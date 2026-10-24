@@ -53,9 +53,9 @@ Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado*
 
 ## Registrar compras e inversiones
 
-En **Compras e inversiones**, registra cada desembolso del negocio: equipo (incluido el envío), insumos de producción, mantenimiento y gastos. El total del registro suma el costo de compra más el envío. Para los insumos, indica la cantidad comprada y ajusta manualmente el saldo disponible conforme los consumas; el valor disponible se estima con el costo proporcional del saldo restante.
+En **Compras e inversiones**, registra cada desembolso del negocio: equipo (incluido el envío), filamentos, otros insumos de producción, mantenimiento y gastos. Para una compra de filamento, selecciónalo del catálogo e indica cantidad en kg o gramos; la app actualiza el costo promedio por kg que usa la calculadora y suma el stock disponible. Después de completar una impresión, pulsa **Registrar consumo después de imprimir** en la calculadora para descontar sus gramos del stock. Para otros insumos, ajusta manualmente el saldo desde el registro de compra.
 
-El tablero compara el total desembolsado con las ventas registradas y muestra cuánto falta para cubrir esas compras. Para que represente dinero recibido, registra ventas ya cobradas. Este indicador sirve para seguir el flujo acumulado de compras y ventas, no representa utilidad neta. El valor disponible de insumos se presenta por separado porque todavía está en existencias. El módulo no descuenta automáticamente materiales al calcular una impresión.
+El tablero compara el total desembolsado con las ventas registradas y muestra cuánto falta para cubrir esas compras. Para que represente dinero recibido, registra ventas ya cobradas. Este indicador sirve para seguir el flujo acumulado de compras y ventas, no representa utilidad neta. El valor disponible de insumos se presenta por separado porque todavía está en existencias.
 
 ## Publicar cambios
 

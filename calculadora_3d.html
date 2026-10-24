@@ -206,6 +206,7 @@
                   <div id="materialSlotsContainer" class="ams-drop-zone">
                     <!-- Renderizado dinámico -->
                   </div>
+                  <button type="button" id="btnRegisterFilamentConsumption" class="btn btn-sm btn-outline-primary rounded-pill mt-2"><i class="bi bi-box-arrow-down me-1"></i>Registrar consumo después de imprimir</button>
                 </div>
               </div>
             </div>
@@ -523,7 +524,7 @@ Generando cotización...
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 mb-3 border-bottom">
               <div>
                 <h5 class="fw-bold mb-0 text-dark">🧵 Catálogo de Filamentos</h5>
-                <small class="text-muted">Edita precios por kg o añade nuevos materiales</small>
+                <small class="text-muted">Las compras vinculadas actualizan el costo promedio por kg</small>
               </div>
               <div class="d-flex gap-2 align-self-start align-self-md-auto flex-wrap">
                 <button type="button" id="btnClearMaterials" class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm" title="Borrar todo">
@@ -711,22 +712,23 @@ Generando cotización...
           <input type="hidden" id="purchaseId">
           <div class="row g-3 mb-3">
             <div class="col-md-4"><label for="purchaseDate" class="form-label small fw-semibold">Fecha *</label><input id="purchaseDate" type="date" class="form-control" required></div>
-            <div class="col-md-4"><label for="purchaseType" class="form-label small fw-semibold">Tipo *</label><select id="purchaseType" class="form-select"><option value="equipo">Equipo / inversión</option><option value="insumo" selected>Insumo de producción</option><option value="mantenimiento">Mantenimiento / repuesto</option><option value="gasto">Gasto del negocio</option></select></div>
-            <div class="col-md-4"><label for="purchaseItemName" class="form-label small fw-semibold">Artículo o concepto *</label><input id="purchaseItemName" class="form-control" maxlength="120" placeholder="Ej.: Filamento PLA, impresora…" required></div>
+            <div class="col-md-4"><label for="purchaseType" class="form-label small fw-semibold">Tipo *</label><select id="purchaseType" class="form-select"><option value="equipo">Equipo / inversión</option><option value="filamento">Filamento del catálogo</option><option value="insumo" selected>Otro insumo de producción</option><option value="mantenimiento">Mantenimiento / repuesto</option><option value="gasto">Gasto del negocio</option></select></div>
+            <div class="col-md-4" id="purchaseMaterialWrap"><label for="purchaseMaterialId" class="form-label small fw-semibold">Filamento del catálogo *</label><div class="input-group"><select id="purchaseMaterialId" class="form-select"></select><button type="button" id="btnAddPurchaseMaterial" class="btn btn-outline-success" title="Agregar filamento al catálogo"><i class="bi bi-plus-lg"></i></button></div></div>
+            <div class="col-md-4" id="purchaseItemNameWrap"><label for="purchaseItemName" class="form-label small fw-semibold">Artículo o concepto *</label><input id="purchaseItemName" class="form-control" maxlength="120" placeholder="Ej.: Resina, lijas…" required></div>
           </div>
           <div class="row g-3 mb-3">
             <div class="col-md-3" id="purchaseQuantityWrap"><label for="purchaseQuantity" class="form-label small fw-semibold">Cantidad comprada *</label><input id="purchaseQuantity" type="number" min="0.001" step="any" class="form-control" value="1"></div>
-            <div class="col-md-3" id="purchaseUnitWrap"><label for="purchaseUnit" class="form-label small fw-semibold">Unidad</label><input id="purchaseUnit" class="form-control" maxlength="30" value="unidades" placeholder="kg, rollos, ml…"></div>
+            <div class="col-md-3" id="purchaseUnitWrap"><label for="purchaseUnit" class="form-label small fw-semibold">Unidad</label><select id="purchaseUnit" class="form-select"><option>kg</option><option>g</option><option>unidades</option><option>rollos</option><option>ml</option><option>litros</option><option>metros</option></select></div>
             <div class="col-md-3"><label for="purchaseCost" class="form-label small fw-semibold">Valor de compra (<span class="currency-code">COP</span>) *</label><input id="purchaseCost" type="number" min="0.01" step="any" class="form-control" required></div>
             <div class="col-md-3"><label for="purchaseShipping" class="form-label small fw-semibold">Envío (<span class="currency-code">COP</span>)</label><input id="purchaseShipping" type="number" min="0" step="any" class="form-control" value="0"></div>
           </div>
           <div class="row g-3 mb-3">
-            <div class="col-md-4" id="purchaseRemainingWrap"><label for="purchaseRemainingQuantity" class="form-label small fw-semibold">Cantidad disponible ahora *</label><input id="purchaseRemainingQuantity" type="number" min="0" step="any" class="form-control" value="1"><div class="form-text">Edita este saldo al consumir material para reflejar lo que queda.</div></div>
+            <div class="col-md-4" id="purchaseRemainingWrap"><label for="purchaseRemainingQuantity" class="form-label small fw-semibold">Cantidad disponible ahora *</label><input id="purchaseRemainingQuantity" type="number" min="0" step="any" class="form-control" value="1"><div class="form-text">Los filamentos se pueden descontar desde Calculadora al terminar una impresión.</div></div>
             <div class="col-md-4"><label for="purchaseSupplier" class="form-label small fw-semibold">Proveedor</label><input id="purchaseSupplier" class="form-control" maxlength="100"></div>
             <div class="col-md-4"><label for="purchasePaymentMethod" class="form-label small fw-semibold">Medio de pago</label><select id="purchasePaymentMethod" class="form-select"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Crédito</option><option>Otro</option></select></div>
           </div>
           <div><label for="purchaseNotes" class="form-label small fw-semibold">Notas</label><textarea id="purchaseNotes" class="form-control" rows="2" maxlength="300" placeholder="Incluye detalles del pago o garantía"></textarea></div>
-          <div class="form-text mt-3">El total desembolsado suma compra y envío. El valor disponible de insumos usa el saldo que registres aquí; el consumo aún se ajusta manualmente.</div>
+          <div class="form-text mt-3">El total desembolsado suma compra y envío. Las compras de filamento actualizan el costo por kilo promedio del catálogo y sus existencias disponibles.</div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success rounded-pill px-4">Guardar registro</button></div>
       </form>

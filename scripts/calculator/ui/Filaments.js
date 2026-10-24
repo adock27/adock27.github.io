@@ -64,6 +64,7 @@ export class Filaments {
 
           // Icono diferente en móvil vs escritorio
           const isMobile = container.id === 'filamentPaletteMobile';
+          const stockLabel = this.app.purchasesModule?.filamentStockLabel(mat.id) || 'Stock sin registrar';
           const iconHtml = isMobile 
             ? `<i class="bi bi-plus-circle text-success" style="font-size:16px;"></i>`
             : `<i class="bi bi-grip-vertical text-muted" style="font-size:13px;opacity:0.5;"></i>`;
@@ -72,7 +73,7 @@ export class Filaments {
             <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
             <div style="min-width:0;flex:1;">
               <div class="small fw-semibold text-dark text-truncate" style="line-height:1.2;">${mat.name}</div>
-              <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg, this.app.config.currency)}/kg</div>
+              <div class="text-muted" style="font-size:10px;">${Engine.formatMoney(mat.pricePerKg, this.app.config.currency)}/kg · ${stockLabel}</div>
             </div>
             ${iconHtml}
           `;
@@ -133,6 +134,7 @@ export class Filaments {
       this.app.currentJob.materialSlots.forEach(slot => {
         const mat = this.app.config.materials.find(m => m.id === slot.materialId)
           || { name: 'Desconocido', color: '#6c757d', pricePerKg: 0 };
+        const stockLabel = this.app.purchasesModule?.filamentStockLabel(slot.materialId) || 'Stock sin registrar';
 
         const card = document.createElement('div');
         card.className = 'ams-slot-card d-flex align-items-center gap-2 p-2 mb-1 rounded-3 border bg-light';
@@ -140,7 +142,7 @@ export class Filaments {
 
         card.innerHTML = `
           <span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:${mat.color || '#6c757d'};border:1.5px solid rgba(0,0,0,0.12);flex-shrink:0;"></span>
-          <span class="small fw-semibold text-dark text-truncate" style="flex:1;min-width:0;font-size:12px;">${mat.name}</span>
+          <span class="text-truncate" style="flex:1;min-width:0;font-size:12px;"><span class="small fw-semibold text-dark d-block text-truncate">${mat.name}</span><span class="text-muted" style="font-size:10px;">${stockLabel}</span></span>
           <div class="input-group input-group-sm" style="max-width:82px;">
             <input type="number" class="form-control slot-grams-input" data-slot-id="${slot.id}" min="0.1" step="0.5" value="${slot.grams}" style="font-size:12px;padding:3px 6px;">
             <span class="input-group-text" style="font-size:11px;padding:3px 5px;">g</span>

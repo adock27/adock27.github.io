@@ -76,9 +76,10 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 
 ### RF-10: Compras e inversiones
 - **RF-10.1:** El usuario puede registrar, consultar, editar y eliminar desembolsos clasificados como equipo/inversión, insumo de producción, mantenimiento o gasto del negocio.
-- **RF-10.2:** Cada registro guarda fecha, concepto, costo, envío, total desembolsado, proveedor, medio de pago y notas; los insumos también guardan cantidad comprada, unidad y saldo disponible editable.
+- **RF-10.2:** Cada registro guarda fecha, concepto, costo, envío, total desembolsado, proveedor, medio de pago y notas; los insumos también guardan cantidad comprada, unidad y saldo disponible. Las compras de filamento se vinculan a un material del catálogo.
 - **RF-10.3:** El tablero muestra total desembolsado, ventas registradas, valor estimado de insumos disponibles y monto de desembolsos aún no cubierto por ventas registradas.
-- **RF-10.4:** El indicador de cobertura compara compras acumuladas y ventas registradas; no se presenta como utilidad neta. El valor de insumos disponibles se calcula según los saldos editables y no se descuenta automáticamente desde la calculadora.
+- **RF-10.4:** El indicador de cobertura compara compras acumuladas y ventas registradas; no se presenta como utilidad neta. El valor de insumos disponibles se calcula según sus saldos. El uso de filamento de un trabajo completado puede descontarse de los lotes comprados.
+- **RF-10.5:** El costo promedio por kg del filamento se calcula con las compras vinculadas, incluyendo el envío, y actualiza el precio utilizado por la calculadora.
 
 ## 3. Requerimientos No Funcionales (RNF)
 

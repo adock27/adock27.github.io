@@ -69,10 +69,10 @@ Los pedidos se guardan por usuario con número, fechas, producto del inventario 
 {"entity":"pedidos","action":"create","token":"TOKEN_DE_SESION","orderNumber":"PED-12345678","inventoryId":"ID_DEL_ARTICULO","date":"2026-10-24","dueDate":"2026-10-30","productName":"Llavero personalizado","clientName":"Ana","quantity":2,"unitPrice":12000,"total":24000,"status":"Pendiente","paymentMethod":"Transferencia","notes":"Color azul"}
 ```
 
-Las compras e inversiones registran el desembolso total (valor de compra más envío), su tipo y, para insumos, la cantidad comprada y el saldo disponible que el usuario mantiene actualizado:
+Las compras e inversiones registran el desembolso total (valor de compra más envío), su tipo y, para insumos, la cantidad comprada y el saldo disponible. Las compras de filamento se vinculan al `materialId` del catálogo:
 
 ```json
-{"entity":"compras","action":"create","token":"TOKEN_DE_SESION","date":"2026-10-24","type":"insumo","itemName":"Filamento PLA","quantity":1,"unit":"kg","purchaseCost":55000,"shippingCost":5000,"totalCost":60000,"remainingQuantity":1,"supplier":"Proveedor","paymentMethod":"Transferencia","notes":"Color negro"}
+{"entity":"compras","action":"create","token":"TOKEN_DE_SESION","date":"2026-10-24","type":"filamento","itemName":"PLA Estándar","materialId":"ID_DEL_MATERIAL","quantity":1,"unit":"kg","purchaseCost":55000,"shippingCost":5000,"totalCost":60000,"remainingQuantity":1,"supplier":"Proveedor","paymentMethod":"Transferencia","notes":"Color negro"}
 ```
 
 ## Conexión con el frontend

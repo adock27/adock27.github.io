@@ -32,7 +32,7 @@ var DB_SCHEMAS = {
   Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt'],
   Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId'],
   Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt'],
-  Compras: ['id', 'userId', 'date', 'type', 'itemName', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
+  Compras: ['id', 'userId', 'date', 'type', 'itemName', 'materialId', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
 };
 
 function getSpreadsheet_() {
