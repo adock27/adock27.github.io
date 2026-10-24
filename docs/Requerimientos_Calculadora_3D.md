@@ -6,11 +6,13 @@ El propósito de este documento es definir los requerimientos funcionales, no fu
 
 ### 1.2 Alcance
 El sistema permitirá a los usuarios (operadores de impresión 3D):
+- Crear una cuenta e iniciar sesión, manteniendo aislados los datos de cada usuario.
 - Calcular costos operativos (filamento, electricidad, desgaste, mano de obra, mermas/fallos).
 - Gestionar materiales y sus propiedades (colores, precio por kg) con soporte multi-color (AMS).
 - Administrar costos de insumos extra (imanes, tornillos, empaques).
 - Generar cotizaciones estructuradas y listas para compartir con clientes (ej. vía WhatsApp).
 - Configurar y guardar preferencias, catálogos, presets, inventario y ventas en Google Sheets mediante Apps Script, con exportación e importación JSON como respaldo manual.
+- Gestionar existencias y registrar ventas asociadas a productos del inventario.
 
 ## 2. Requerimientos Funcionales (RF)
 
@@ -49,6 +51,26 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - **RF-6.3:** **Catálogo Extras:** CRUD de insumos complementarios con su precio unitario.
 - **RF-6.4:** **Redondeo:** Configurar reglas de redondeo para precios finales (ej. a los $100 o $500 más cercanos).
 - **RF-6.5:** **Exportar/Importar:** Guardar y cargar toda la configuración y catálogos mediante archivos `.json`.
+
+### RF-7: Cuenta y acceso
+- **RF-7.1:** El usuario puede crear una cuenta con correo y contraseña e iniciar sesión.
+- **RF-7.2:** Las operaciones privadas deben autenticarse con la sesión emitida por Apps Script.
+- **RF-7.3:** Los datos de negocio se filtran por el usuario autenticado; una cuenta solo puede consultar y modificar sus propios registros.
+
+### RF-8: Inventario y ventas
+- **RF-8.1:** El inventario permite crear, consultar, actualizar y eliminar artículos con categoría, cantidad, unidad, stock mínimo, costo unitario y notas.
+- **RF-8.2:** El listado muestra la existencia, el mínimo y el estado. Una cantidad igual a cero se marca como «Agotado»; las cantidades positivas que alcancen el mínimo se marcan como «Stock bajo».
+- **RF-8.3:** El formulario de venta selecciona el producto desde el inventario y permite agregar uno nuevo desde el mismo formulario, indicando su existencia inicial.
+- **RF-8.4:** Registrar una venta descuenta del inventario la cantidad vendida y guarda el producto, fecha, cliente, cantidad, precio unitario, total, medio de pago y notas.
+- **RF-8.5:** Editar una venta ajusta las existencias asociadas; eliminarla devuelve al inventario la cantidad que se había vendido.
+- **RF-8.6:** El costo de compra del inventario y el precio de venta son valores independientes.
+- **RF-8.7:** El módulo de ventas presenta indicadores mensuales, búsqueda y acciones para editar y eliminar ventas.
+
+### RF-9: Gestión de pedidos
+- **RF-9.1:** El usuario puede crear, consultar, editar y eliminar pedidos con número, cliente, fecha, fecha de entrega, producto del inventario, cantidad, precio, estado y notas.
+- **RF-9.2:** Los estados disponibles son pendiente, en producción, listo, entregado y cancelado; el listado permite buscar y filtrar por estado.
+- **RF-9.3:** Crear un pedido no reserva ni descuenta stock. Un pedido listo puede convertirse en venta; la conversión valida existencias, descuenta la cantidad, crea el registro de venta y enlaza ambos registros.
+- **RF-9.4:** Un pedido ya convertido a venta no puede editarse ni eliminarse desde Pedidos para evitar inconsistencias con el historial de ventas.
 
 ## 3. Requerimientos No Funcionales (RNF)
 
@@ -90,3 +112,12 @@ El sistema se divide en tres vistas principales mediante pestañas (Nav Pills):
    - Formularios de parámetros de máquina y entorno.
    - Tablas de datos para filamentos y extras con acciones de edición/eliminación.
    - Panel de Exportación e Importación de Backups.
+4. **Tab 4: Inventario**
+   - Resumen de artículos, alertas de stock bajo y valor estimado.
+   - Tabla de existencias con búsqueda, edición y eliminación.
+5. **Tab 5: Pedidos**
+   - Seguimiento de pedidos por estado, fechas, cliente, artículo y valor.
+   - Acción para registrar como venta los pedidos listos, validando y descontando el inventario.
+6. **Tab 6: Ventas**
+   - Indicadores del mes, búsqueda, historial y formulario de registro.
+   - Selección de artículos del inventario y alta rápida de un producto desde el formulario de venta.

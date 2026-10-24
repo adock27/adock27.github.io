@@ -1,11 +1,11 @@
 // Persistencia remota de todos los datos de la calculadora en Google Apps Script.
 const API_URL = 'https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ6CTe2fjdl1dDyoUfCtnBUngv5a069JAldSfGakdRdsa5/exec';
 const SESSION_KEY = 'calc3d_session_v1';
-const LEGACY_KEYS = ['calc3d_config_v2', 'calc3d_presets_v2', 'calc3d_inventory_v1', 'calc3d_sales_v1'];
+const LEGACY_KEYS = ['calc3d_config_v2', 'calc3d_presets_v2', 'calc3d_inventory_v1', 'calc3d_sales_v1', 'calc3d_orders_v1'];
 let syncTimer = null;
 let syncing = Promise.resolve();
 const pendingScopes = new Set();
-let snapshot = { config: null, presets: null, inventory: null, sales: null };
+let snapshot = { config: null, presets: null, inventory: null, sales: null, orders: null };
 
 async function request(entity, action, fields = {}) {
   const session = ApiSync.getSession();
@@ -53,11 +53,13 @@ function readLegacyData(defaults) {
   const oldPresets = read(LEGACY_KEYS[1], defaults.presets);
   const oldInventory = read(LEGACY_KEYS[2], defaults.inventory);
   const oldSales = read(LEGACY_KEYS[3], defaults.sales);
+  const oldOrders = read(LEGACY_KEYS[4], defaults.orders);
   return {
     config,
     presets: Array.isArray(oldPresets) && oldPresets.length ? oldPresets : defaults.presets,
     inventory: Array.isArray(oldInventory) ? oldInventory : defaults.inventory,
-    sales: Array.isArray(oldSales) ? oldSales : defaults.sales
+    sales: Array.isArray(oldSales) ? oldSales : defaults.sales,
+    orders: Array.isArray(oldOrders) ? oldOrders : defaults.orders
   };
 }
 
@@ -66,7 +68,7 @@ function clearLegacyData() {
 }
 
 async function pushSnapshot(scopes, current = snapshot) {
-  const { config, presets, inventory, sales } = current;
+  const { config, presets, inventory, sales, orders } = current;
   const userId = ApiSync.getSession()?.id;
   if (!userId) throw new Error('Inicia sesión para guardar los datos.');
   const all = scopes.has('all');
@@ -78,6 +80,7 @@ async function pushSnapshot(scopes, current = snapshot) {
   if (all || scopes.has('presets')) await replaceCollection('presets', presets || []);
   if (all || scopes.has('inventory')) await replaceCollection('inventario', inventory || []);
   if (all || scopes.has('sales')) await replaceCollection('ventas', sales || []);
+  if (all || scopes.has('orders')) await replaceCollection('pedidos', orders || []);
 }
 
 export const ApiSync = {
@@ -116,16 +119,17 @@ export const ApiSync = {
     try {
       const userId = this.getSession()?.id;
       if (!userId) throw new Error('Inicia sesión para cargar tus datos.');
-      const [remoteConfigRecord, materials, extras, presets, inventory, sales] = await Promise.all([
+      const [remoteConfigRecord, materials, extras, presets, inventory, sales, orders] = await Promise.all([
         request('configuracion', 'get', { userId }),
         request('materiales', 'list', { userId }),
         request('extras', 'list', { userId }),
         request('presets', 'list', { userId }),
         request('inventario', 'list', { userId }),
-        request('ventas', 'list', { userId })
+        request('ventas', 'list', { userId }),
+        request('pedidos', 'list', { userId })
       ]);
       const remoteConfig = remoteConfigRecord?.data;
-      const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length);
+      const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length || orders.length);
       if (!hasRemoteData) {
         const initial = readLegacyData(defaults);
         this.setSnapshot(initial);
@@ -146,7 +150,8 @@ export const ApiSync = {
         config,
         presets: remoteConfigRecord ? presets : (presets.length ? presets : legacy.presets),
         inventory: remoteConfigRecord || inventory.length ? inventory : legacy.inventory,
-        sales: remoteConfigRecord || sales.length ? sales : legacy.sales
+        sales: remoteConfigRecord || sales.length ? sales : legacy.sales,
+        orders: remoteConfigRecord || orders.length ? orders : legacy.orders
       };
       this.setSnapshot(snapshotData);
       if (!remoteConfigRecord) await pushSnapshot(new Set(['all']), this.getSnapshot());

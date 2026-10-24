@@ -480,12 +480,15 @@ export class Settings {
         this.app.presets = Storage.loadPresets();
         this.app.inventory = Storage.loadInventory();
         this.app.sales = Storage.loadSales();
+        this.app.orders = Storage.loadOrders();
         this.render();
         this.app.presetsComponent.render();
         this.app.inventoryModule.items = this.app.inventory;
         this.app.inventoryModule.render();
         this.app.salesModule.items = this.app.sales;
         this.app.salesModule.render();
+        this.app.ordersModule.items = this.app.orders;
+        this.app.ordersModule.render();
         this.app.filaments.renderPalette();
         this.app.filaments.renderMaterialSlots();
         this.app.extras.render();

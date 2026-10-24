@@ -124,6 +124,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-orders">
+            <i class="bi bi-clipboard-check me-1"></i> Pedidos
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-sales">
             <i class="bi bi-cash-coin me-1"></i> Ventas
           </a>
@@ -592,7 +597,40 @@ Generando cotización...
     </div>
   </div>
 
-  <!-- VISTA 5: VENTAS -->
+  <!-- VISTA 5: PEDIDOS -->
+  <div id="tab-orders" class="tab-pane-view d-none">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-clipboard-check text-success me-2"></i>Pedidos</h4>
+        <p class="text-secondary small mb-0">Da seguimiento a pedidos de clientes. Registrar un pedido no descuenta existencias.</p>
+      </div>
+      <button type="button" id="btnAddOrder" class="btn btn-success rounded-pill px-4"><i class="bi bi-plus-lg me-1"></i> Nuevo pedido</button>
+    </div>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Pedidos abiertos</div><div id="ordersOpenCount" class="fs-3 fw-bold">0</div></div></div>
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Valor pendiente</div><div id="ordersOpenValue" class="fs-3 fw-bold">$0</div></div></div>
+      <div class="col-md-4"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Pedidos este mes</div><div id="ordersMonthCount" class="fs-3 fw-bold">0</div></div></div>
+    </div>
+    <div class="card border-0 shadow-sm p-3 p-md-4 bg-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <h5 class="fw-bold mb-0">Seguimiento de pedidos</h5>
+        <div class="d-flex flex-wrap gap-2">
+          <select id="ordersStatusFilter" class="form-select form-select-sm" style="max-width: 180px" aria-label="Filtrar pedidos por estado">
+            <option value="">Todos los estados</option><option>Pendiente</option><option>En producción</option><option>Listo</option><option>Entregado</option><option>Cancelado</option>
+          </select>
+          <input type="search" id="ordersSearch" class="form-control form-control-sm" placeholder="Buscar pedido…" style="max-width: 240px;">
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr class="small text-secondary"><th>Pedido</th><th>Cliente</th><th>Producto</th><th>Entrega</th><th>Cantidad</th><th>Total</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+          <tbody id="ordersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA 6: VENTAS -->
   <div id="tab-sales" class="tab-pane-view d-none">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
       <div>
@@ -618,6 +656,34 @@ Generando cotización...
         </table>
       </div>
     </div>
+  </div>
+
+  <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+      <form id="orderForm">
+        <div class="modal-header"><h5 class="modal-title fw-bold" id="orderModalTitle">Nuevo pedido</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+        <div class="modal-body">
+          <input type="hidden" id="orderId">
+          <div class="row g-3 mb-3">
+            <div class="col-6"><label for="orderDate" class="form-label small fw-semibold">Fecha del pedido *</label><input id="orderDate" type="date" class="form-control" required></div>
+            <div class="col-6"><label for="orderDueDate" class="form-label small fw-semibold">Fecha de entrega</label><input id="orderDueDate" type="date" class="form-control"></div>
+          </div>
+          <div class="mb-3"><label for="orderClientName" class="form-label small fw-semibold">Cliente *</label><input id="orderClientName" class="form-control" maxlength="120" required></div>
+          <div class="mb-2"><label for="orderInventoryId" class="form-label small fw-semibold">Producto *</label><select id="orderInventoryId" class="form-select" required></select><div class="form-text">El pedido no descuenta stock. El descuento ocurre al registrarlo como venta desde el estado «Listo».</div></div>
+          <div class="row g-3 mb-3">
+            <div class="col-4"><label for="orderQuantity" class="form-label small fw-semibold">Cantidad *</label><input id="orderQuantity" type="number" min="0.01" step="any" class="form-control" value="1" required></div>
+            <div class="col-8"><label for="orderUnitPrice" class="form-label small fw-semibold">Precio unitario (<span class="currency-code">COP</span>) *</label><input id="orderUnitPrice" type="number" min="0" step="any" class="form-control" value="0" required></div>
+          </div>
+          <div class="d-flex justify-content-between border-top pt-2 mb-3"><span class="fw-semibold">Total</span><strong id="orderTotalPreview">$0</strong></div>
+          <div class="row g-3 mb-3">
+            <div class="col-6"><label for="orderStatus" class="form-label small fw-semibold">Estado</label><select id="orderStatus" class="form-select"><option>Pendiente</option><option>En producción</option><option>Listo</option><option>Entregado</option><option>Cancelado</option></select></div>
+            <div class="col-6"><label for="orderPaymentMethod" class="form-label small fw-semibold">Medio de pago</label><select id="orderPaymentMethod" class="form-select"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
+          </div>
+          <div><label for="orderNotes" class="form-label small fw-semibold">Notas</label><textarea id="orderNotes" class="form-control" rows="2" maxlength="500"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success rounded-pill px-4">Guardar pedido</button></div>
+      </form>
+    </div></div>
   </div>
 
   <div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalTitle" aria-hidden="true">

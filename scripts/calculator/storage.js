@@ -6,7 +6,7 @@ import { ApiSync } from './api-sync.js';
  */
 
 const cloneData = value => JSON.parse(JSON.stringify(value));
-const runtimeData = { config: null, presets: null, inventory: null, sales: null };
+const runtimeData = { config: null, presets: null, inventory: null, sales: null, orders: null };
 
 export const DEFAULT_CONFIG = {
   version: 2,
@@ -97,7 +97,7 @@ export const DEFAULT_PRESETS = [
 
 export const Storage = {
   setSnapshot(snapshot = {}) {
-    ['config', 'presets', 'inventory', 'sales'].forEach(key => {
+    ['config', 'presets', 'inventory', 'sales', 'orders'].forEach(key => {
       if (Object.prototype.hasOwnProperty.call(snapshot, key)) runtimeData[key] = cloneData(snapshot[key]);
     });
   },
@@ -159,6 +159,17 @@ export const Storage = {
     return true;
   },
 
+  loadOrders() {
+    return runtimeData.orders === null ? [] : cloneData(runtimeData.orders);
+  },
+
+  saveOrders(items) {
+    runtimeData.orders = cloneData(items);
+    ApiSync.setSnapshot({ orders: runtimeData.orders });
+    ApiSync.schedule('orders');
+    return true;
+  },
+
   /**
    * Guarda un nuevo preset o actualiza uno existente.
    * @param {Object} preset
@@ -197,7 +208,8 @@ export const Storage = {
       config: data.config || this.loadConfig(),
       presets: data.presets || this.loadPresets(),
       inventory: data.inventory || this.loadInventory(),
-      sales: data.sales || this.loadSales()
+      sales: data.sales || this.loadSales(),
+      orders: data.orders || this.loadOrders()
     }, null, 2);
   },
 
@@ -214,7 +226,8 @@ export const Storage = {
         config: data.config || current.config,
         presets: Array.isArray(data.presets) ? data.presets : current.presets,
         inventory: Array.isArray(data.inventory) ? data.inventory : current.inventory,
-        sales: Array.isArray(data.sales) ? data.sales : current.sales
+        sales: Array.isArray(data.sales) ? data.sales : current.sales,
+        orders: Array.isArray(data.orders) ? data.orders : current.orders
       };
       this.setSnapshot(next);
       ApiSync.setSnapshot(next);
