@@ -90,8 +90,10 @@ export class Orders {
     const isCustom = document.getElementById('orderInventoryId')?.value === '__custom__';
     const wrap = document.getElementById('orderCustomProductWrap');
     const input = document.getElementById('orderCustomProductName');
+    const addToInventoryWrap = document.getElementById('orderAddCustomToInventoryWrap');
     const addToInventory = document.getElementById('orderAddCustomToInventory');
     wrap?.classList.toggle('d-none', !isCustom);
+    addToInventoryWrap?.classList.toggle('d-none', !isCustom);
     if (input) input.required = isCustom;
     if (addToInventory) addToInventory.disabled = !isCustom || document.getElementById('orderStatus')?.value !== 'Entregado';
   }
