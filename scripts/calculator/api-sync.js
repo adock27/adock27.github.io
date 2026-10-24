@@ -142,13 +142,13 @@ export const ApiSync = {
         materials: remoteConfigRecord ? materials : (materials.length ? materials : legacy.config.materials),
         extrasCatalog: remoteConfigRecord ? extras : (extras.length ? extras : legacy.config.extrasCatalog)
       };
-      const loaded = {
+      const snapshotData = {
         config,
         presets: remoteConfigRecord ? presets : (presets.length ? presets : legacy.presets),
         inventory: remoteConfigRecord || inventory.length ? inventory : legacy.inventory,
         sales: remoteConfigRecord || sales.length ? sales : legacy.sales
       };
-      this.setSnapshot(loaded);
+      this.setSnapshot(snapshotData);
       if (!remoteConfigRecord) await pushSnapshot(new Set(['all']), this.getSnapshot());
       clearLegacyData();
       const loaded = { ...this.getSnapshot(), connected: true };
