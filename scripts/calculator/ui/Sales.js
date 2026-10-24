@@ -24,12 +24,22 @@ export class Sales {
   bindEvents() {
     document.getElementById('btnAddSale')?.addEventListener('click', () => this.openForm());
     this.form?.addEventListener('submit', event => this.saveSale(event));
+    this.modalElement?.addEventListener('hide.bs.modal', () => {
+      const focusedElement = document.activeElement;
+      if (focusedElement && this.modalElement.contains(focusedElement)) focusedElement.blur();
+    });
+    this.modalElement?.addEventListener('hidden.bs.modal', () => {
+      const fallback = document.getElementById('btnAddSale');
+      const target = this.returnFocusTarget?.isConnected ? this.returnFocusTarget : fallback;
+      target?.focus({ preventScroll: true });
+    });
     this.searchInput?.addEventListener('input', () => this.render());
     document.getElementById('saleInventoryId')?.addEventListener('change', () => this.updateInventoryHint());
     ['saleQuantity', 'saleUnitPrice'].forEach(id => document.getElementById(id)?.addEventListener('input', () => this.updateTotalPreview()));
   }
 
   openForm(sale = null) {
+    this.returnFocusTarget = document.activeElement;
     this.form?.reset();
     this.renderInventoryOptions(sale?.inventoryId || '');
     document.getElementById('saleId').value = sale?.id || '';

@@ -18,6 +18,7 @@ function setupDatabase() {
     }
     sheet.setFrozenRows(1);
   });
+  repairMisalignedSalesRows_(ss.getSheetByName('Ventas'));
   return 'Base de datos lista';
 }
 
@@ -29,7 +30,7 @@ var DB_SCHEMAS = {
   Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt'],
   Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt'],
   Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt'],
-  Ventas: ['id', 'userId', 'inventoryId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
+  Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId']
 };
 
 function getSpreadsheet_() {
@@ -58,7 +59,7 @@ function rowsFor_(sheet) {
 }
 
 function appendRecord_(sheetName, record) {
-  var sheet = sheetFor_(sheetName), headers = DB_SCHEMAS[sheetName];
+  var sheet = sheetFor_(sheetName), headers = sheetHeaders_(sheet);
   var now = new Date().toISOString();
   record.id = record.id || Utilities.getUuid();
   record.createdAt = record.createdAt || now;
@@ -68,12 +69,39 @@ function appendRecord_(sheetName, record) {
 }
 
 function writeRecord_(sheetName, rowNumber, record) {
-  var sheet = sheetFor_(sheetName), headers = DB_SCHEMAS[sheetName];
+  var sheet = sheetFor_(sheetName), headers = sheetHeaders_(sheet);
   record.updatedAt = new Date().toISOString();
   sheet.getRange(rowNumber, 1, 1, headers.length).setValues([headers.map(function (key) {
     return record[key] == null ? '' : record[key];
   })]);
   return record;
+}
+
+function sheetHeaders_(sheet) {
+  var lastColumn = sheet.getLastColumn();
+  if (lastColumn < 1) return [];
+  return sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+}
+
+/** Repara filas creadas mientras inventoryId estaba insertado en medio del esquema lógico. */
+function repairMisalignedSalesRows_(sheet) {
+  if (!sheet || sheet.getLastRow() < 2) return;
+  var headers = sheetHeaders_(sheet);
+  var dateCol = headers.indexOf('date'), productCol = headers.indexOf('productName'), inventoryCol = headers.indexOf('inventoryId');
+  if (dateCol < 0 || productCol !== dateCol + 1 || inventoryCol <= dateCol) return;
+  var values = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+  var repaired = false;
+  values.forEach(function (row) {
+    var dateValue = row[dateCol], productValue = row[productCol];
+    var nextCellLooksLikeDate = productValue instanceof Date || /^\d{4}-\d{2}-\d{2}$/.test(String(productValue || ''));
+    var dateCellLooksShifted = dateValue === '' || dateValue == null || /^[\w-]{8,}$/.test(String(dateValue));
+    if (!nextCellLooksLikeDate || !dateCellLooksShifted) return;
+    var original = row.slice();
+    for (var col = dateCol; col < inventoryCol; col++) row[col] = original[col + 1];
+    row[inventoryCol] = original[dateCol];
+    repaired = true;
+  });
+  if (repaired) sheet.getRange(2, 1, values.length, headers.length).setValues(values);
 }
 
 function publicRecord_(sheetName, record) {
