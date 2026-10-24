@@ -34,6 +34,9 @@ export class Purchases {
 
   bindEvents() {
     document.getElementById('btnAddPurchase')?.addEventListener('click', () => this.openForm());
+    document.getElementById('btnBulkPurchases')?.addEventListener('click', () => this.openBulkForm());
+    document.getElementById('btnPreviewBulkPurchases')?.addEventListener('click', () => this.prepareBulkPreview());
+    document.getElementById('btnSaveBulkPurchases')?.addEventListener('click', () => this.saveBulkPurchases());
     this.form?.addEventListener('submit', event => this.savePurchase(event));
     this.searchInput?.addEventListener('input', () => this.renderTable());
     document.getElementById('purchaseType')?.addEventListener('change', () => this.toggleSupplyFields());
@@ -43,6 +46,138 @@ export class Purchases {
       if (!document.getElementById('purchaseId').value) document.getElementById('purchaseRemainingQuantity').value = event.target.value;
     });
     document.getElementById('btnRegisterFilamentConsumption')?.addEventListener('click', () => this.registerCurrentJobConsumption());
+  }
+
+  openBulkForm() {
+    document.getElementById('bulkPurchasesInput').value = '';
+    document.getElementById('bulkPurchasesDate').value = localDateInput();
+    document.getElementById('bulkPurchasesPreview').replaceChildren();
+    document.getElementById('bulkPurchasesMessage').textContent = '';
+    document.getElementById('btnSaveBulkPurchases').disabled = true;
+    this.bulkModalElement = document.getElementById('bulkPurchasesModal');
+    this.bulkModal = window.bootstrap?.Modal && this.bulkModalElement
+      ? window.bootstrap.Modal.getOrCreateInstance(this.bulkModalElement)
+      : null;
+    this.bulkModal?.show();
+  }
+
+  inferBulkType(name) {
+    const value = name.toLocaleLowerCase();
+    if (/\bcajas?\b/.test(value)) return 'insumo';
+    if (/env[ií]o|aeropost/.test(value)) return 'equipo';
+    if (/\b(pla|petg|abs|asa|tpu|filamento|sunlu)\b/.test(value)) return 'filamento';
+    if (/repuesto/.test(value)) return 'mantenimiento';
+    if (/impresora|equipo|sensor|lijadora|pulidora|placa/.test(value)) return 'equipo';
+    return 'insumo';
+  }
+
+  parseBulkRows(text) {
+    return String(text || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).flatMap(line => {
+      let cells;
+      if (line.startsWith('|')) cells = line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
+      else if (line.includes('\t')) cells = line.split('\t').map(cell => cell.trim());
+      else if (line.includes(';')) cells = line.split(';').map(cell => cell.trim());
+      else if (line.includes('|')) cells = line.split('|').map(cell => cell.trim());
+      else cells = line.split(/\s{2,}/).map(cell => cell.trim());
+      if (cells.length < 2 || /^[-:]+$/.test(cells[0]) || /^[-:]+$/.test(cells[1])) return [];
+      const amountText = cells.slice(1).join(' ').replace(/[\s$]/g, '').replace(/COP/gi, '');
+      const amount = Number(amountText.replace(/[.,](?=\d{3}(\D|$))/g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
+      if (!cells[0] || !Number.isFinite(amount) || amount <= 0 || /^(art[ií]culo|producto|nombre|valor|monto|total)$/i.test(cells[0])) return [];
+      const type = this.inferBulkType(cells[0]);
+      const grams = cells[0].match(/\b(\d+(?:[.,]\d+)?)\s*g\b/i);
+      const count = cells[0].match(/\bx\s*(\d+)\b/i);
+      return [{ name: cells[0], amount, type,
+        quantity: type === 'filamento' && grams ? Number(grams[1].replace(',', '.')) : count ? Number(count[1]) : '',
+        unit: type === 'filamento' && grams ? 'g' : 'unidades' }];
+    });
+  }
+
+  prepareBulkPreview() {
+    const rows = this.parseBulkRows(document.getElementById('bulkPurchasesInput').value);
+    const container = document.getElementById('bulkPurchasesPreview');
+    container.replaceChildren();
+    if (!rows.length) {
+      document.getElementById('bulkPurchasesMessage').textContent = 'No encontré filas válidas. Usa nombre y valor en columnas separadas.';
+      document.getElementById('btnSaveBulkPurchases').disabled = true;
+      return;
+    }
+    const table = document.createElement('table'); table.className = 'table table-sm table-bordered align-middle mb-0';
+    const head = document.createElement('thead'); head.className = 'table-light';
+    head.innerHTML = '<tr><th>Artículo</th><th>Valor COP</th><th>Categoría</th><th>Cantidad</th><th>Unidad</th><th>Filamento del catálogo</th></tr>'; table.appendChild(head);
+    const body = document.createElement('tbody');
+    rows.forEach(item => {
+      const row = document.createElement('tr'); row._bulkItem = item;
+      const name = document.createElement('td'); name.textContent = item.name; name.className = 'fw-semibold'; row.appendChild(name);
+      const amount = document.createElement('td'); amount.textContent = this.formatMoney(item.amount); row.appendChild(amount);
+      const typeCell = document.createElement('td'); const type = document.createElement('select'); type.className = 'form-select form-select-sm bulk-type';
+      Object.entries(PURCHASE_TYPES).forEach(([value,label]) => { const option = document.createElement('option'); option.value = value; option.textContent = label; option.selected = item.type === value; type.appendChild(option); }); typeCell.appendChild(type); row.appendChild(typeCell);
+      const quantityCell = document.createElement('td'); const quantity = document.createElement('input'); quantity.type = 'number'; quantity.min = '0.001'; quantity.step = 'any'; quantity.placeholder = 'Cantidad'; quantity.className = 'form-control form-control-sm bulk-quantity'; quantity.value = item.quantity || ''; quantityCell.appendChild(quantity); row.appendChild(quantityCell);
+      const unitCell = document.createElement('td'); const unit = document.createElement('select'); unit.className = 'form-select form-select-sm bulk-unit';
+      [['kg','kg'],['g','g'],['unidades','unidades'],['rollos','rollos'],['ml','ml'],['litros','litros'],['metros','metros']].forEach(([value,label]) => { const option = document.createElement('option'); option.value = value; option.textContent = label; unit.appendChild(option); });
+      unit.value = item.unit || (item.type === 'filamento' ? 'kg' : 'unidades'); unitCell.appendChild(unit); row.appendChild(unitCell);
+      const materialCell = document.createElement('td'); const material = document.createElement('select'); material.className = 'form-select form-select-sm bulk-material';
+      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Selecciona o se creará'; material.appendChild(placeholder);
+      (this.app.config.materials || []).forEach(entry => { const option = document.createElement('option'); option.value = entry.id; option.textContent = entry.name; option.selected = entry.name.trim().toLocaleLowerCase() === item.name.trim().toLocaleLowerCase(); material.appendChild(option); });
+      materialCell.appendChild(material); row.appendChild(materialCell);
+      type.addEventListener('change', () => { unit.value = type.value === 'filamento' ? 'kg' : 'unidades'; this.updateBulkRowFields(row); });
+      row.querySelectorAll('select,input').forEach(input => input.addEventListener('input', () => this.updateBulkSaveButton()));
+      body.appendChild(row); this.updateBulkRowFields(row);
+    });
+    table.appendChild(body); container.appendChild(table);
+    const total = rows.reduce((sum, item) => sum + item.amount, 0);
+    document.getElementById('bulkPurchasesMessage').textContent = `${rows.length} filas · Total ${this.formatMoney(total)}. Revisa las categorías y completa cantidades para filamentos e insumos que quieras controlar en stock.`;
+    this.updateBulkSaveButton();
+  }
+
+  updateBulkRowFields(row) {
+    const type = row.querySelector('.bulk-type').value;
+    row.querySelector('.bulk-quantity').disabled = type !== 'insumo' && type !== 'filamento';
+    row.querySelector('.bulk-unit').disabled = type !== 'insumo' && type !== 'filamento';
+    row.querySelector('.bulk-material').disabled = type !== 'filamento';
+    if (type !== 'filamento') row.querySelector('.bulk-material').value = '';
+    this.updateBulkSaveButton();
+  }
+
+  updateBulkSaveButton() {
+    const rows = [...document.querySelectorAll('#bulkPurchasesPreview tbody tr')];
+    const invalid = rows.some(row => {
+      const type = row.querySelector('.bulk-type').value;
+      const value = row.querySelector('.bulk-quantity').value;
+      const quantity = Number(value);
+      return (type === 'filamento' && (!quantity || quantity <= 0)) || (type === 'insumo' && value !== '' && (!quantity || quantity <= 0));
+    });
+    const button = document.getElementById('btnSaveBulkPurchases');
+    if (button) button.disabled = !rows.length || invalid;
+  }
+
+  saveBulkPurchases() {
+    const rows = [...document.querySelectorAll('#bulkPurchasesPreview tbody tr')];
+    if (!rows.length) return;
+    const materialIds = [];
+    rows.forEach(row => {
+      const source = row._bulkItem, type = row.querySelector('.bulk-type').value, unit = row.querySelector('.bulk-unit').value;
+      const suppliedQuantity = Number(row.querySelector('.bulk-quantity').value);
+      const tracksStock = type === 'filamento' || (type === 'insumo' && suppliedQuantity > 0);
+      const quantity = tracksStock ? suppliedQuantity : 1;
+      let materialId = '';
+      if (type === 'filamento') {
+        const selectedId = row.querySelector('.bulk-material').value;
+        let material = (this.app.config.materials || []).find(entry => String(entry.id) === selectedId);
+        if (!material) {
+          material = { id: makeId(), name: source.name.trim(), pricePerKg: 0, color: '#10b981', note: 'Costo actualizado desde Compras e inversiones' };
+          this.app.config.materials.push(material);
+        }
+        materialId = material.id; materialIds.push(materialId);
+      }
+      this.items.push({ id: makeId(), date: document.getElementById('bulkPurchasesDate').value || localDateInput(), type,
+        itemName: type === 'filamento' ? this.app.config.materials.find(entry => String(entry.id) === String(materialId)).name : source.name.trim(),
+        materialId, quantity, unit: tracksStock ? unit : 'unidad', purchaseCost: source.amount, shippingCost: 0, totalCost: source.amount,
+        remainingQuantity: tracksStock ? quantity : 0, supplier: '', paymentMethod: 'Otro', notes: 'Importación masiva' });
+    });
+    Storage.saveConfig(this.app.config);
+    this.syncMaterialPrice(materialIds);
+    this.persist(); this.app.settings?.renderCatalogTables(); this.bulkModal?.hide();
+    this.app.showToast(`${rows.length} compras registradas.`, 'success');
   }
 
   openForm(item = null) {

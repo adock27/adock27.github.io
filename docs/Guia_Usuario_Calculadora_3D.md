@@ -53,7 +53,9 @@ Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado*
 
 ## Registrar compras e inversiones
 
-En **Compras e inversiones**, registra cada desembolso del negocio: equipo (incluido el envío), filamentos, otros insumos de producción, mantenimiento y gastos. Para una compra de filamento, selecciónalo del catálogo e indica cantidad en kg o gramos; la app actualiza el costo promedio por kg que usa la calculadora y suma el stock disponible. Después de completar una impresión, pulsa **Registrar consumo después de imprimir** en la calculadora para descontar sus gramos del stock. Para otros insumos, ajusta manualmente el saldo desde el registro de compra.
+En **Compras e inversiones**, registra cada desembolso del negocio: equipo, filamentos, otros insumos, mantenimiento y gastos. Para varias compras, usa **Carga masiva** y pega una fila por compra con nombre y valor en columnas separadas; Excel/Sheets y tablas Markdown también se aceptan. Revisa las categorías sugeridas y la fecha común antes de registrar. Las cantidades del nombre como `x 150` o `250G` se detectan cuando es posible; completa las cantidades de filamento que falten y selecciona el material del catálogo. Si no existe, se crea al guardar. El importe pegado se guarda como costo total de compra y el envío separado queda en cero.
+
+Las compras de filamento actualizan el costo promedio por kg que usa la calculadora y suman el stock disponible. Después de completar una impresión, pulsa **Registrar consumo después de imprimir** en la calculadora para descontar sus gramos del stock. Para otros insumos, si no indicas cantidad en la carga masiva se registra el gasto sin saldo controlado; puedes ajustar el saldo desde el registro individual.
 
 El tablero compara el total desembolsado con las ventas registradas y muestra cuánto falta para cubrir esas compras. Para que represente dinero recibido, registra ventas ya cobradas. Este indicador sirve para seguir el flujo acumulado de compras y ventas, no representa utilidad neta. El valor disponible de insumos se presenta por separado porque todavía está en existencias.
 

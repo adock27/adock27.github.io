@@ -621,7 +621,7 @@ Generando cotización...
         <h4 class="fw-bold mb-1"><i class="bi bi-wallet2 text-success me-2"></i>Compras e inversiones</h4>
         <p class="text-secondary small mb-0">Registra el dinero puesto en el negocio y compáralo con las ventas registradas.</p>
       </div>
-      <button type="button" id="btnAddPurchase" class="btn btn-success rounded-pill px-4"><i class="bi bi-plus-lg me-1"></i> Registrar compra</button>
+      <div class="d-flex flex-wrap gap-2"><button type="button" id="btnBulkPurchases" class="btn btn-outline-success rounded-pill px-4"><i class="bi bi-clipboard-plus me-1"></i> Carga masiva</button><button type="button" id="btnAddPurchase" class="btn btn-success rounded-pill px-4"><i class="bi bi-plus-lg me-1"></i> Registrar compra</button></div>
     </div>
     <div class="row g-3 mb-3">
       <div class="col-md-6 col-xl-3"><div class="card border-0 shadow-sm p-3 h-100"><div class="text-secondary small">Total desembolsado</div><div id="purchasesTotalSpent" class="fs-4 fw-bold">$0</div></div></div>
@@ -702,6 +702,20 @@ Generando cotización...
   </div>
 
     </main>
+  </div>
+
+  <div class="modal fade" id="bulkPurchasesModal" tabindex="-1" aria-labelledby="bulkPurchasesModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl"><div class="modal-content border-0 shadow">
+      <div class="modal-header"><h5 class="modal-title fw-bold" id="bulkPurchasesModalTitle">Carga masiva de compras e inversiones</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+      <div class="modal-body">
+        <p class="small text-secondary">Pega una fila por compra, con el nombre y el valor separados por tabulación, punto y coma o barra vertical. Puedes pegar también una tabla de Excel o una tabla Markdown. Los filamentos requieren cantidad y vínculo al catálogo para actualizar el stock.</p>
+        <div class="row g-2 mb-2"><div class="col-sm-4 col-md-3"><label for="bulkPurchasesDate" class="form-label small fw-semibold">Fecha para las filas</label><input id="bulkPurchasesDate" type="date" class="form-control form-control-sm"></div><div class="col-sm-8 col-md-9 d-flex align-items-end"><span class="small text-secondary pb-1">Cada importe se registrará como valor total de compra, sin envío separado.</span></div></div>
+        <textarea id="bulkPurchasesInput" class="form-control font-monospace small" rows="7" placeholder="Impresora&#9;1809078&#10;PLA Gris&#9;65000"></textarea>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-2"><button type="button" id="btnPreviewBulkPurchases" class="btn btn-sm btn-outline-primary">Preparar filas</button><span id="bulkPurchasesMessage" class="small text-secondary"></span></div>
+        <div id="bulkPurchasesPreview" class="table-responsive mt-3"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnSaveBulkPurchases" class="btn btn-success rounded-pill px-4" disabled>Registrar compras</button></div>
+    </div></div>
   </div>
 
   <div class="modal fade" id="purchaseModal" tabindex="-1" aria-labelledby="purchaseModalTitle" aria-hidden="true">
