@@ -32,6 +32,7 @@ export class Orders {
     this.form?.addEventListener('submit', event => this.saveOrder(event));
     this.searchInput?.addEventListener('input', () => this.render());
     this.statusFilter?.addEventListener('change', () => this.render());
+    document.getElementById('orderInventoryId')?.addEventListener('change', () => this.toggleCustomProduct());
     document.getElementById('orderModal')?.addEventListener('hide.bs.modal', () => {
       const focusedElement = document.activeElement;
       if (focusedElement && this.modalElement.contains(focusedElement)) focusedElement.blur();
@@ -46,7 +47,9 @@ export class Orders {
     this.returnFocusTarget = document.activeElement;
     this.form?.reset();
     document.getElementById('orderId').value = order?.id || '';
-    this.renderInventoryOptions(order?.inventoryId || '');
+    this.renderInventoryOptions(order?.inventoryId || '__custom__');
+    document.getElementById('orderCustomProductName').value = order?.inventoryId ? '' : (order?.productName || '');
+    this.toggleCustomProduct();
     document.getElementById('orderDate').value = order?.date || localDateInput();
     document.getElementById('orderDueDate').value = order?.dueDate || '';
     document.getElementById('orderClientName').value = order?.clientName || '';
@@ -65,12 +68,11 @@ export class Orders {
     if (!select) return;
     const items = this.app.inventoryModule.items;
     select.replaceChildren();
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = items.length ? 'Selecciona un producto' : 'Agrega productos al inventario primero';
-    placeholder.disabled = true;
-    placeholder.selected = !selectedId;
-    select.appendChild(placeholder);
+    const customOption = document.createElement('option');
+    customOption.value = '__custom__';
+    customOption.textContent = 'Producto personalizado (sin inventario)';
+    customOption.selected = selectedId === '__custom__';
+    select.appendChild(customOption);
     items.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
@@ -78,25 +80,35 @@ export class Orders {
       option.selected = String(item.id) === String(selectedId);
       select.appendChild(option);
     });
-    select.disabled = items.length === 0;
+    select.disabled = false;
+  }
+
+  toggleCustomProduct() {
+    const isCustom = document.getElementById('orderInventoryId')?.value === '__custom__';
+    const wrap = document.getElementById('orderCustomProductWrap');
+    const input = document.getElementById('orderCustomProductName');
+    wrap?.classList.toggle('d-none', !isCustom);
+    if (input) input.required = isCustom;
   }
 
   updateTotalPreview() {
     const quantity = Number(document.getElementById('orderQuantity')?.value) || 0;
     const price = Number(document.getElementById('orderUnitPrice')?.value) || 0;
     const preview = document.getElementById('orderTotalPreview');
-    if (preview) preview.textContent = this.formatMoney(quantity * price);
+    if (preview) preview.textContent = price === 0 ? 'Por cotizar' : this.formatMoney(quantity * price);
   }
 
   saveOrder(event) {
     event.preventDefault();
     const id = document.getElementById('orderId').value;
     const inventoryId = document.getElementById('orderInventoryId').value;
-    const product = this.app.inventoryModule.items.find(item => String(item.id) === String(inventoryId));
+    const product = inventoryId === '__custom__' ? null : this.app.inventoryModule.items.find(item => String(item.id) === String(inventoryId));
+    const isCustom = inventoryId === '__custom__';
+    const productName = isCustom ? document.getElementById('orderCustomProductName').value.trim() : product?.name;
     const clientName = document.getElementById('orderClientName').value.trim();
     const quantity = Number(document.getElementById('orderQuantity').value);
     const unitPrice = Number(document.getElementById('orderUnitPrice').value);
-    if (!product) return this.app.showToast('Selecciona un producto del inventario.', 'error');
+    if (!productName) return this.app.showToast('Selecciona un producto o escribe el nombre del producto personalizado.', 'error');
     if (!clientName) return this.app.showToast('Escribe el nombre del cliente.', 'error');
     if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0) {
       return this.app.showToast('Revisa la cantidad y el precio del pedido.', 'error');
@@ -105,16 +117,16 @@ export class Orders {
     const existing = index >= 0 ? this.items[index] : null;
     const status = document.getElementById('orderStatus').value;
     if (!ORDER_STATUSES.includes(status)) return this.app.showToast('Selecciona un estado válido para el pedido.', 'error');
-    if (status === 'Entregado' && !existing?.saleId) {
+    if (status === 'Entregado' && !existing?.saleId && !isCustom) {
       return this.app.showToast('Primero cambia el pedido a “Listo” y usa Registrar venta para descontar inventario.', 'error');
     }
     const order = {
       id: id || makeId('order'),
       orderNumber: existing?.orderNumber || `PED-${Date.now().toString().slice(-8)}`,
-      inventoryId: product.id,
+      inventoryId: product?.id || '',
       date: document.getElementById('orderDate').value || localDateInput(),
       dueDate: document.getElementById('orderDueDate').value,
-      productName: product.name,
+      productName,
       clientName,
       quantity,
       unitPrice,
@@ -140,6 +152,7 @@ export class Orders {
   convertToSale(order) {
     if (order.saleId) return this.app.showToast('Este pedido ya tiene una venta registrada.', 'info');
     if (order.status !== 'Listo') return this.app.showToast('Cambia el estado del pedido a “Listo” antes de registrarlo como venta.', 'error');
+    if (!order.inventoryId) return this.app.showToast('Este pedido personalizado no está vinculado al inventario y no puede descontar existencias.', 'info');
     const product = this.app.inventoryModule.items.find(item => String(item.id) === String(order.inventoryId));
     const available = Number(product?.quantity) || 0;
     if (!product) return this.app.showToast('El producto ya no existe en el inventario.', 'error');
@@ -199,7 +212,7 @@ export class Orders {
     visible.forEach(order => {
       const row = document.createElement('tr');
       const statusClass = order.status === 'Cancelado' ? 'text-bg-secondary' : order.status === 'Entregado' ? 'text-bg-success' : order.status === 'Listo' ? 'text-bg-primary' : 'text-bg-warning';
-      [order.orderNumber, order.clientName, order.productName, order.dueDate || '—', `${order.quantity}`, this.formatMoney(order.total), order.status]
+      [order.orderNumber, order.clientName, order.productName, order.dueDate || '—', `${order.quantity}`, Number(order.unitPrice) === 0 ? 'Por cotizar' : this.formatMoney(order.total), order.status]
         .forEach((value, index) => {
           const cell = document.createElement('td');
           cell.textContent = String(value || '—');
@@ -208,7 +221,7 @@ export class Orders {
         });
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
-      if (order.status === 'Listo' && !order.saleId) {
+      if (order.status === 'Listo' && !order.saleId && order.inventoryId) {
         const saleButton = document.createElement('button');
         saleButton.type = 'button';
         saleButton.className = 'btn btn-sm btn-outline-success me-1';

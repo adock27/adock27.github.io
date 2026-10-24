@@ -83,7 +83,21 @@
     </div>
   </nav>
 
-  <div class="container py-4">
+  <div class="container-fluid app-layout py-3 py-lg-4">
+    <aside class="app-sidebar" aria-label="Navegación principal">
+      <div class="app-sidebar-heading">
+        <span class="small text-uppercase fw-bold text-secondary">Espacio de trabajo</span>
+      </div>
+      <ul class="nav flex-column gap-1" id="navTabs">
+        <li class="nav-item"><a class="nav-link nav-tab-btn active bg-success text-white fw-semibold rounded-3" href="#" data-target="tab-calculator"><i class="bi bi-calculator"></i><span>Calculadora</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-quote"><i class="bi bi-chat-text"></i><span>Cotizador</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-settings"><i class="bi bi-gear"></i><span>Configuración</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-inventory"><i class="bi bi-box-seam"></i><span>Inventario</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-orders"><i class="bi bi-clipboard-check"></i><span>Pedidos</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-sales"><i class="bi bi-cash-coin"></i><span>Ventas</span></a></li>
+      </ul>
+    </aside>
+    <main class="app-main">
     <div id="setupReminder" class="alert alert-info d-none justify-content-between align-items-center gap-3" role="status">
       <span><i class="bi bi-info-circle me-1"></i> Completa tu configuración inicial para adaptar los costos a tu moneda y tarifas.</span>
       <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" id="btnOpenSetup">Configurar</button>
@@ -98,42 +112,6 @@
       <div class="d-flex flex-wrap align-items-center" id="presetsShelf" style="max-height: 88px; overflow-y: auto; overflow-x: hidden;">
         <!-- Renderizado dinámico -->
       </div>
-    </div>
-
-    <!-- Navegación de Pestañas Minimalistas (Nav Pills) -->
-    <div class="card border-0 shadow-sm p-2 mb-4 bg-white">
-      <ul class="nav nav-pills nav-fill gap-1" id="navTabs">
-        <li class="nav-item">
-          <a class="nav-link nav-tab-btn active bg-success text-white fw-semibold rounded-3 py-2" href="#" data-target="tab-calculator">
-            <i class="bi bi-calculator me-1"></i> Calculadora de Impresión
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-quote">
-            <i class="bi bi-chat-text me-1"></i> Cotizador para Clientes
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-settings">
-            <i class="bi bi-gear me-1"></i> Configuración & Catálogos
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-inventory">
-            <i class="bi bi-box-seam me-1"></i> Inventario
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-orders">
-            <i class="bi bi-clipboard-check me-1"></i> Pedidos
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3 py-2" href="#" data-target="tab-sales">
-            <i class="bi bi-cash-coin me-1"></i> Ventas
-          </a>
-        </li>
-      </ul>
     </div>
 
     <!-- VISTA 1: CALCULADORA PRINCIPAL -->
@@ -658,6 +636,9 @@ Generando cotización...
     </div>
   </div>
 
+    </main>
+  </div>
+
   <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
       <form id="orderForm">
@@ -669,10 +650,10 @@ Generando cotización...
             <div class="col-6"><label for="orderDueDate" class="form-label small fw-semibold">Fecha de entrega</label><input id="orderDueDate" type="date" class="form-control"></div>
           </div>
           <div class="mb-3"><label for="orderClientName" class="form-label small fw-semibold">Cliente *</label><input id="orderClientName" class="form-control" maxlength="120" required></div>
-          <div class="mb-2"><label for="orderInventoryId" class="form-label small fw-semibold">Producto *</label><select id="orderInventoryId" class="form-select" required></select><div class="form-text">El pedido no descuenta stock. El descuento ocurre al registrarlo como venta desde el estado «Listo».</div></div>
+          <div class="mb-2"><label for="orderInventoryId" class="form-label small fw-semibold">Producto *</label><select id="orderInventoryId" class="form-select" required></select><div id="orderCustomProductWrap" class="mt-2 d-none"><label for="orderCustomProductName" class="form-label small fw-semibold">Nombre del producto *</label><input id="orderCustomProductName" class="form-control" maxlength="120" placeholder="Ej.: Figura personalizada"></div><div class="form-text">Puedes elegir un artículo del inventario o describir un producto personalizado. Los pedidos personalizados no descuentan existencias.</div></div>
           <div class="row g-3 mb-3">
             <div class="col-4"><label for="orderQuantity" class="form-label small fw-semibold">Cantidad *</label><input id="orderQuantity" type="number" min="0.01" step="any" class="form-control" value="1" required></div>
-            <div class="col-8"><label for="orderUnitPrice" class="form-label small fw-semibold">Precio unitario (<span class="currency-code">COP</span>) *</label><input id="orderUnitPrice" type="number" min="0" step="any" class="form-control" value="0" required></div>
+            <div class="col-8"><label for="orderUnitPrice" class="form-label small fw-semibold">Precio unitario (<span class="currency-code">COP</span>) *</label><input id="orderUnitPrice" type="number" min="0" step="any" class="form-control" value="0" required><div class="form-text">Déjalo en 0 mientras cotizas; el pedido se mostrará como «Por cotizar».</div></div>
           </div>
           <div class="d-flex justify-content-between border-top pt-2 mb-3"><span class="fw-semibold">Total</span><strong id="orderTotalPreview">$0</strong></div>
           <div class="row g-3 mb-3">

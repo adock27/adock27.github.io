@@ -43,9 +43,9 @@ Al editar una venta se ajustan las existencias del producto anterior y del nuevo
 
 ## Dar seguimiento a pedidos
 
-En **Pedidos**, crea un registro con cliente, producto del inventario, cantidad, precio acordado y fechas. Cada pedido contiene un producto. Puedes avanzar por los estados **Pendiente**, **En producción** y **Listo**, o marcarlo como **Cancelado**. El listado permite buscar pedidos y filtrar por estado.
+En **Pedidos**, crea un registro con cliente, producto (del inventario o personalizado), cantidad, precio y fechas. Cada pedido contiene un producto. Si todavía no conoces el precio, déjalo en 0: el pedido aparecerá como **Por cotizar**. Puedes avanzar por los estados **Pendiente**, **En producción** y **Listo**, o marcarlo como **Cancelado**. El listado permite buscar pedidos y filtrar por estado.
 
-Crear un pedido no descuenta ni reserva existencias. Cuando el pedido está **Listo**, usa el botón de registrar como venta. La app comprueba que haya unidades disponibles, descuenta el stock, crea una venta y enlaza ambos registros. El pedido pasa a **Entregado** y queda bloqueado para edición o eliminación; los cambios posteriores de esa operación se gestionan desde Ventas.
+Crear un pedido no descuenta ni reserva existencias. Cuando el pedido está **Listo** y usa un artículo del inventario, puedes registrarlo como venta: la app comprueba las unidades, descuenta el stock, crea la venta y enlaza ambos registros. Para un producto personalizado sin inventario, cambia el estado manualmente a **Entregado** cuando corresponda; ese pedido no descuenta stock ni crea una venta automáticamente. Los pedidos enlazados a una venta quedan bloqueados para edición o eliminación.
 
 ## Publicar cambios
 
