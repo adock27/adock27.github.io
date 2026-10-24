@@ -22,6 +22,7 @@ export class Inventory {
   }
 
   openForm(item = null) {
+    if (!this.app.isAdmin) return this.app.showToast('Solo un administrador puede editar el inventario.', 'error');
     this.form?.reset();
     document.getElementById('inventoryItemId').value = item?.id || '';
     document.getElementById('inventoryName').value = item?.name || '';
@@ -36,6 +37,7 @@ export class Inventory {
   }
 
   saveItem(event) {
+    if (!this.app.isAdmin) return this.app.showToast('Solo un administrador puede editar el inventario.', 'error');
     event.preventDefault();
     const id = document.getElementById('inventoryItemId').value;
     const item = {
@@ -80,6 +82,8 @@ export class Inventory {
     const itemCount = document.getElementById('inventoryItemCount');
     const lowCount = document.getElementById('inventoryLowCount');
     const value = document.getElementById('inventoryTotalValue');
+    document.getElementById('inventoryValueCard')?.classList.toggle('d-none', !this.app.isAdmin);
+    document.getElementById('inventoryUnitCostHead')?.classList.toggle('d-none', !this.app.isAdmin);
     if (itemCount) itemCount.textContent = String(this.items.length);
     if (lowCount) lowCount.textContent = String(lowStock);
     if (value) value.textContent = new Intl.NumberFormat('es-CO', { style: 'currency', currency: this.app.config.currency || 'COP', maximumFractionDigits: 0 }).format(totalValue);
@@ -106,6 +110,7 @@ export class Inventory {
       values.forEach((text, index) => {
         const cell = document.createElement('td');
         cell.textContent = text;
+        if (index === 4 && !this.app.isAdmin) cell.classList.add('d-none');
         if (index === 5) cell.innerHTML = `<span class="badge ${statusClass}">${text}</span>`;
         if (index === 0) cell.classList.add('fw-semibold');
         row.appendChild(cell);
@@ -114,10 +119,13 @@ export class Inventory {
       actions.className = 'text-end text-nowrap';
       const edit = document.createElement('button');
       edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.title = 'Editar'; edit.innerHTML = '<i class="bi bi-pencil"></i>';
+      edit.classList.toggle('d-none', !this.app.isAdmin);
       edit.addEventListener('click', () => this.openForm(item));
       const remove = document.createElement('button');
       remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-danger'; remove.title = 'Eliminar'; remove.innerHTML = '<i class="bi bi-trash"></i>';
+      remove.classList.toggle('d-none', !this.app.isAdmin);
       remove.addEventListener('click', () => {
+        if (!this.app.isAdmin) return this.app.showToast('Solo un administrador puede eliminar artículos.', 'error');
         if (!window.confirm(`¿Eliminar “${item.name}” del inventario?`)) return;
         this.items = this.items.filter(current => current.id !== item.id);
         this.persist();

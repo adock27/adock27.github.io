@@ -66,6 +66,12 @@ Los archivos de la app y los archivos `.gs` del backend se publican por separado
 - **Cambios de interfaz o lógica web:** publica los archivos del sitio, incluidos `calculadora_3d.html` y los módulos `scripts/calculator/` afectados; luego recarga con **Ctrl+F5**.
 - **Cambios de Apps Script o de las hojas:** copia todos los `.gs` de `apps_script_crud/` al mismo proyecto. Ejecuta `setupDatabase` si cambió el esquema y publica una nueva versión en **Implementar → Gestionar implementaciones → Editar → Nueva versión → Implementar**.
 
+## Administrar usuarios y permisos
+
+La primera cuenta del negocio es administradora. Después de activar roles, ejecuta `setupDatabase` en Apps Script y publica una nueva versión del backend para migrar las cuentas existentes como administradoras de sus propios datos. El administrador puede crear cuentas de empleados desde **Usuarios**; empleados y administrador comparten los datos de ese negocio.
+
+El empleado puede usar Calculadora, Cotizador, consultar Inventario, gestionar Pedidos y registrar Ventas. No puede abrir Configuración, Compras e inversiones ni Usuarios; tampoco cambia los catálogos ni crea o elimina productos del inventario. El backend verifica los permisos en cada solicitud. Para retirar acceso, desactiva o elimina la cuenta desde Usuarios.
+
 Al añadir módulos que usan una entidad nueva, actualiza primero Apps Script: copia su archivo `.gs` y el `Database.gs` actualizado, ejecuta `setupDatabase` para crear la hoja correspondiente y publica una nueva versión. Después publica el frontend. La interfaz no podrá cargar esa entidad hasta que la API actualizada esté desplegada.
 
 Consulta [Backend de Apps Script](../apps_script_crud/README.md) para configurar el Sheet, la propiedad `SPREADSHEET_ID`, despliegues y errores comunes. El documento de alcance funcional está en [Requerimientos de la calculadora](Requerimientos_Calculadora_3D.md).

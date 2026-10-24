@@ -21,7 +21,8 @@ async function request(entity, action, fields = {}) {
 }
 
 async function replaceCollection(entity, items) {
-  const userId = ApiSync.getSession()?.id;
+  const session = ApiSync.getSession();
+  const userId = session?.businessId || session?.id;
   const remote = await request(entity, 'list', { userId });
   const remoteById = new Map(remote.map(item => [String(item.id), item]));
   const currentIds = new Set();
@@ -70,7 +71,8 @@ function clearLegacyData() {
 
 async function pushSnapshot(scopes, current = snapshot) {
   const { config, presets, inventory, sales, orders, purchases } = current;
-  const userId = ApiSync.getSession()?.id;
+  const session = ApiSync.getSession();
+  const userId = session?.businessId || session?.id;
   if (!userId) throw new Error('Inicia sesión para guardar los datos.');
   const all = scopes.has('all');
   if (all || scopes.has('config')) {
@@ -107,20 +109,32 @@ export const ApiSync = {
 
   async login(email, password) {
     const user = await request('usuarios', 'login', { email, password });
-    const session = { id: user.id, email: user.email, token: user.sessionToken };
+    const session = { id: user.id, email: user.email, token: user.sessionToken, role: user.role || 'admin', businessId: user.businessId || user.id };
     this.saveSession(session);
     return session;
   },
 
   async listMaterials() {
-    return request('materiales', 'list', { userId: this.getSession()?.id });
+    const session = this.getSession();
+    return request('materiales', 'list', { userId: session?.businessId || session?.id });
   },
+
+  async listUsers() { return request('usuarios', 'list'); },
+
+  async createEmployee(email, password) { return request('usuarios', 'createuser', { email, password }); },
+
+  async updateUser(action, id, fields = {}) { return request('usuarios', action, { id, ...fields }); },
 
   async load(defaults) {
     window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: ['load'] } }));
     try {
-      const userId = this.getSession()?.id;
-      if (!userId) throw new Error('Inicia sesión para cargar tus datos.');
+      let session = this.getSession();
+      if (!session?.id) throw new Error('Inicia sesión para cargar tus datos.');
+      const currentUser = await request('usuarios', 'me');
+      session = { ...session, id: currentUser.id, email: currentUser.email, role: currentUser.role || 'admin', businessId: currentUser.businessId || currentUser.id };
+      this.saveSession(session);
+      const userId = session.businessId;
+      const purchaseRequest = session.role === 'admin' ? request('compras', 'list', { userId }) : Promise.resolve([]);
       const [remoteConfigRecord, materials, extras, presets, inventory, sales, orders, purchases] = await Promise.all([
         request('configuracion', 'get', { userId }),
         request('materiales', 'list', { userId }),
@@ -129,7 +143,7 @@ export const ApiSync = {
         request('inventario', 'list', { userId }),
         request('ventas', 'list', { userId }),
         request('pedidos', 'list', { userId }),
-        request('compras', 'list', { userId })
+        purchaseRequest
       ]);
       const remoteConfig = remoteConfigRecord?.data;
       const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length || orders.length || purchases.length);
@@ -166,7 +180,7 @@ export const ApiSync = {
     } catch (error) {
       console.error('No se pudieron cargar los datos desde Apps Script.', error);
       window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: ['load'], error } }));
-      if (/sesión|cuenta ya no existe|no autorizado/i.test(error.message || '')) {
+      if (/sesión|cuenta ya no existe|cuenta está desactivada|no autorizado/i.test(error.message || '')) {
         window.dispatchEvent(new Event('calculator-auth-expired'));
       }
       throw error;

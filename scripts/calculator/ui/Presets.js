@@ -15,6 +15,7 @@ export class Presets {
   render() {
     if (!this.presetsShelf) return;
     this.presetsShelf.innerHTML = '';
+    this.btnSaveAsPreset?.classList.toggle('d-none', !this.app.isAdmin);
 
     if (this.app.presets.length === 0) {
       this.presetsShelf.innerHTML = `<span class="text-muted small fst-italic">Sin presets guardados aún.</span>`;
@@ -39,7 +40,9 @@ export class Presets {
       delBtn.className = 'btn btn-sm btn-outline-danger border-0 rounded-0 rounded-end-pill px-2';
       delBtn.innerHTML = '<i class="bi bi-x"></i>';
       delBtn.title = 'Eliminar preset';
+      delBtn.classList.toggle('d-none', !this.app.isAdmin);
       delBtn.addEventListener('click', (e) => {
+        if (!this.app.isAdmin) return this.app.showToast('Solo un administrador puede eliminar presets.', 'error');
         e.stopPropagation();
         if (!delBtn.classList.contains('confirming')) {
           delBtn.classList.add('confirming', 'bg-danger', 'text-white');
@@ -87,6 +90,7 @@ export class Presets {
   }
 
   handleSaveCurrentAsPreset() {
+    if (!this.app.isAdmin) return this.app.showToast('Solo un administrador puede guardar presets.', 'error');
     const name = prompt('Nombre del preset:', this.app.currentJob.projectName || 'Mi Trabajo');
     if (!name || !name.trim()) return;
 

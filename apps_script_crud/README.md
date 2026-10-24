@@ -18,7 +18,7 @@ La API recibe JSON por `POST`, con `entity` y `action`. Todas las respuestas usa
 
 | `entity` | Hoja | Acciones |
 |---|---|---|
-| `usuarios` | Usuarios | `create`, `get`, `update`, `delete`, `login` |
+| `usuarios` | Usuarios | `create`, `login`, `me`, `list`, `createuser`, `setrole`, `setactive`, `resetpassword`, `delete` |
 | `materiales` | Materiales | `create`, `list`, `get`, `update`, `delete` |
 | `extras` | Extras | `create`, `list`, `get`, `update`, `delete` |
 | `presets` | Presets | `create`, `list`, `get`, `update`, `delete` |
@@ -29,7 +29,15 @@ La API recibe JSON por `POST`, con `entity` y `action`. Todas las respuestas usa
 | `pedidos` | Pedidos | `create`, `list`, `get`, `update`, `delete` |
 | `compras` | Compras | `create`, `list`, `get`, `update`, `delete` |
 
-Campos `id`, `createdAt` y `updatedAt` se generan automáticamente cuando corresponda. `create` y `login` son operaciones públicas; las demás requieren el token firmado que devuelve `login`. El backend obtiene el usuario desde el token y limita cada lectura y cambio a sus registros. Las hojas son compartidas por las cuentas, con una columna `userId` para aislar los datos. Ejecuta `setupDatabase` después de agregar estos archivos para generar `AUTH_SECRET` en las propiedades del script.
+Campos `id`, `createdAt` y `updatedAt` se generan automáticamente cuando corresponda. `create` y `login` son las únicas acciones públicas; la primera cuenta queda como administrador y el registro público se cierra después. El administrador crea las cuentas de empleados desde **Usuarios**. Todas las cuentas del negocio comparten los datos mediante el `businessId` del administrador; los demás negocios siguen aislados. Ejecuta `setupDatabase` para agregar columnas de roles, migrar las cuentas existentes como administradores de sus propios datos y generar `AUTH_SECRET`.
+
+### Roles y permisos
+
+- **Administrador:** acceso a todos los módulos, compras e inversiones, configuración, catálogos y administración de usuarios.
+- **Empleado:** acceso a Calculadora, Cotizador, Inventario de productos, Pedidos y Ventas. Puede consultar existencias y registrar operaciones; no ve costos unitarios del inventario, no administra catálogo/configuración y no accede a compras ni cuentas.
+- El backend valida el rol en cada petición. El personal puede actualizar cantidades de inventario para reflejar ventas, pero no crear ni eliminar artículos. La configuración y los catálogos son de solo lectura para que la calculadora y el cotizador puedan funcionar.
+
+El administrador crea cuentas con una contraseña temporal desde **Usuarios** y puede cambiar roles, activar/desactivar cuentas, restablecer contraseñas o eliminar empleados. Cambiar o desactivar una cuenta surte efecto en su siguiente petición autenticada. Conserva al menos un administrador activo por negocio.
 
 ## Ejemplos
 
@@ -79,7 +87,7 @@ Las compras e inversiones registran el desembolso total (valor de compra más en
 
 La calculadora carga y guarda configuración, materiales, extras, presets, inventario, compras e inversiones, pedidos y ventas directamente en Apps Script. El formulario de ventas selecciona un artículo existente y permite crear uno rápidamente en el inventario. `sessionStorage` solo mantiene el token de acceso de la sesión. Al primer acceso, la app puede migrar datos legados de `localStorage` a una cuenta vacía y luego elimina esas claves; el uso normal no persiste datos de negocio en el navegador. El indicador de sincronización de la app muestra cargas, guardados y errores. Los cambios se reflejan primero en la sesión y se sincronizan de forma asíncrona; si el indicador muestra un error, verifica la conexión y vuelve a cargar desde el backend antes de dar el cambio por guardado.
 
-Después de copiar o actualizar los archivos `.gs`, guarda el proyecto y ejecuta `setupDatabase` si cambió el esquema. Para activar Compras e inversiones, incluye `Compras.gs` y el router/esquema actualizado de `Database.gs`, ejecuta `setupDatabase` para crear la pestaña `Compras`, y publica una **nueva versión** de la aplicación web antes de publicar el frontend. La versión anterior del backend no reconoce `compras` y la carga inicial de la nueva interfaz fallará hasta actualizarla.
+Después de copiar o actualizar los archivos `.gs`, guarda el proyecto y ejecuta `setupDatabase` si cambió el esquema. Para activar roles, actualiza `Database.gs`, `Usuarios.gs` y `CrudUtils.gs`, ejecuta `setupDatabase` para agregar columnas y migrar usuarios existentes, y publica una **nueva versión** de la aplicación web antes de publicar el frontend. Las cuentas existentes se migran como administradores de su espacio. El primer registro público después de una instalación nueva crea el administrador inicial; las cuentas posteriores las crea el administrador desde la app.
 
 ## Solución de problemas
 

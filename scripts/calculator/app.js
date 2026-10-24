@@ -14,9 +14,14 @@ import { Inventory } from './ui/Inventory.js';
 import { Sales } from './ui/Sales.js';
 import { Orders } from './ui/Orders.js';
 import { Purchases } from './ui/Purchases.js';
+import { Users } from './ui/Users.js';
 
 class CalculatorApp {
   constructor(initialData = {}) {
+    this.session = ApiSync.getSession();
+    this.isAdmin = this.session?.role === 'admin';
+    const accountLabel = document.getElementById('accountEmail');
+    if (accountLabel && this.session?.email) accountLabel.textContent = `${this.session.email} · ${this.isAdmin ? 'Administrador' : 'Empleado'}`;
     this.config = initialData.config || Storage.loadConfig();
     this.presets = initialData.presets || Storage.loadPresets();
     this.inventory = initialData.inventory || Storage.loadInventory();
@@ -68,6 +73,7 @@ class CalculatorApp {
     this.salesModule = new Sales(this);
     this.ordersModule = new Orders(this);
     this.purchasesModule = new Purchases(this);
+    if (this.isAdmin) this.usersModule = new Users(this);
 
     // Initial renders
     this.presetsComponent.render();
@@ -104,6 +110,11 @@ class CalculatorApp {
   initInitialSetup() {
     const modalEl = document.getElementById('initialSetupModal');
     const reminder = document.getElementById('setupReminder');
+    if (!this.isAdmin) {
+      reminder?.classList.add('d-none');
+      document.getElementById('btnOpenSetup')?.classList.add('d-none');
+      return;
+    }
     if (!modalEl || !window.bootstrap?.Modal) return;
 
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

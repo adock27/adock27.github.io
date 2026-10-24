@@ -111,7 +111,7 @@ export class Orders {
     wrap?.classList.toggle('d-none', !isCustom);
     addToInventoryWrap?.classList.toggle('d-none', !isCustom);
     if (input) input.required = isCustom;
-    if (addToInventory) addToInventory.disabled = !isCustom || document.getElementById('orderStatus')?.value !== 'Entregado';
+    if (addToInventory) addToInventory.disabled = !this.app.isAdmin || !isCustom || document.getElementById('orderStatus')?.value !== 'Entregado';
   }
 
   updateTotalPreview() {
@@ -159,7 +159,7 @@ export class Orders {
       saleId: existing?.saleId || ''
     };
     if (status === 'Entregado' && !order.saleId) {
-      const addCustomToInventory = isCustom && document.getElementById('orderAddCustomToInventory').checked;
+      const addCustomToInventory = this.app.isAdmin && isCustom && document.getElementById('orderAddCustomToInventory').checked;
       if (!this.createSaleFromOrder(order, addCustomToInventory)) return;
     }
     if (index >= 0) this.items[index] = order;

@@ -18,12 +18,13 @@ function setupDatabase() {
     }
     sheet.setFrozenRows(1);
   });
+  migrateUserRoles_();
   repairMisalignedSalesRows_(ss.getSheetByName('Ventas'));
   return 'Base de datos lista';
 }
 
 var DB_SCHEMAS = {
-  Usuarios: ['id', 'email', 'passwordHash', 'salt', 'createdAt', 'updatedAt'],
+  Usuarios: ['id', 'email', 'passwordHash', 'salt', 'role', 'businessId', 'active', 'createdAt', 'updatedAt'],
   Materiales: ['id', 'userId', 'name', 'pricePerKg', 'color', 'note', 'createdAt', 'updatedAt'],
   Extras: ['id', 'userId', 'name', 'defaultCost', 'category', 'createdAt', 'updatedAt'],
   Presets: ['id', 'userId', 'name', 'description', 'materialId', 'grams', 'hours', 'minutes', 'laborMinutes', 'extrasJson', 'createdAt', 'updatedAt'],
@@ -134,10 +135,16 @@ function doPost(e) {
     var body = JSON.parse(e && e.postData && e.postData.contents || '{}');
     var entity = String(body.entity || '').toLowerCase();
     var result;
+    var auth = null;
     if (entity === 'usuarios' && ['create', 'login'].indexOf(String(body.action || '').toLowerCase()) === -1) {
-      body.userId = authenticateRequest_(body).id;
+      auth = authenticateRequest_(body);
+      body.authUser = auth;
+      body.userId = auth.id;
     } else if (entity !== 'usuarios') {
-      body.userId = authenticateRequest_(body).id;
+      auth = authenticateRequest_(body);
+      body.authRole = auth.role;
+      body.userId = auth.businessId;
+      authorizeEntityRequest_(auth, entity, String(body.action || '').toLowerCase());
     }
     if (entity === 'usuarios') result = handleUsers_(body);
     else if (entity === 'materiales') result = handleMaterials_(body);
@@ -178,7 +185,30 @@ function authenticateRequest_(body) {
   }
   var user = rowsFor_(sheetFor_('Usuarios')).filter(function (row) { return String(row.id) === userId; })[0];
   if (!user) throw new Error('La cuenta ya no existe.');
-  return { id: userId, email: user.email };
+  if (user.active === false || String(user.active).toLowerCase() === 'false') throw new Error('La cuenta está desactivada.');
+  return { id: userId, email: user.email, role: user.role || 'admin', businessId: user.businessId || user.id };
+}
+
+function migrateUserRoles_() {
+  var sheet = sheetFor_('Usuarios'), users = rowsFor_(sheet);
+  users.forEach(function (user) {
+    var changed = false;
+    if (!user.role) { user.role = 'admin'; changed = true; }
+    if (!user.businessId) { user.businessId = user.id; changed = true; }
+    if (user.active === '' || user.active == null) { user.active = true; changed = true; }
+    if (changed) writeRecord_('Usuarios', user._row, user);
+  });
+}
+
+function authorizeEntityRequest_(auth, entity, action) {
+  if (auth.role === 'admin') return;
+  var readOnly = ['list', 'get'];
+  var allowedReadEntities = ['configuracion', 'materiales', 'extras', 'presets', 'inventario'];
+  var allowedWriteEntities = ['cotizaciones', 'ventas', 'pedidos'];
+  if (allowedReadEntities.indexOf(entity) !== -1 && readOnly.indexOf(action) !== -1) return;
+  if (allowedWriteEntities.indexOf(entity) !== -1 && ['list', 'get', 'create', 'update', 'delete'].indexOf(action) !== -1) return;
+  if (entity === 'inventario' && action === 'update') return; // el CRUD solo permite modificar quantity en CrudUtils_.
+  throw new Error('Tu rol no tiene permiso para esta acción.');
 }
 
 function doGet() {

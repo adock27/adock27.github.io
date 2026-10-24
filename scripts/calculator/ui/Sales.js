@@ -77,6 +77,7 @@ export class Sales {
   }
 
   quickAddInventoryItem() {
+    if (!this.app.isAdmin) return this.app.showToast('Solo un administrador puede crear productos de inventario.', 'error');
     const nameInput = document.getElementById('quickInventoryName');
     const name = nameInput.value.trim();
     const quantity = Number(document.getElementById('quickInventoryQuantity').value);

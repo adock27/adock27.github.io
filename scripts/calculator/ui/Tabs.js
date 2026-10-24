@@ -4,6 +4,24 @@ export class Tabs {
     this.tabBtns = document.querySelectorAll('.nav-tab-btn');
     this.tabPanes = document.querySelectorAll('.tab-pane-view');
     this.init();
+    this.applyRolePermissions();
+  }
+
+  applyRolePermissions() {
+    const allowed = this.app.isAdmin
+      ? new Set(['tab-calculator', 'tab-quote', 'tab-settings', 'tab-inventory', 'tab-purchases', 'tab-orders', 'tab-sales', 'tab-users'])
+      : new Set(['tab-calculator', 'tab-quote', 'tab-inventory', 'tab-orders', 'tab-sales']);
+    this.tabBtns.forEach(btn => {
+      const visible = allowed.has(btn.dataset.target);
+      btn.closest('.nav-item')?.classList.toggle('d-none', !visible);
+    });
+    this.tabPanes.forEach(pane => {
+      if (!allowed.has(pane.id)) pane.classList.add('d-none');
+    });
+    document.getElementById('adminUsersNav')?.classList.toggle('d-none', !this.app.isAdmin);
+    document.getElementById('btnAddInventoryItem')?.classList.toggle('d-none', !this.app.isAdmin);
+    document.getElementById('btnQuickAddInventory')?.classList.toggle('d-none', !this.app.isAdmin);
+    document.getElementById('orderAddCustomToInventoryWrap')?.classList.toggle('d-none', !this.app.isAdmin);
   }
 
   init() {
@@ -16,6 +34,7 @@ export class Tabs {
   }
 
   switchTab(targetId) {
+    if ([...this.tabBtns].some(btn => btn.dataset.target === targetId && btn.closest('.nav-item')?.classList.contains('d-none'))) return;
     this.tabBtns.forEach(b => {
       const isTarget = b.dataset.target === targetId;
       b.classList.toggle('active', isTarget);

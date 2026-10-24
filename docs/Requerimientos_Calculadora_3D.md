@@ -6,14 +6,14 @@ El propósito de este documento es definir los requerimientos funcionales, no fu
 
 ### 1.2 Alcance
 El sistema permitirá a los usuarios (operadores de impresión 3D):
-- Crear una cuenta e iniciar sesión, manteniendo aislados los datos de cada usuario.
+- Iniciar sesión como administrador o empleado. Los datos se comparten dentro del negocio y se aíslan entre negocios.
 - Calcular costos operativos (filamento, electricidad, desgaste, recuperación proporcional de la cuota de impresora, mano de obra, mermas/fallos).
 - Gestionar materiales y sus propiedades (colores, precio por kg) con soporte multi-color (AMS).
 - Administrar costos de insumos extra (imanes, tornillos, empaques).
 - Generar cotizaciones estructuradas y listas para compartir con clientes (ej. vía WhatsApp).
 - Configurar y guardar preferencias, catálogos, presets, inventario y ventas en Google Sheets mediante Apps Script, con exportación e importación JSON como respaldo manual.
 - Gestionar existencias y registrar ventas asociadas a productos del inventario.
-- Registrar compras e inversiones del negocio por usuario, con clasificación, cantidades, costos y proveedor.
+- Registrar compras e inversiones del negocio, con clasificación, cantidades, costos y proveedor. Este módulo está disponible solo para administradores.
 
 ## 2. Requerimientos Funcionales (RF)
 
@@ -57,7 +57,10 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 ### RF-7: Cuenta y acceso
 - **RF-7.1:** El usuario puede crear una cuenta con correo y contraseña e iniciar sesión.
 - **RF-7.2:** Las operaciones privadas deben autenticarse con la sesión emitida por Apps Script.
-- **RF-7.3:** Los datos de negocio se filtran por el usuario autenticado; una cuenta solo puede consultar y modificar sus propios registros.
+- **RF-7.3:** Los datos se filtran por negocio; el administrador y sus empleados autorizados comparten los registros de ese negocio, y negocios distintos permanecen aislados.
+- **RF-7.4:** La primera cuenta se crea como administrador. Después, el registro público se cierra y solo un administrador puede crear o gestionar cuentas de empleados.
+- **RF-7.5:** El administrador accede a todos los módulos, configuración, compras e inversiones, catálogo y administración de usuarios. El empleado accede a calculadora, cotizador, consulta de inventario, pedidos y ventas.
+- **RF-7.6:** El empleado no puede administrar usuarios, editar configuración/catálogos, consultar compras e inversiones, ni crear o eliminar artículos del inventario. El backend valida estas restricciones en cada solicitud.
 
 ### RF-8: Inventario y ventas
 - **RF-8.1:** El inventario permite crear, consultar, actualizar y eliminar artículos con categoría, cantidad, unidad, stock mínimo, costo unitario y notas.
@@ -97,7 +100,7 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - Los cálculos matemáticos deben actualizar la interfaz (resumen económico, gráficas) de manera instantánea (en tiempo real) sin necesidad de recargar la página.
 
 ### RNF-3: Persistencia de Datos
-- La aplicación usa Google Apps Script como backend y Google Sheets como almacenamiento persistente por usuario.
+- La aplicación usa Google Apps Script como backend y Google Sheets como almacenamiento persistente por negocio, con roles validados en el servidor.
 - Los datos de negocio se guardan en Apps Script/Google Sheets, no en el navegador. Los datos legados del navegador se migran una sola vez al backend en una cuenta vacía. La sesión autenticada se mantiene en `sessionStorage`.
 
 ### RNF-4: Mantenibilidad
