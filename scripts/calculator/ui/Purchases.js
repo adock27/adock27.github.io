@@ -3,6 +3,7 @@ import { Storage } from '../storage.js';
 const PURCHASE_TYPES = {
   equipo: 'Equipo',
   filamento: 'Filamento',
+  stock_inicial: 'Stock inicial de filamento',
   insumo: 'Insumo',
   mantenimiento: 'Mantenimiento',
   gasto: 'Gasto del negocio'
@@ -50,8 +51,10 @@ export class Purchases {
 
   openBulkForm() {
     document.getElementById('bulkPurchasesInput').value = '';
+    document.getElementById('bulkFilamentsInput').value = '';
     document.getElementById('bulkPurchasesDate').value = localDateInput();
     document.getElementById('bulkPurchasesPreview').replaceChildren();
+    document.getElementById('bulkFilamentPreview').replaceChildren();
     document.getElementById('bulkPurchasesMessage').textContent = '';
     document.getElementById('btnSaveBulkPurchases').disabled = true;
     this.bulkModalElement = document.getElementById('bulkPurchasesModal');
@@ -92,15 +95,50 @@ export class Purchases {
     });
   }
 
+  parseFilamentInventory(text) {
+    const lines = String(text || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    const records = [];
+    let candidateCount = 0;
+    lines.forEach(line => {
+      let cells;
+      if (line.startsWith('|')) cells = line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
+      else if (line.includes('\t')) cells = line.split('\t').map(cell => cell.trim());
+      else if (line.includes(';')) cells = line.split(';').map(cell => cell.trim());
+      else return;
+      if (cells.length < 8 || /^[-:]+$/.test(cells[0])) return;
+      if (/^color$/i.test(cells[0]) || /^color$/i.test(cells[0].replace(/\*/g, ''))) return;
+      candidateCount += 1;
+      const quantity = Number(String(cells[5]).replace(',', '.'));
+      const weight = String(cells[6]).match(/(\d+(?:[.,]\d+)?)\s*g\b/i);
+      const amountText = cells[4].replace(/[^\d,.-]/g, '');
+      const amount = Number(amountText.replace(/[.,](?=\d{3}(\D|$))/g, '').replace(',', '.'));
+      const gramsPerUnit = weight ? Number(weight[1].replace(',', '.')) : 0;
+      if (!cells[0] || !cells[1] || !cells[2] || !(quantity > 0) || !(gramsPerUnit > 0) || !(amount > 0)) return;
+      const filamentType = cells[2].toUpperCase();
+      const color = cells[0].trim();
+      const brand = cells[1].trim();
+      const available = !/agotado/i.test(cells[3]);
+      records.push({ color, brand, filamentType, status: available ? 'Disponible' : 'Agotado', amount, quantity, gramsPerUnit,
+        colorCode: cells[7].trim(), materialName: `${filamentType} ${color} — ${brand}`, purchasedGrams: quantity * gramsPerUnit,
+        remainingGrams: available ? quantity * gramsPerUnit : 0 });
+    });
+    this.bulkFilamentSkipped = Math.max(0, candidateCount - records.length);
+    return records;
+  }
+
   prepareBulkPreview() {
     const rows = this.parseBulkRows(document.getElementById('bulkPurchasesInput').value);
+    this.bulkFilamentRows = this.parseFilamentInventory(document.getElementById('bulkFilamentsInput').value);
     const container = document.getElementById('bulkPurchasesPreview');
     container.replaceChildren();
-    if (!rows.length) {
+    const filamentContainer = document.getElementById('bulkFilamentPreview');
+    filamentContainer.replaceChildren();
+    if (!rows.length && !this.bulkFilamentRows.length) {
       document.getElementById('bulkPurchasesMessage').textContent = 'No encontré filas válidas. Usa nombre y valor en columnas separadas.';
       document.getElementById('btnSaveBulkPurchases').disabled = true;
       return;
     }
+    if (rows.length) {
     const table = document.createElement('table'); table.className = 'table table-sm table-bordered align-middle mb-0';
     const head = document.createElement('thead'); head.className = 'table-light';
     head.innerHTML = '<tr><th>Artículo</th><th>Valor COP</th><th>Categoría</th><th>Cantidad</th><th>Unidad</th><th>Filamento del catálogo</th></tr>'; table.appendChild(head);
@@ -110,7 +148,7 @@ export class Purchases {
       const name = document.createElement('td'); name.textContent = item.name; name.className = 'fw-semibold'; row.appendChild(name);
       const amount = document.createElement('td'); amount.textContent = this.formatMoney(item.amount); row.appendChild(amount);
       const typeCell = document.createElement('td'); const type = document.createElement('select'); type.className = 'form-select form-select-sm bulk-type';
-      Object.entries(PURCHASE_TYPES).forEach(([value,label]) => { const option = document.createElement('option'); option.value = value; option.textContent = label; option.selected = item.type === value; type.appendChild(option); }); typeCell.appendChild(type); row.appendChild(typeCell);
+      Object.entries(PURCHASE_TYPES).filter(([value]) => value !== 'stock_inicial').forEach(([value,label]) => { const option = document.createElement('option'); option.value = value; option.textContent = label; option.selected = item.type === value; type.appendChild(option); }); typeCell.appendChild(type); row.appendChild(typeCell);
       const quantityCell = document.createElement('td'); const quantity = document.createElement('input'); quantity.type = 'number'; quantity.min = '0.001'; quantity.step = 'any'; quantity.placeholder = 'Cantidad'; quantity.className = 'form-control form-control-sm bulk-quantity'; quantity.value = item.quantity || ''; quantityCell.appendChild(quantity); row.appendChild(quantityCell);
       const unitCell = document.createElement('td'); const unit = document.createElement('select'); unit.className = 'form-select form-select-sm bulk-unit';
       [['kg','kg'],['g','g'],['unidades','unidades'],['rollos','rollos'],['ml','ml'],['litros','litros'],['metros','metros']].forEach(([value,label]) => { const option = document.createElement('option'); option.value = value; option.textContent = label; unit.appendChild(option); });
@@ -124,43 +162,74 @@ export class Purchases {
       body.appendChild(row); this.updateBulkRowFields(row);
     });
     table.appendChild(body); container.appendChild(table);
+    }
+    if (this.bulkFilamentRows.length) {
+      const title = document.createElement('div'); title.className = 'small fw-semibold mb-2';
+      const bought = this.bulkFilamentRows.reduce((sum, item) => sum + item.purchasedGrams, 0);
+      const available = this.bulkFilamentRows.reduce((sum, item) => sum + item.remainingGrams, 0);
+      title.textContent = `Filamentos: ${this.bulkFilamentRows.length} filas · ${bought.toLocaleString('es-CO')} g comprados · ${available.toLocaleString('es-CO')} g disponibles. Se cargarán como stock inicial, sin sumar su valor al total de inversiones.`;
+      filamentContainer.appendChild(title);
+      const table = document.createElement('table'); table.className = 'table table-sm table-bordered align-middle mb-0';
+      const head = document.createElement('thead'); head.className = 'table-light'; head.innerHTML = '<tr><th>Material</th><th>Valor por rollo</th><th>Rollos</th><th>Gramos</th><th>Estado</th><th>Color</th></tr>'; table.appendChild(head);
+      const body = document.createElement('tbody');
+      this.bulkFilamentRows.forEach(item => {
+        const row = document.createElement('tr');
+        [item.materialName, this.formatMoney(item.amount), item.quantity, `${item.purchasedGrams} g`, item.status].forEach(value => { const cell = document.createElement('td'); cell.textContent = String(value); row.appendChild(cell); });
+        const color = document.createElement('td'); const swatch = document.createElement('span'); swatch.className = 'd-inline-block rounded-circle border'; swatch.style.width = '16px'; swatch.style.height = '16px'; swatch.style.backgroundColor = item.colorCode || 'transparent'; swatch.title = item.colorCode; color.appendChild(swatch); color.append(` ${item.colorCode}`); row.appendChild(color);
+        body.appendChild(row);
+      });
+      table.appendChild(body); filamentContainer.appendChild(table);
+    }
     const total = rows.reduce((sum, item) => sum + item.amount, 0);
-    document.getElementById('bulkPurchasesMessage').textContent = `${rows.length} filas · Total ${this.formatMoney(total)}. Revisa las categorías y completa cantidades para filamentos e insumos que quieras controlar en stock.`;
+    const skipped = this.bulkFilamentSkipped || 0;
+    document.getElementById('bulkPurchasesMessage').textContent = `${rows.length} compras · Total ${this.formatMoney(total)}${this.bulkFilamentRows.length ? ` · ${this.bulkFilamentRows.length} filas de stock inicial` : ''}${skipped ? ` · ${skipped} fila(s) de filamento inválidas; corrige la tabla antes de guardar` : ''}.`;
     this.updateBulkSaveButton();
   }
 
   updateBulkRowFields(row) {
     const type = row.querySelector('.bulk-type').value;
-    row.querySelector('.bulk-quantity').disabled = type !== 'insumo' && type !== 'filamento';
-    row.querySelector('.bulk-unit').disabled = type !== 'insumo' && type !== 'filamento';
-    row.querySelector('.bulk-material').disabled = type !== 'filamento';
+    const hasOpeningFilaments = this.bulkFilamentRows?.length > 0;
+    row.querySelector('.bulk-quantity').disabled = (type !== 'insumo' && type !== 'filamento') || (type === 'filamento' && hasOpeningFilaments);
+    row.querySelector('.bulk-unit').disabled = (type !== 'insumo' && type !== 'filamento') || (type === 'filamento' && hasOpeningFilaments);
+    row.querySelector('.bulk-material').disabled = type !== 'filamento' || hasOpeningFilaments;
     if (type !== 'filamento') row.querySelector('.bulk-material').value = '';
     this.updateBulkSaveButton();
   }
 
   updateBulkSaveButton() {
     const rows = [...document.querySelectorAll('#bulkPurchasesPreview tbody tr')];
-    const invalid = rows.some(row => {
+    const invalid = (this.bulkFilamentSkipped || 0) > 0 || rows.some(row => {
       const type = row.querySelector('.bulk-type').value;
       const value = row.querySelector('.bulk-quantity').value;
       const quantity = Number(value);
-      return (type === 'filamento' && (!quantity || quantity <= 0)) || (type === 'insumo' && value !== '' && (!quantity || quantity <= 0));
+      const openingInventory = this.bulkFilamentRows?.length > 0;
+      return (type === 'filamento' && !openingInventory && (!quantity || quantity <= 0)) || (type === 'insumo' && value !== '' && (!quantity || quantity <= 0));
     });
     const button = document.getElementById('btnSaveBulkPurchases');
-    if (button) button.disabled = !rows.length || invalid;
+    if (button) button.disabled = (!rows.length && !this.bulkFilamentRows?.length) || invalid;
   }
 
   saveBulkPurchases() {
     const rows = [...document.querySelectorAll('#bulkPurchasesPreview tbody tr')];
-    if (!rows.length) return;
+    if (!rows.length && !this.bulkFilamentRows?.length) return;
+    const importDate = document.getElementById('bulkPurchasesDate').value || localDateInput();
+    const importedKeys = new Set(rows.map(row => `${importDate}|${row._bulkItem.name.trim().toLocaleLowerCase()}|${row._bulkItem.amount}`));
+    if (this.items.some(item => item.notes === 'Importación masiva' && importedKeys.has(`${item.date}|${String(item.itemName || '').trim().toLocaleLowerCase()}|${Number(item.totalCost) || 0}`))) {
+      return this.app.showToast('Al menos una de estas compras ya fue importada en esa fecha. No se agregaron filas para evitar duplicarlas.', 'error');
+    }
+    const openingNames = new Set((this.bulkFilamentRows || []).map(item => item.materialName.toLocaleLowerCase()));
+    if (this.items.some(item => item.type === 'stock_inicial' && openingNames.has(String(item.itemName || '').toLocaleLowerCase()))) {
+      return this.app.showToast('Ya existe stock inicial para alguno de esos filamentos. Elimina las filas anteriores antes de volver a importar para evitar duplicarlo.', 'error');
+    }
     const materialIds = [];
     rows.forEach(row => {
       const source = row._bulkItem, type = row.querySelector('.bulk-type').value, unit = row.querySelector('.bulk-unit').value;
       const suppliedQuantity = Number(row.querySelector('.bulk-quantity').value);
-      const tracksStock = type === 'filamento' || (type === 'insumo' && suppliedQuantity > 0);
+      const historicalFilamentSpend = type === 'filamento' && this.bulkFilamentRows?.length > 0;
+      const tracksStock = (type === 'filamento' && !historicalFilamentSpend) || (type === 'insumo' && suppliedQuantity > 0);
       const quantity = tracksStock ? suppliedQuantity : 1;
       let materialId = '';
-      if (type === 'filamento') {
+      if (type === 'filamento' && !historicalFilamentSpend) {
         const selectedId = row.querySelector('.bulk-material').value;
         let material = (this.app.config.materials || []).find(entry => String(entry.id) === selectedId);
         if (!material) {
@@ -169,15 +238,57 @@ export class Purchases {
         }
         materialId = material.id; materialIds.push(materialId);
       }
-      this.items.push({ id: makeId(), date: document.getElementById('bulkPurchasesDate').value || localDateInput(), type,
-        itemName: type === 'filamento' ? this.app.config.materials.find(entry => String(entry.id) === String(materialId)).name : source.name.trim(),
+      this.items.push({ id: makeId(), date: importDate, type,
+        itemName: type === 'filamento' && materialId ? this.app.config.materials.find(entry => String(entry.id) === String(materialId)).name : source.name.trim(),
         materialId, quantity, unit: tracksStock ? unit : 'unidad', purchaseCost: source.amount, shippingCost: 0, totalCost: source.amount,
         remainingQuantity: tracksStock ? quantity : 0, supplier: '', paymentMethod: 'Otro', notes: 'Importación masiva' });
     });
+    this.importOpeningFilamentStock(this.bulkFilamentRows || []);
     Storage.saveConfig(this.app.config);
     this.syncMaterialPrice(materialIds);
     this.persist(); this.app.settings?.renderCatalogTables(); this.bulkModal?.hide();
-    this.app.showToast(`${rows.length} compras registradas.`, 'success');
+    this.app.recalculate();
+    this.app.filaments?.renderMaterialSlots();
+    this.app.showToast(`${rows.length} compras y ${(this.bulkFilamentRows || []).length} filas de stock inicial cargadas.`, 'success');
+  }
+
+  importOpeningFilamentStock(records) {
+    if (!records.length) return;
+    const groups = new Map();
+    records.forEach(item => {
+      const key = `${item.filamentType}|${item.color}|${item.brand}`.toLocaleLowerCase();
+      const group = groups.get(key) || { ...item, totalGrams: 0, totalRemainingGrams: 0, totalCost: 0 };
+      group.totalGrams += item.purchasedGrams;
+      group.totalRemainingGrams += item.remainingGrams;
+      group.totalCost += item.amount * item.quantity;
+      groups.set(key, group);
+    });
+    groups.forEach(group => {
+      let material = (this.app.config.materials || []).find(entry => entry.name.toLocaleLowerCase() === group.materialName.toLocaleLowerCase());
+      const pricePerKg = group.totalGrams > 0 ? group.totalCost * 1000 / group.totalGrams : 0;
+      if (!material) {
+        material = { id: makeId(), name: group.materialName, pricePerKg, color: group.colorCode || '#10b981', note: `Marca ${group.brand}; tipo ${group.filamentType}` };
+        this.app.config.materials.push(material);
+      } else {
+        material.pricePerKg = pricePerKg;
+        material.color = group.colorCode || material.color;
+        material.note = `Marca ${group.brand}; tipo ${group.filamentType}`;
+      }
+      const materialId = material.id;
+      this.app.config.filamentBasePrices ||= {};
+      this.app.config.filamentBaseQuantities ||= {};
+      this.app.config.filamentBaseCosts ||= {};
+      this.app.config.filamentBasePrices[materialId] = pricePerKg;
+      this.app.config.filamentBaseQuantities[materialId] = group.totalGrams;
+      this.app.config.filamentBaseCosts[materialId] = group.totalCost;
+      const sourceRows = records.filter(item => `${item.filamentType}|${item.color}|${item.brand}`.toLocaleLowerCase() === `${group.filamentType}|${group.color}|${group.brand}`.toLocaleLowerCase());
+      sourceRows.forEach(item => this.items.push({
+        id: makeId(), date: document.getElementById('bulkPurchasesDate').value || localDateInput(), type: 'stock_inicial',
+        itemName: material.name, materialId, quantity: item.purchasedGrams, unit: 'g', purchaseCost: item.amount * item.quantity, shippingCost: 0, totalCost: 0,
+        remainingQuantity: item.remainingGrams, supplier: item.brand, paymentMethod: 'Otro',
+        notes: `Stock inicial; ${item.quantity} rollo(s) de ${item.gramsPerUnit} g; estado ${item.status}; costo registrado en inversiones.`
+      }));
+    });
   }
 
   openForm(item = null) {
@@ -273,12 +384,12 @@ export class Purchases {
   }
 
   availableGrams(materialId) {
-    return this.items.filter(item => item.type === 'filamento' && String(item.materialId || '') === String(materialId))
+    return this.items.filter(item => ['filamento', 'stock_inicial'].includes(item.type) && String(item.materialId || '') === String(materialId))
       .reduce((sum, item) => sum + this.quantityToGrams(item.remainingQuantity, item.unit), 0);
   }
 
   filamentStockLabel(materialId) {
-    const hasPurchases = this.items.some(item => item.type === 'filamento' && String(item.materialId || '') === String(materialId));
+    const hasPurchases = this.items.some(item => ['filamento', 'stock_inicial'].includes(item.type) && String(item.materialId || '') === String(materialId));
     return hasPurchases ? `${this.availableGrams(materialId).toFixed(1)} g disponibles` : 'Stock sin registrar';
   }
 
@@ -294,8 +405,12 @@ export class Purchases {
         this.app.config.filamentBasePrices[materialId] = Number(material.pricePerKg) || 0;
         changed = true;
       }
-      const grams = linkedPurchases.reduce((sum, item) => sum + this.quantityToGrams(item.quantity, item.unit), 0);
-      const cost = linkedPurchases.reduce((sum, item) => sum + (Number(item.totalCost) || 0), 0);
+      const baseGrams = Math.max(0, Number(this.app.config.filamentBaseQuantities?.[materialId]) || 0);
+      const baseCost = Object.prototype.hasOwnProperty.call(this.app.config.filamentBaseCosts || {}, materialId)
+        ? Math.max(0, Number(this.app.config.filamentBaseCosts[materialId]) || 0)
+        : baseGrams * (Number(this.app.config.filamentBasePrices[materialId]) || 0) / 1000;
+      const grams = baseGrams + linkedPurchases.reduce((sum, item) => sum + this.quantityToGrams(item.quantity, item.unit), 0);
+      const cost = baseCost + linkedPurchases.reduce((sum, item) => sum + (Number(item.totalCost) || 0), 0);
       if (grams > 0) {
         material.pricePerKg = cost * 1000 / grams;
         changed = true;
@@ -330,7 +445,7 @@ export class Purchases {
     if (!window.confirm('¿Registrar como consumidos los gramos de filamento de este trabajo? Hazlo después de completar la impresión para descontar el stock una sola vez.')) return;
     usage.forEach((gramsToUse, materialId) => {
       let remainingToUse = gramsToUse;
-      const lots = this.items.filter(item => item.type === 'filamento' && String(item.materialId || '') === materialId)
+      const lots = this.items.filter(item => ['filamento', 'stock_inicial'].includes(item.type) && String(item.materialId || '') === materialId)
         .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
       lots.forEach(lot => {
         if (remainingToUse <= 0) return;
@@ -405,9 +520,13 @@ export class Purchases {
   renderSummary() {
     const spent = this.items.reduce((sum, item) => sum + (Number(item.totalCost) || 0), 0);
     const sales = (this.app.salesModule?.items || this.app.sales || []).reduce((sum, sale) => sum + (Number(sale.total) || 0), 0);
-    const stockValue = this.items.filter(item => item.type === 'insumo' || item.type === 'filamento').reduce((sum, item) => {
+    const stockValue = this.items.filter(item => item.type === 'insumo' || item.type === 'filamento' || item.type === 'stock_inicial').reduce((sum, item) => {
       const quantity = Math.max(0, Number(item.remainingQuantity) || 0);
       const purchasedQuantity = Number(item.quantity) || 0;
+      if (item.type === 'stock_inicial') {
+        const material = (this.app.config.materials || []).find(entry => String(entry.id) === String(item.materialId));
+        return sum + this.quantityToGrams(quantity, item.unit) * (Number(material?.pricePerKg) || 0) / 1000;
+      }
       return sum + (purchasedQuantity > 0 ? quantity * ((Number(item.totalCost) || 0) / purchasedQuantity) : 0);
     }, 0);
     const covered = Math.min(spent, sales);
@@ -447,7 +566,7 @@ export class Purchases {
     }
     items.forEach(item => {
       const row = document.createElement('tr');
-      const qty = item.type === 'insumo' || item.type === 'filamento'
+      const qty = item.type === 'insumo' || item.type === 'filamento' || item.type === 'stock_inicial'
         ? `${Number(item.remainingQuantity) || 0} / ${Number(item.quantity) || 0} ${item.unit || ''}`
         : '—';
       [this.formatDate(item.date), PURCHASE_TYPES[item.type] || 'Compra', this.getItemName(item), qty, item.supplier || '—', this.formatMoney(item.totalCost)].forEach((value, index) => {
@@ -461,9 +580,10 @@ export class Purchases {
       const edit = document.createElement('button');
       edit.type = 'button';
       edit.className = 'btn btn-sm btn-outline-primary me-1';
-      edit.title = item.type === 'insumo' || item.type === 'filamento' ? 'Editar compra o ajustar saldo disponible' : 'Editar compra';
+      edit.title = item.type === 'stock_inicial' ? 'El stock inicial se corrige al volver a importar la tabla' : item.type === 'insumo' || item.type === 'filamento' ? 'Editar compra o ajustar saldo disponible' : 'Editar compra';
+      if (item.type === 'stock_inicial') edit.disabled = true;
       edit.innerHTML = '<i class="bi bi-pencil"></i>';
-      edit.addEventListener('click', () => this.openForm(item));
+      if (item.type !== 'stock_inicial') edit.addEventListener('click', () => this.openForm(item));
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'btn btn-sm btn-outline-danger';
@@ -473,6 +593,22 @@ export class Purchases {
         if (!window.confirm(`¿Eliminar el registro de “${this.getItemName(item)}”?`)) return;
         const materialId = item.materialId;
         this.items = this.items.filter(current => current.id !== item.id);
+        if (item.type === 'stock_inicial' && materialId) {
+          this.app.config.filamentBaseQuantities ||= {};
+          this.app.config.filamentBaseCosts ||= {};
+          this.app.config.filamentBasePrices ||= {};
+          this.app.config.filamentBaseQuantities[materialId] = Math.max(0, (Number(this.app.config.filamentBaseQuantities[materialId]) || 0) - this.quantityToGrams(item.quantity, item.unit));
+          this.app.config.filamentBaseCosts[materialId] = Math.max(0, (Number(this.app.config.filamentBaseCosts[materialId]) || 0) - (Number(item.purchaseCost) || 0));
+          if (!this.app.config.filamentBaseQuantities[materialId]) {
+            delete this.app.config.filamentBaseQuantities[materialId];
+            delete this.app.config.filamentBaseCosts[materialId];
+            delete this.app.config.filamentBasePrices[materialId];
+            const material = this.app.config.materials.find(entry => String(entry.id) === String(materialId));
+            if (material) material.pricePerKg = 0;
+          } else {
+            this.app.config.filamentBasePrices[materialId] = this.app.config.filamentBaseCosts[materialId] * 1000 / this.app.config.filamentBaseQuantities[materialId];
+          }
+        }
         this.syncMaterialPrice([materialId]);
         this.persist();
         this.app.showToast('Registro eliminado', 'info');

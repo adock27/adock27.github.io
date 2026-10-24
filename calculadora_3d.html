@@ -708,11 +708,15 @@ Generando cotización...
     <div class="modal-dialog modal-dialog-centered modal-xl"><div class="modal-content border-0 shadow">
       <div class="modal-header"><h5 class="modal-title fw-bold" id="bulkPurchasesModalTitle">Carga masiva de compras e inversiones</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
       <div class="modal-body">
-        <p class="small text-secondary">Pega una fila por compra, con el nombre y el valor separados por tabulación, punto y coma o barra vertical. Puedes pegar también una tabla de Excel o una tabla Markdown. Los filamentos requieren cantidad y vínculo al catálogo para actualizar el stock.</p>
+        <p class="small text-secondary">Pega las inversiones en el primer cuadro y, si tienes el detalle, la tabla completa de filamentos en el segundo. La lista de inversiones registra el desembolso. La tabla de filamentos crea materiales y stock inicial sin duplicar ese gasto.</p>
         <div class="row g-2 mb-2"><div class="col-sm-4 col-md-3"><label for="bulkPurchasesDate" class="form-label small fw-semibold">Fecha para las filas</label><input id="bulkPurchasesDate" type="date" class="form-control form-control-sm"></div><div class="col-sm-8 col-md-9 d-flex align-items-end"><span class="small text-secondary pb-1">Cada importe se registrará como valor total de compra, sin envío separado.</span></div></div>
-        <textarea id="bulkPurchasesInput" class="form-control font-monospace small" rows="7" placeholder="Impresora&#9;1809078&#10;PLA Gris&#9;65000"></textarea>
+        <label for="bulkPurchasesInput" class="form-label small fw-semibold">Compras e inversiones</label>
+        <textarea id="bulkPurchasesInput" class="form-control font-monospace small" rows="6" placeholder="Pega aquí la tabla de inversiones (nombre y valor)"></textarea>
+        <label for="bulkFilamentsInput" class="form-label small fw-semibold mt-3">Inventario inicial de filamentos (opcional)</label>
+        <textarea id="bulkFilamentsInput" class="form-control font-monospace small" rows="6" placeholder="Pega aquí las columnas Color, Marca, Tipo, Estado, Valor, Cantidad, Peso y CodigoColor"></textarea>
         <div class="d-flex flex-wrap align-items-center gap-2 mt-2"><button type="button" id="btnPreviewBulkPurchases" class="btn btn-sm btn-outline-primary">Preparar filas</button><span id="bulkPurchasesMessage" class="small text-secondary"></span></div>
         <div id="bulkPurchasesPreview" class="table-responsive mt-3"></div>
+        <div id="bulkFilamentPreview" class="table-responsive mt-3"></div>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnSaveBulkPurchases" class="btn btn-success rounded-pill px-4" disabled>Registrar compras</button></div>
     </div></div>
