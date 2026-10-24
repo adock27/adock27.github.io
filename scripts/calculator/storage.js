@@ -1,3 +1,5 @@
+import { ApiSync } from './api-sync.js';
+
 /**
  * 3D Print Storage & Configuration Layer
  * Maneja persistencia, catálogos dinámicos (materiales, extras), presets y copias de seguridad.
@@ -124,6 +126,7 @@ export const Storage = {
   saveConfig(config) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+      ApiSync.schedule();
       return true;
     } catch (e) {
       console.error('Error guardando configuración:', e);
@@ -137,6 +140,8 @@ export const Storage = {
   resetConfig() {
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_CONFIG));
+      ApiSync.schedule();
       return { ...DEFAULT_CONFIG };
     } catch (e) {
       console.error(e);
@@ -176,6 +181,7 @@ export const Storage = {
         });
       }
       localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+      ApiSync.schedule();
       return presets;
     } catch (e) {
       console.error('Error guardando preset:', e);
@@ -191,6 +197,7 @@ export const Storage = {
     try {
       const presets = this.loadPresets().filter(p => p.id !== presetId);
       localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+      ApiSync.schedule();
       return presets;
     } catch (e) {
       console.error('Error eliminando preset:', e);
@@ -227,3 +234,4 @@ export const Storage = {
     }
   }
 };
+

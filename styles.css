@@ -33,6 +33,20 @@ body {
   max-width: 380px;
 }
 
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: radial-gradient(circle at top left, #e8fff3, #f3f6f8 55%, #e8eef2);
+}
+.auth-card {
+  width: min(100%, 430px);
+  border-radius: 1.25rem;
+}
+
 /* === Drag & Drop Filaments === */
 .filament-chip {
   cursor: grab;

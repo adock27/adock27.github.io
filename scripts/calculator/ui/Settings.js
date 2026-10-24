@@ -1,4 +1,5 @@
 import { Storage, DEFAULT_CONFIG } from '../storage.js';
+import { ApiSync } from '../api-sync.js';
 
 export class Settings {
   constructor(app) {
@@ -368,63 +369,23 @@ export class Settings {
     }
 
     try {
-      const response = await fetch('https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ6CTe2fjdl1dDyoUfCtnBUngv5a069JAldSfGakdRdsa5/exec');
-      if (!response.ok) throw new Error('Error de red al conectar con la API');
-      const data = await response.json();
-
-      if (Array.isArray(data)) {
-        // Función auxiliar para mapear el nombre a un color HEX
-        const getColorHex = (colorName) => {
-          const colors = {
-            'blanco': '#ffffff',
-            'negro': '#000000',
-            'amarillo': '#fbbf24',
-            'rojo': '#ef4444',
-            'azul': '#3b82f6',
-            'verde': '#22c55e',
-            'naranja': '#f97316',
-            'gris': '#6b7280',
-            'transparente': '#e5e7eb'
-          };
-          const c = colorName.toLowerCase().trim();
-          return colors[c] || ('#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0'));
-        };
-
-        const availableData = data.filter(item => {
-          const estado = (item.Estado || '').toLowerCase().trim();
-          return estado !== 'agotado';
-        });
-
-        const newMaterials = availableData.map((item, index) => {
-          return {
-            id: 'api_mat_' + Date.now() + '_' + index,
-            name: `${item.Marca || ''} ${item.Tipo || ''} ${item.Color || ''}`.trim() || 'Filamento API',
-            pricePerKg: Number(item.Valor) || 60000,
-            color: item.CodigoColor ? item.CodigoColor : getColorHex(item.Color || ''),
-            note: `${item.Estado || 'Disponible'} | Cant: ${item.Cantidad || 0} | ${item.Peso || '1000g'}`
-          };
-        });
-
-        // Opcional: Reemplazar o combinar. Vamos a combinar, pero evitando duplicados exactos por nombre.
-        const existingNames = new Set(this.app.config.materials.map(m => m.name.toLowerCase()));
-        let addedCount = 0;
-        
-        newMaterials.forEach(m => {
-          if (!existingNames.has(m.name.toLowerCase())) {
-            this.app.config.materials.push(m);
-            addedCount++;
-          }
-        });
-
-        Storage.saveConfig(this.app.config);
-        this.renderCatalogTables();
-        this.app.filaments.renderPalette();
-        this.app.filaments.renderMaterialSlots();
-        this.app.recalculate();
-        this.app.showToast(`Sincronización exitosa: ${addedCount} añadidos`, 'success');
-      } else {
-        throw new Error('Formato de datos no válido');
-      }
+      const remoteMaterials = await ApiSync.listMaterials();
+      if (!Array.isArray(remoteMaterials)) throw new Error('Formato de datos no válido');
+      const existingNames = new Set(this.app.config.materials.map(m => m.name.toLowerCase()));
+      let addedCount = 0;
+      remoteMaterials.forEach(material => {
+        if (!existingNames.has(String(material.name || '').toLowerCase())) {
+          this.app.config.materials.push(material);
+          existingNames.add(String(material.name || '').toLowerCase());
+          addedCount++;
+        }
+      });
+      Storage.saveConfig(this.app.config);
+      this.renderCatalogTables();
+      this.app.filaments.renderPalette();
+      this.app.filaments.renderMaterialSlots();
+      this.app.recalculate();
+      this.app.showToast(`Sincronización exitosa: ${addedCount} materiales añadidos`, 'success');
     } catch (err) {
       console.error(err);
       this.app.showToast('Error al sincronizar con la API', 'error');

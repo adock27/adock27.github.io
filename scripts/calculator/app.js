@@ -1,5 +1,7 @@
 import { Engine } from './engine.js';
 import { Storage } from './storage.js';
+import { ApiSync } from './api-sync.js';
+import { Auth } from './auth.js';
 
 import { Tabs } from './ui/Tabs.js';
 import { Presets } from './ui/Presets.js';
@@ -10,9 +12,9 @@ import { Quote } from './ui/Quote.js';
 import { Settings } from './ui/Settings.js';
 
 class CalculatorApp {
-  constructor() {
-    this.config = Storage.loadConfig();
-    this.presets = Storage.loadPresets();
+  constructor(initialData = {}) {
+    this.config = initialData.config || Storage.loadConfig();
+    this.presets = initialData.presets || Storage.loadPresets();
     
     this.currentJob = {
       projectName: 'Llavero Personalizado',
@@ -228,6 +230,15 @@ class CalculatorApp {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  window.calcApp = new CalculatorApp();
+document.addEventListener('DOMContentLoaded', async () => {
+  Auth.init();
+  if (!ApiSync.getSession()?.token) return;
+  const localConfig = Storage.loadConfig();
+  const localPresets = Storage.loadPresets();
+  const remote = await ApiSync.load(localConfig, localPresets);
+  window.calcApp = new CalculatorApp(remote);
+  if (!remote.connected) window.calcApp.showToast('Conexión al backend no disponible; usando datos locales.', 'info');
+  window.addEventListener('calculator-api-sync-error', () => {
+    window.calcApp?.showToast('No se pudo sincronizar con Apps Script; los cambios siguen guardados localmente.', 'error');
+  });
 });
