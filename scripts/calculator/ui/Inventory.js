@@ -60,6 +60,7 @@ export class Inventory {
   persist() {
     this.app.inventory = this.items;
     Storage.saveInventory(this.items);
+    this.app.salesModule?.renderInventoryOptions();
     this.render();
   }
 

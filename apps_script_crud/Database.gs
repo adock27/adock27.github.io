@@ -29,7 +29,7 @@ var DB_SCHEMAS = {
   Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt'],
   Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt'],
   Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt'],
-  Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
+  Ventas: ['id', 'userId', 'inventoryId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
 };
 
 function getSpreadsheet_() {
