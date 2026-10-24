@@ -239,6 +239,37 @@ class CalculatorApp {
 document.addEventListener('DOMContentLoaded', async () => {
   Auth.init();
   if (!ApiSync.getSession()?.token) return;
+  const saveStatus = document.getElementById('backendSaveStatus');
+  const saveStatusText = document.getElementById('backendSaveStatusText');
+  const saveSpinner = document.getElementById('backendSaveSpinner');
+  const scopeLabels = { load: 'datos', all: 'datos', config: 'configuración', presets: 'presets', inventory: 'inventario', sales: 'ventas' };
+  const setSaveStatus = (label, state) => {
+    if (!saveStatus) return;
+    if (saveStatusText) saveStatusText.textContent = label;
+    else saveStatus.textContent = label;
+    saveStatus.className = `badge rounded-pill d-inline-flex align-items-center gap-2 ${state === 'error' ? 'text-bg-danger' : state === 'pending' ? 'text-bg-warning' : 'text-bg-success'}`;
+    saveStatus.setAttribute('aria-busy', state === 'pending' ? 'true' : 'false');
+    saveSpinner?.classList.toggle('d-none', state !== 'pending');
+  };
+  const labelForScopes = scopes => {
+    const labels = [...new Set((scopes || []).map(scope => scopeLabels[scope] || scope))];
+    if (labels.includes('datos')) return 'datos';
+    if (labels.length === 1) return labels[0];
+    if (labels.length === 2) return `${labels[0]} y ${labels[1]}`;
+    return `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`;
+  };
+  window.addEventListener('calculator-api-sync-start', event => {
+    const isLoad = event.detail?.scopes?.includes('load');
+    setSaveStatus(`${isLoad ? 'Cargando' : 'Guardando'} ${labelForScopes(event.detail?.scopes)}…`, 'pending');
+  });
+  window.addEventListener('calculator-api-sync-success', event => {
+    const isLoad = event.detail?.scopes?.includes('load');
+    setSaveStatus(isLoad ? 'Backend conectado' : 'Guardado en backend', 'success');
+  });
+  window.addEventListener('calculator-api-sync-error', event => {
+    setSaveStatus('Error de conexión', 'error');
+    window.calcApp?.showToast(`No se pudo sincronizar ${labelForScopes(event.detail?.scopes)} con el backend.`, 'error');
+  });
   const localConfig = Storage.loadConfig();
   const localPresets = Storage.loadPresets();
   let remote;
@@ -255,16 +286,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   Storage.setSnapshot(remote);
   window.calcApp = new CalculatorApp(remote);
-  const saveStatus = document.getElementById('backendSaveStatus');
-  const setSaveStatus = (label, state) => {
-    if (!saveStatus) return;
-    saveStatus.textContent = label;
-    saveStatus.className = `badge rounded-pill d-none d-md-inline ${state === 'error' ? 'text-bg-danger' : state === 'pending' ? 'text-bg-warning' : 'text-bg-success'}`;
-  };
-  window.addEventListener('calculator-api-sync-start', () => setSaveStatus('Guardando…', 'pending'));
-  window.addEventListener('calculator-api-sync-success', () => setSaveStatus('Guardado en backend', 'success'));
-  window.addEventListener('calculator-api-sync-error', () => {
-    setSaveStatus('Error al guardar', 'error');
-    window.calcApp?.showToast('No se pudo guardar en el backend. Revisa la conexión antes de continuar.', 'error');
-  });
 });

@@ -112,6 +112,7 @@ export const ApiSync = {
   },
 
   async load(defaults) {
+    window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: ['load'] } }));
     try {
       const userId = this.getSession()?.id;
       if (!userId) throw new Error('Inicia sesión para cargar tus datos.');
@@ -130,7 +131,9 @@ export const ApiSync = {
         this.setSnapshot(initial);
         await pushSnapshot(new Set(['all']), this.getSnapshot());
         clearLegacyData();
-        return { ...this.getSnapshot(), connected: true };
+        const loaded = { ...this.getSnapshot(), connected: true };
+        window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: ['load'] } }));
+        return loaded;
       }
       const legacy = remoteConfigRecord ? defaults : readLegacyData(defaults);
       const config = {
@@ -148,9 +151,12 @@ export const ApiSync = {
       this.setSnapshot(loaded);
       if (!remoteConfigRecord) await pushSnapshot(new Set(['all']), this.getSnapshot());
       clearLegacyData();
-      return { ...this.getSnapshot(), connected: true };
+      const loaded = { ...this.getSnapshot(), connected: true };
+      window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: ['load'] } }));
+      return loaded;
     } catch (error) {
       console.error('No se pudieron cargar los datos desde Apps Script.', error);
+      window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: ['load'], error } }));
       if (/sesión|cuenta ya no existe|no autorizado/i.test(error.message || '')) {
         window.dispatchEvent(new Event('calculator-auth-expired'));
       }
@@ -161,16 +167,16 @@ export const ApiSync = {
   schedule(scope = 'all') {
     pendingScopes.add(scope);
     clearTimeout(syncTimer);
+    window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: Array.from(pendingScopes) } }));
     syncTimer = setTimeout(() => {
       const scopes = new Set(pendingScopes);
       pendingScopes.clear();
       syncing = syncing.then(async () => {
-        window.dispatchEvent(new Event('calculator-api-sync-start'));
         await pushSnapshot(scopes);
-        window.dispatchEvent(new Event('calculator-api-sync-success'));
+        window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: Array.from(scopes) } }));
       }).catch(error => {
         console.error('No se pudo guardar en Apps Script.', error);
-        window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: error }));
+        window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: Array.from(scopes), error } }));
       });
     }, 700);
   }

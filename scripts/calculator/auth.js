@@ -51,13 +51,18 @@ export const Auth = {
     loginForm?.addEventListener('submit', async event => {
       event.preventDefault();
       const button = loginForm.querySelector('button[type="submit"]');
+      const originalLabel = button?.innerHTML;
       button.disabled = true;
+      if (button) button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Conectando…';
       try {
         await ApiSync.login(loginForm.elements.email.value.trim(), loginForm.elements.password.value);
         window.location.reload();
       } catch (error) {
         showMessage(error.message || 'No se pudo iniciar sesión.');
-      } finally { button.disabled = false; }
+      } finally {
+        button.disabled = false;
+        if (button && originalLabel) button.innerHTML = originalLabel;
+      }
     });
     registerForm?.addEventListener('submit', async event => {
       event.preventDefault();
@@ -71,13 +76,18 @@ export const Auth = {
         return;
       }
       const button = registerForm.querySelector('button[type="submit"]');
+      const originalLabel = button?.innerHTML;
       button.disabled = true;
+      if (button) button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Creando cuenta…';
       try {
         await ApiSync.register(registerForm.elements.email.value.trim(), password);
         window.location.reload();
       } catch (error) {
         showMessage(error.message || 'No se pudo crear la cuenta.');
-      } finally { button.disabled = false; }
+      } finally {
+        button.disabled = false;
+        if (button && originalLabel) button.innerHTML = originalLabel;
+      }
     });
   },
 
