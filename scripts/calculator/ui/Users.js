@@ -1,5 +1,6 @@
 import { ApiSync } from '../api-sync.js';
 import { Tables } from './Tables.js';
+import { RecordDetails } from './RecordDetails.js';
 
 export class Users {
   constructor(app) {
@@ -59,6 +60,12 @@ export class Users {
     const statusCell = document.createElement('td');
     const badge = document.createElement('span'); badge.className = `badge ${user.active ? 'text-bg-success' : 'text-bg-secondary'}`; badge.textContent = user.active ? 'Activo' : 'Desactivado'; statusCell.appendChild(badge); row.appendChild(statusCell);
     const actions = document.createElement('td'); actions.className = 'text-end text-nowrap';
+    const view = document.createElement('button'); view.type = 'button'; view.className = 'btn btn-sm btn-outline-secondary me-1'; view.title = 'Ver detalle de la cuenta'; view.setAttribute('aria-label', `Ver cuenta de ${user.email}`); view.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>';
+    view.addEventListener('click', () => RecordDetails.show('Detalle de usuario', [
+      ['Correo electrónico', user.email], ['Rol', user.role === 'admin' ? 'Administrador' : 'Empleado'],
+      ['Estado', user.active ? 'Activo' : 'Desactivado'], ['Fecha de creación', this.formatDate(user.createdAt)],
+      ['Última actualización', this.formatDate(user.updatedAt)], ['ID', user.id, true]
+    ]));
     const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = `btn btn-sm ${user.active ? 'btn-outline-warning' : 'btn-outline-success'} me-1`;
     toggle.textContent = user.active ? 'Desactivar' : 'Activar'; toggle.disabled = String(user.id) === String(ApiSync.getSession()?.id);
     toggle.addEventListener('click', () => this.runAction(user, 'setactive', { active: !user.active }, user.active ? 'Cuenta desactivada.' : 'Cuenta activada.'));
@@ -74,7 +81,12 @@ export class Users {
     remove.addEventListener('click', () => {
       if (window.confirm(`¿Eliminar la cuenta de ${user.email}? Sus registros del negocio se conservan.`)) this.runAction(user, 'delete', {}, 'Cuenta eliminada.');
     });
-    actions.append(toggle, reset, remove); row.appendChild(actions); this.body.appendChild(row);
+    actions.append(view, toggle, reset, remove); row.appendChild(actions); this.body.appendChild(row);
+  }
+
+  formatDate(value) {
+    const date = new Date(value || '');
+    return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
   }
 
   async runAction(user, action, fields, successMessage) {

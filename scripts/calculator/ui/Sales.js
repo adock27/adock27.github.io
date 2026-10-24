@@ -1,6 +1,7 @@
 import { Storage } from '../storage.js';
 import { ApiSync } from '../api-sync.js';
 import { Tables } from './Tables.js';
+import { RecordDetails } from './RecordDetails.js';
 
 function localDateInput() {
   const now = new Date();
@@ -308,6 +309,24 @@ export class Sales {
     else if (quantity) quantity.removeAttribute('max');
   }
 
+  showDetails(sale) {
+    const date = new Date(`${sale.date || ''}T00:00:00`);
+    const stockQuantity = this.getQuantityFromStock(sale);
+    const madeQuantity = sale.quantityMadeToOrder !== undefined && sale.quantityMadeToOrder !== null && sale.quantityMadeToOrder !== ''
+      ? Number(sale.quantityMadeToOrder) || 0
+      : Math.max(0, (Number(sale.quantity) || 0) - stockQuantity);
+    RecordDetails.show('Detalle de la venta', [
+      ['Fecha', Number.isNaN(date.getTime()) ? sale.date : date.toLocaleDateString('es-CO')],
+      ['Producto / servicio', sale.productName], ['Cliente', sale.clientName],
+      ['Vendedor', sale.createdByEmail], ['Cantidad total', sale.quantity],
+      ['Unidades desde stock', stockQuantity], ['Unidades bajo pedido', madeQuantity],
+      ['Precio unitario', this.formatMoney(sale.unitPrice)], ['Total', this.formatMoney(sale.total)],
+      ['Medio de pago', sale.paymentMethod], ['Creado', RecordDetails.formatDateTime(sale.createdAt)],
+      ['Última actualización', RecordDetails.formatDateTime(sale.updatedAt)],
+      ['Notas', sale.notes, true], ['ID', sale.id, true]
+    ]);
+  }
+
   persistInventory() {
     this.app.inventory = this.app.inventoryModule.items;
     Storage.saveInventory(this.app.inventory);
@@ -373,6 +392,7 @@ export class Sales {
           row.appendChild(cell);
         });
       const actions = document.createElement('td'); actions.className = 'text-end text-nowrap';
+      const view = document.createElement('button'); view.type = 'button'; view.className = 'btn btn-sm btn-outline-secondary me-1'; view.title = 'Ver detalle'; view.setAttribute('aria-label', `Ver venta de ${sale.productName}`); view.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>'; view.addEventListener('click', () => this.showDetails(sale));
       const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.title = 'Editar'; edit.innerHTML = '<i class="bi bi-pencil"></i>';
       const canManage = this.app.canManageRecord(sale);
       edit.disabled = !canManage;
@@ -391,7 +411,7 @@ export class Sales {
         this.items = this.items.filter(current => current.id !== sale.id);
         this.persist(); this.app.showToast('Venta eliminada', 'info');
       });
-      actions.append(edit, remove); row.appendChild(actions); this.tableBody.appendChild(row);
+      actions.append(view, edit, remove); row.appendChild(actions); this.tableBody.appendChild(row);
     });
     Tables.end(this.tableBody);
   }

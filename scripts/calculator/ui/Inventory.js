@@ -1,5 +1,6 @@
 import { Storage } from '../storage.js';
 import { Tables } from './Tables.js';
+import { RecordDetails } from './RecordDetails.js';
 
 export class Inventory {
   constructor(app) {
@@ -99,6 +100,20 @@ export class Inventory {
     orders.toggleCustomProduct();
   }
 
+  showDetails(item) {
+    const type = item.productType === 'hybrid' ? 'Mixto: stock + bajo pedido'
+      : item.productType === 'on_demand' ? 'Bajo pedido' : 'Solo stock';
+    RecordDetails.show('Detalle del producto', [
+      ['Producto', item.name], ['Categoría', item.category || 'General'],
+      ['Modalidad', type], ['Existencia', item.productType === 'on_demand' ? 'No controla stock' : `${Number(item.quantity) || 0} ${item.unit || 'unidades'}`],
+      ['Stock mínimo', item.productType === 'on_demand' ? '—' : `${Number(item.minQuantity) || 0} ${item.unit || 'unidades'}`],
+      ...(this.app.isAdmin ? [['Costo unitario', this.formatMoney(item.unitCost)]] : []),
+      ['Registrado por', item.createdByEmail], ['Creado', RecordDetails.formatDateTime(item.createdAt)],
+      ['Última actualización', RecordDetails.formatDateTime(item.updatedAt)],
+      ['Notas', item.notes, true], ['ID', item.id, true]
+    ]);
+  }
+
   render() {
     if (!this.tableBody) return;
     Tables.begin(this.tableBody);
@@ -155,6 +170,13 @@ export class Inventory {
       });
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
+      const view = document.createElement('button');
+      view.type = 'button';
+      view.className = 'btn btn-sm btn-outline-secondary me-1';
+      view.title = 'Ver detalle del producto';
+      view.setAttribute('aria-label', `Ver detalle de ${item.name}`);
+      view.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>';
+      view.addEventListener('click', () => this.showDetails(item));
       const sell = document.createElement('button');
       sell.type = 'button';
       sell.className = 'btn btn-sm btn-outline-success me-1';
@@ -184,7 +206,7 @@ export class Inventory {
         this.persist();
         this.app.showToast('Artículo eliminado', 'info');
       });
-      actions.append(sell, order, edit, remove);
+      actions.append(view, sell, order, edit, remove);
       row.appendChild(actions);
       this.tableBody.appendChild(row);
     });

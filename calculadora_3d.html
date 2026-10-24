@@ -539,7 +539,7 @@ Generando cotización...
                   <tr class="small text-secondary">
                     <th>Material</th>
                     <th><span id="materialCurrencyHeader">COP</span> / kg</th>
-                    <th class="text-end">Acción</th>
+                    <th class="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="materialsTableBody">
@@ -566,7 +566,7 @@ Generando cotización...
                   <tr class="small text-secondary">
                     <th>Insumo</th>
                     <th>Costo unitario</th>
-                    <th class="text-end">Acción</th>
+                    <th class="text-end">Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="extrasTableBody">
@@ -897,6 +897,16 @@ Generando cotización...
           <button type="button" class="btn btn-link text-secondary text-decoration-none" data-bs-dismiss="modal">Lo haré después</button>
           <button type="button" class="btn btn-success rounded-pill px-4" id="btnSaveInitialSetup"><i class="bi bi-check2 me-1"></i>Guardar y empezar</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="recordDetailsModal" tabindex="-1" aria-labelledby="recordDetailsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title fw-bold" id="recordDetailsTitle">Detalle del registro</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+        <div class="modal-body"><div id="recordDetailsBody"></div></div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button></div>
       </div>
     </div>
   </div>

@@ -339,6 +339,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .backend-status .spinner-border { width: 12px; height: 12px; border-width: 2px; }
 .sales-sync-spinning { animation: sales-sync-spin .9s linear infinite; }
 @keyframes sales-sync-spin { to { transform: rotate(360deg); } }
+.record-detail-value { color: var(--text-primary); overflow-wrap: anywhere; font-size: 14px; }
 .icon-button {
   display: inline-grid;
   width: 36px;

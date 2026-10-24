@@ -1,5 +1,6 @@
 import { Storage, DEFAULT_CONFIG } from '../storage.js';
 import { ApiSync } from '../api-sync.js';
+import { RecordDetails } from './RecordDetails.js';
 
 export class Settings {
   constructor(app) {
@@ -73,6 +74,12 @@ export class Settings {
     if (materialCurrencyHeader) materialCurrencyHeader.textContent = currency;
   }
 
+  formatMoney(value) {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency', currency: this.app.config.currency || 'COP', maximumFractionDigits: 0
+    }).format(Number(value) || 0);
+  }
+
   renderCatalogTables() {
     if (this.el.materialsTableBody) {
       this.el.materialsTableBody.innerHTML = this.app.config.materials.map(m => `
@@ -94,6 +101,7 @@ export class Settings {
             </div>
           </td>
           <td class="text-end" style="white-space:nowrap;">
+            <button type="button" class="btn btn-sm btn-outline-secondary btn-view-mat me-1" data-mat-id="${m.id}" title="Ver detalle"><i class="bi bi-eye" aria-hidden="true"></i></button>
             <button type="button" class="btn btn-sm btn-outline-primary btn-edit-mat me-1" data-mat-id="${m.id}" title="Editar">
               <i class="bi bi-pencil"></i>
             </button>
@@ -127,6 +135,17 @@ export class Settings {
             this.app.filaments.renderPalette();
             this.app.filaments.renderMaterialSlots();
           }
+        });
+      });
+
+      this.el.materialsTableBody.querySelectorAll('.btn-view-mat').forEach(btn => {
+        btn.addEventListener('click', event => {
+          const material = this.app.config.materials.find(item => item.id === event.currentTarget.dataset.matId);
+          if (!material) return;
+          RecordDetails.show('Detalle del material', [
+            ['Material', material.name], ['Precio por kg', this.formatMoney(material.pricePerKg)],
+            ['Color', material.color], ['Nota', material.note, true], ['ID', material.id, true]
+          ]);
         });
       });
 
@@ -226,7 +245,7 @@ export class Settings {
 
     if (this.el.extrasTableBody) {
       this.el.extrasTableBody.innerHTML = this.app.config.extrasCatalog.map(x => `
-        <tr>
+        <tr data-extra-id="${x.id}">
           <td>
             <strong class="text-dark">${x.name}</strong>
             <div class="text-muted" style="font-size:11px;">${x.category || 'General'}</div>
@@ -238,6 +257,7 @@ export class Settings {
             </div>
           </td>
           <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-secondary btn-view-extra me-1" data-extra-id="${x.id}" title="Ver detalle"><i class="bi bi-eye" aria-hidden="true"></i></button>
             <button type="button" class="btn btn-sm btn-outline-danger btn-del-extra" data-extra-id="${x.id}" title="Eliminar">
               <i class="bi bi-trash"></i>
             </button>
@@ -255,6 +275,17 @@ export class Settings {
             this.app.extras.render();
             this.app.recalculate();
           }
+        });
+      });
+
+      this.el.extrasTableBody.querySelectorAll('.btn-view-extra').forEach(btn => {
+        btn.addEventListener('click', event => {
+          const extra = this.app.config.extrasCatalog.find(item => item.id === event.currentTarget.dataset.extraId);
+          if (!extra) return;
+          RecordDetails.show('Detalle del extra o herraje', [
+            ['Nombre', extra.name], ['Categoría', extra.category || 'General'],
+            ['Costo unitario', this.formatMoney(extra.defaultCost)], ['ID', extra.id, true]
+          ]);
         });
       });
 

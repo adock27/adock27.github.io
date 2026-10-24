@@ -1,5 +1,6 @@
 import { Storage } from '../storage.js';
 import { Tables } from './Tables.js';
+import { RecordDetails } from './RecordDetails.js';
 
 const ORDER_STATUSES = ['Pendiente', 'En producción', 'Listo', 'Entregado', 'Cancelado'];
 
@@ -124,6 +125,35 @@ export class Orders {
     const price = Number(document.getElementById('orderUnitPrice')?.value) || 0;
     const preview = document.getElementById('orderTotalPreview');
     if (preview) preview.textContent = price === 0 ? 'Por cotizar' : this.formatMoney(quantity * price);
+  }
+
+  showDetails(order) {
+    const fulfilled = order.status === 'Entregado';
+    const linkedSale = (this.app.salesModule?.items || []).find(sale => String(sale.id) === String(order.saleId));
+    const stockUnits = order.quantityFromStock !== undefined && order.quantityFromStock !== null && order.quantityFromStock !== ''
+      ? Number(order.quantityFromStock)
+      : linkedSale ? this.app.salesModule.getQuantityFromStock(linkedSale) : null;
+    const madeUnits = order.quantityMadeToOrder !== undefined && order.quantityMadeToOrder !== null && order.quantityMadeToOrder !== ''
+      ? Number(order.quantityMadeToOrder)
+      : linkedSale ? Math.max(0, Number(linkedSale.quantity || 0) - (stockUnits || 0)) : null;
+    const formatDate = value => {
+      const dateOnly = normalizeDateInput(value);
+      if (!dateOnly) return '—';
+      const date = new Date(`${dateOnly}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString('es-CO');
+    };
+    RecordDetails.show(`Detalle del pedido ${order.orderNumber || ''}`.trim(), [
+      ['Número', order.orderNumber], ['Estado', order.status], ['Cliente', order.clientName],
+      ['Producto', order.productName], ['Fecha del pedido', formatDate(order.date)],
+      ['Fecha de entrega', formatDate(order.dueDate)], ['Cantidad total', order.quantity],
+      ['Unidades desde stock', fulfilled ? stockUnits : 'Aún no entregado'],
+      ['Unidades bajo pedido', fulfilled ? madeUnits : 'Aún no entregado'],
+      ['Precio unitario', this.formatMoney(order.unitPrice)], ['Total', this.formatMoney(order.total)],
+      ['Medio de pago', order.paymentMethod], ['Registrado por', order.createdByEmail],
+      ['Creado', RecordDetails.formatDateTime(order.createdAt)],
+      ['Última actualización', RecordDetails.formatDateTime(order.updatedAt)],
+      ['Notas', order.notes, true], ['ID de venta asociada', order.saleId, true], ['ID', order.id, true]
+    ]);
   }
 
   saveOrder(event) {
@@ -293,6 +323,12 @@ export class Orders {
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
       const canManage = this.app.canManageRecord(order);
+      const view = document.createElement('button');
+      view.type = 'button'; view.className = 'btn btn-sm btn-outline-secondary me-1'; view.title = 'Ver detalle';
+      view.setAttribute('aria-label', `Ver pedido ${order.orderNumber || ''}`);
+      view.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>';
+      view.addEventListener('click', () => this.showDetails(order));
+      actions.appendChild(view);
       if (canManage && order.status === 'Listo' && !order.saleId) {
         const saleButton = document.createElement('button');
         saleButton.type = 'button';

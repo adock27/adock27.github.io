@@ -1,5 +1,6 @@
 import { Storage } from '../storage.js';
 import { Tables } from './Tables.js';
+import { RecordDetails } from './RecordDetails.js';
 
 const PURCHASE_TYPES = {
   equipo: 'Equipo',
@@ -581,6 +582,13 @@ export class Purchases {
       });
       const actions = document.createElement('td');
       actions.className = 'text-end text-nowrap';
+      const view = document.createElement('button');
+      view.type = 'button';
+      view.className = 'btn btn-sm btn-outline-secondary me-1';
+      view.title = 'Ver detalle de la compra';
+      view.setAttribute('aria-label', `Ver detalle de ${this.getItemName(item)}`);
+      view.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>';
+      view.addEventListener('click', () => this.showDetails(item));
       const edit = document.createElement('button');
       edit.type = 'button';
       edit.className = 'btn btn-sm btn-outline-primary me-1';
@@ -617,7 +625,7 @@ export class Purchases {
         this.persist();
         this.app.showToast('Registro eliminado', 'info');
       });
-      actions.append(edit, remove);
+      actions.append(view, edit, remove);
       row.appendChild(actions);
       this.tableBody.appendChild(row);
     });
@@ -634,6 +642,20 @@ export class Purchases {
       return (this.app.config.materials || []).find(material => String(material.id) === String(item.materialId))?.name || item.itemName || '';
     }
     return item.itemName || '';
+  }
+
+  showDetails(item) {
+    RecordDetails.show('Detalle de compra o inversión', [
+      ['Fecha', this.formatDate(item.date)], ['Tipo', PURCHASE_TYPES[item.type] || item.type],
+      ['Artículo o concepto', this.getItemName(item)], ['Cantidad comprada', `${Number(item.quantity) || 0} ${item.unit || ''}`.trim()],
+      ['Cantidad disponible', `${Number(item.remainingQuantity) || 0} ${item.unit || ''}`.trim()],
+      ['Costo de compra', this.formatMoney(item.purchaseCost)], ['Envío', this.formatMoney(item.shippingCost)],
+      ['Total desembolsado', this.formatMoney(item.totalCost)], ['Proveedor', item.supplier],
+      ['Medio de pago', item.paymentMethod], ['Registrado por', item.createdByEmail],
+      ['Creado', RecordDetails.formatDateTime(item.createdAt)],
+      ['Última actualización', RecordDetails.formatDateTime(item.updatedAt)],
+      ['Notas', item.notes, true], ['ID', item.id, true]
+    ]);
   }
 
   formatMoney(amount) {
