@@ -17,6 +17,7 @@ export class Sales {
     this.form = document.getElementById('saleForm');
     this.tableBody = document.getElementById('salesTableBody');
     this.searchInput = document.getElementById('salesSearch');
+    this.initPeriodControls();
     this.bindEvents();
     this.renderInventoryOptions();
     this.render();
@@ -35,6 +36,8 @@ export class Sales {
       target?.focus({ preventScroll: true });
     });
     this.searchInput?.addEventListener('input', () => this.render());
+    document.getElementById('salesPeriodMonth')?.addEventListener('change', () => this.render());
+    document.getElementById('salesPeriodYear')?.addEventListener('change', () => this.render());
     document.getElementById('saleInventoryId')?.addEventListener('change', () => this.updateInventoryHint());
     document.getElementById('btnQuickAddInventory')?.addEventListener('click', () => {
       const panel = document.getElementById('quickInventoryPanel');
@@ -43,6 +46,29 @@ export class Sales {
     });
     document.getElementById('btnQuickAddInventorySave')?.addEventListener('click', () => this.quickAddInventoryItem());
     ['saleQuantity', 'saleUnitPrice'].forEach(id => document.getElementById(id)?.addEventListener('input', () => this.updateTotalPreview()));
+  }
+
+  initPeriodControls() {
+    const monthSelect = document.getElementById('salesPeriodMonth');
+    if (!monthSelect || !document.getElementById('salesPeriodYear')) return;
+    const today = localDateInput();
+    monthSelect.value = today.slice(5, 7);
+    this.syncAvailableYears();
+    document.getElementById('salesPeriodYear').value = today.slice(0, 4);
+  }
+
+  syncAvailableYears() {
+    const yearSelect = document.getElementById('salesPeriodYear');
+    if (!yearSelect) return;
+    const selected = yearSelect.value;
+    const years = new Set([localDateInput().slice(0, 4)]);
+    this.items.forEach(sale => {
+      const year = String(sale.date || '').slice(0, 4);
+      if (/^\d{4}$/.test(year)) years.add(year);
+    });
+    yearSelect.replaceChildren(new Option('Todos los años', 'all'));
+    [...years].sort((a, b) => b.localeCompare(a)).forEach(year => yearSelect.add(new Option(year, year)));
+    yearSelect.value = [...yearSelect.options].some(option => option.value === selected) ? selected : localDateInput().slice(0, 4);
   }
 
   openForm(sale = null) {
@@ -241,25 +267,41 @@ export class Sales {
   render() {
     if (!this.tableBody) return;
     Tables.begin(this.tableBody);
-    const monthKey = localDateInput().slice(0, 7);
-    const monthSales = this.items.filter(sale => String(sale.date || '').slice(0, 7) === monthKey);
-    const monthTotal = monthSales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0);
+    this.syncAvailableYears();
+    const month = document.getElementById('salesPeriodMonth')?.value || localDateInput().slice(5, 7);
+    const year = document.getElementById('salesPeriodYear')?.value || localDateInput().slice(0, 4);
+    const matchesPeriod = sale => {
+      const date = String(sale.date || '');
+      return (year === 'all' || date.slice(0, 4) === year) && (month === 'all' || date.slice(5, 7) === month);
+    };
+    const periodSales = this.items.filter(matchesPeriod);
+    const periodTotal = periodSales.reduce((sum, sale) => sum + (Number(sale.total) || 0), 0);
+    const monthName = month === 'all' ? '' : document.getElementById('salesPeriodMonth')?.selectedOptions[0]?.textContent || '';
+    const periodLabel = year === 'all'
+      ? (month === 'all' ? 'todos los períodos' : `${monthName} · todos los años`)
+      : (month === 'all' ? year : `${monthName} ${year}`);
     const totalEl = document.getElementById('salesMonthTotal');
     const countEl = document.getElementById('salesMonthCount');
     const averageEl = document.getElementById('salesMonthAverage');
-    if (totalEl) totalEl.textContent = this.formatMoney(monthTotal);
-    if (countEl) countEl.textContent = String(monthSales.length);
-    if (averageEl) averageEl.textContent = this.formatMoney(monthSales.length ? monthTotal / monthSales.length : 0);
+    if (totalEl) totalEl.textContent = this.formatMoney(periodTotal);
+    if (countEl) countEl.textContent = String(periodSales.length);
+    if (averageEl) averageEl.textContent = this.formatMoney(periodSales.length ? periodTotal / periodSales.length : 0);
+    const totalLabel = document.getElementById('salesPeriodTotalLabel');
+    const countLabel = document.getElementById('salesPeriodCountLabel');
+    const averageLabel = document.getElementById('salesMonthAverageLabel');
+    if (totalLabel) totalLabel.textContent = `Ventas · ${periodLabel}`;
+    if (countLabel) countLabel.textContent = `Operaciones · ${periodLabel}`;
+    if (averageLabel) averageLabel.textContent = 'Promedio por venta';
 
     const query = (this.searchInput?.value || '').trim().toLowerCase();
     const visible = [...this.items]
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-      .filter(sale => `${sale.productName} ${sale.clientName || ''} ${sale.paymentMethod || ''} ${sale.notes || ''}`.toLowerCase().includes(query));
+      .filter(sale => matchesPeriod(sale) && `${sale.productName} ${sale.clientName || ''} ${sale.paymentMethod || ''} ${sale.notes || ''}`.toLowerCase().includes(query));
     this.tableBody.replaceChildren();
     if (!visible.length) {
       const row = document.createElement('tr'), cell = document.createElement('td');
       cell.className = 'text-center text-secondary py-4';
-      cell.textContent = this.items.length ? 'No hay ventas que coincidan con la búsqueda.' : 'Aún no hay ventas registradas.';
+      cell.textContent = !this.items.length ? 'Aún no hay ventas registradas.' : !periodSales.length ? `No hay ventas para ${periodLabel}.` : 'No hay ventas que coincidan con la búsqueda.';
       cell.colSpan = 8;
       row.appendChild(cell); this.tableBody.appendChild(row); Tables.end(this.tableBody); return;
     }
