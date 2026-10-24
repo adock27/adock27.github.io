@@ -30,7 +30,7 @@ var DB_SCHEMAS = {
   Presets: ['id', 'userId', 'name', 'description', 'materialId', 'grams', 'hours', 'minutes', 'laborMinutes', 'extrasJson', 'createdAt', 'updatedAt'],
   Configuracion: ['id', 'userId', 'dataJson', 'createdAt', 'updatedAt'],
   Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt'],
-  Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt'],
+  Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt', 'productType'],
   Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId'],
   Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt'],
   Compras: ['id', 'userId', 'date', 'type', 'itemName', 'materialId', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']

@@ -31,6 +31,8 @@ La API recibe JSON por `POST`, con `entity` y `action`. Todas las respuestas usa
 
 Campos `id`, `createdAt` y `updatedAt` se generan automáticamente cuando corresponda. `create` y `login` son las únicas acciones públicas; la primera cuenta queda como administrador y el registro público se cierra después. El administrador crea las cuentas de empleados desde **Usuarios**. Todas las cuentas del negocio comparten los datos mediante el `businessId` del administrador; los demás negocios siguen aislados. Ejecuta `setupDatabase` para agregar columnas de roles, migrar las cuentas existentes como administradores de sus propios datos y generar `AUTH_SECRET`.
 
+Los productos de `Inventario` incluyen `productType`: `stock` controla existencias y `on_demand` identifica productos que se fabrican al recibir una venta. Al desplegar este campo por primera vez, ejecuta `setupDatabase` para agregar la columna a la hoja; los registros existentes se interpretan como `stock`.
+
 ### Roles y permisos
 
 - **Administrador:** acceso a todos los módulos, compras e inversiones, configuración, catálogos y administración de usuarios.

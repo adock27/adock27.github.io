@@ -784,7 +784,7 @@ Generando cotización...
             <div class="col-6"><label for="orderStatus" class="form-label small fw-semibold">Estado</label><select id="orderStatus" class="form-select"><option>Pendiente</option><option>En producción</option><option>Listo</option><option>Entregado</option><option>Cancelado</option></select></div>
             <div class="col-6"><label for="orderPaymentMethod" class="form-label small fw-semibold">Medio de pago</label><select id="orderPaymentMethod" class="form-select"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
           </div>
-          <div id="orderAddCustomToInventoryWrap" class="form-check mb-3 d-none"><input id="orderAddCustomToInventory" class="form-check-input" type="checkbox"><label class="form-check-label small" for="orderAddCustomToInventory">Agregar el producto personalizado al inventario con existencia 0</label><div class="form-text">Disponible al entregar el pedido.</div></div>
+          <div id="orderAddCustomToInventoryWrap" class="form-check mb-3 d-none"><input id="orderAddCustomToInventory" class="form-check-input" type="checkbox"><label class="form-check-label small" for="orderAddCustomToInventory">Guardar en el catálogo como producto bajo pedido</label><div class="form-text">Disponible al entregar el pedido. No controla existencias ni descuenta stock.</div></div>
           <div><label for="orderNotes" class="form-label small fw-semibold">Notas</label><textarea id="orderNotes" class="form-control" rows="2" maxlength="500"></textarea></div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success rounded-pill px-4">Guardar pedido</button></div>
@@ -846,11 +846,12 @@ Generando cotización...
             <div class="col-6"><label for="inventoryCategory" class="form-label small fw-semibold">Categoría</label><input id="inventoryCategory" class="form-control" placeholder="Filamento, herrajes…"></div>
             <div class="col-6"><label for="inventoryUnit" class="form-label small fw-semibold">Unidad</label><select id="inventoryUnit" class="form-select"><option>unidades</option><option>gramos</option><option>kg</option><option>metros</option><option>ml</option><option>litros</option></select></div>
           </div>
-          <div class="row g-3 mb-3">
-            <div class="col-4"><label for="inventoryQuantity" class="form-label small fw-semibold">Existencia</label><input id="inventoryQuantity" type="number" min="0" step="any" class="form-control" value="0" required></div>
-            <div class="col-4"><label for="inventoryMinQuantity" class="form-label small fw-semibold">Stock mínimo</label><input id="inventoryMinQuantity" type="number" min="0" step="any" class="form-control" value="0"></div>
-            <div class="col-4"><label for="inventoryUnitCost" class="form-label small fw-semibold">Costo c/u</label><input id="inventoryUnitCost" type="number" min="0" step="any" class="form-control" value="0"></div>
+          <div class="mb-3"><label for="inventoryProductType" class="form-label small fw-semibold">Control de existencia</label><select id="inventoryProductType" class="form-select"><option value="stock">Producto con stock</option><option value="on_demand">Producto bajo pedido (se fabrica al vender)</option></select><div class="form-text">Los productos bajo pedido no requieren unidades disponibles y no descuentan stock al venderse.</div></div>
+          <div class="row g-3 mb-3" id="inventoryStockFields">
+            <div class="col-6"><label for="inventoryQuantity" class="form-label small fw-semibold">Existencia</label><input id="inventoryQuantity" type="number" min="0" step="any" class="form-control" value="0" required></div>
+            <div class="col-6"><label for="inventoryMinQuantity" class="form-label small fw-semibold">Stock mínimo</label><input id="inventoryMinQuantity" type="number" min="0" step="any" class="form-control" value="0"></div>
           </div>
+          <div class="mb-3"><label for="inventoryUnitCost" class="form-label small fw-semibold">Costo unitario estimado</label><input id="inventoryUnitCost" type="number" min="0" step="any" class="form-control" value="0"><div class="form-text">Opcional; útil para registrar un costo estimado del producto bajo pedido.</div></div>
           <div><label for="inventoryNotes" class="form-label small fw-semibold">Notas</label><textarea id="inventoryNotes" class="form-control" rows="2" maxlength="300"></textarea></div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success rounded-pill px-4">Guardar</button></div>

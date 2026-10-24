@@ -25,20 +25,21 @@ Una cotización es una propuesta que se comparte con el cliente; no se convierte
 
 ## Administrar el inventario
 
-En **Inventario de productos**, usa **Añadir artículo** para registrar productos terminados que fabricas y vendes: nombre, categoría, unidad, existencia inicial, stock mínimo y costo unitario. Los filamentos, resina y demás compras de insumos se registran en **Compras e inversiones**.
+En **Inventario de productos**, usa **Añadir artículo** para registrar productos terminados. Elige **Producto con stock** para artículos ya fabricados que descuentan existencias al venderse, o **Producto bajo pedido** para artículos que solo se fabrican cuando llega una venta (por ejemplo, un QR personalizado). Los productos bajo pedido no controlan existencia ni aparecen como agotados. Los filamentos, resina y demás compras de insumos se registran en **Compras e inversiones**.
 
 El listado muestra todos los artículos. Los de stock crítico aparecen primero:
 
 - **Agotado**: existencia igual a cero.
 - **Stock bajo**: existencia positiva igual o menor que el mínimo configurado.
 - **Disponible**: existencia por encima del mínimo.
+- **Bajo pedido**: se fabrica al venderse; no descuenta stock de producto terminado.
 
 Usa la búsqueda para localizar artículos y los botones de la fila para editar o eliminar.
 
 ## Registrar una venta
 
 1. Abre **Ventas** y pulsa **Registrar venta**.
-2. Selecciona un producto existente del inventario.
+2. Selecciona un producto existente del inventario. Si es **Bajo pedido**, no se valida ni descuenta existencia.
 3. Si aún no existe, pulsa **Agregar producto** debajo del selector. Completa el nombre y la existencia inicial; puedes añadir categoría, unidad, mínimo y costo. Pulsa **Agregar y seleccionar** para continuar en el formulario de venta.
 4. Indica fecha, cliente, cantidad, precio de venta unitario y medio de pago. El total se calcula automáticamente.
 5. Pulsa **Guardar venta**. La cantidad vendida se descuenta del inventario.
@@ -49,7 +50,7 @@ Al editar una venta se ajustan las existencias del producto anterior y del nuevo
 
 En **Pedidos**, crea un registro con cliente, producto (del inventario o personalizado), cantidad, precio y fechas. Cada pedido contiene un producto. Si todavía no conoces el precio, déjalo en 0: el pedido aparecerá como **Por cotizar**. Puedes avanzar por los estados **Pendiente**, **En producción** y **Listo**, o marcarlo como **Cancelado**. Al entregar un pedido, la app registra la venta automáticamente. El listado muestra primero los pedidos activos; el filtro **Todos los pedidos** permite consultar también entregados y cancelados.
 
-Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado**, la app crea y enlaza su venta. Si el pedido usa un artículo del inventario, valida y descuenta las unidades; si es personalizado, crea la venta sin afectar existencias. En el formulario puedes elegir agregar ese producto personalizado al inventario con existencia 0 para futuras ventas. Los pedidos entregados se conservan en el historial y quedan bloqueados para edición o eliminación, evitando duplicar ventas.
+Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado**, la app crea y enlaza su venta. Si el pedido usa un producto con stock, valida y descuenta las unidades; si usa un producto bajo pedido o personalizado, crea la venta sin afectar existencias. Al entregar un pedido personalizado, un administrador puede guardarlo en el catálogo como producto bajo pedido para futuras ventas. Los pedidos entregados se conservan en el historial y quedan bloqueados para edición o eliminación, evitando duplicar ventas.
 
 ## Registrar compras e inversiones
 

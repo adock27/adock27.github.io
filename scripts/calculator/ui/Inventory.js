@@ -18,6 +18,7 @@ export class Inventory {
   bindEvents() {
     document.getElementById('btnAddInventoryItem')?.addEventListener('click', () => this.openForm());
     this.form?.addEventListener('submit', event => this.saveItem(event));
+    document.getElementById('inventoryProductType')?.addEventListener('change', () => this.toggleStockFields());
     this.searchInput?.addEventListener('input', () => this.render());
   }
 
@@ -27,11 +28,13 @@ export class Inventory {
     document.getElementById('inventoryItemId').value = item?.id || '';
     document.getElementById('inventoryName').value = item?.name || '';
     document.getElementById('inventoryCategory').value = item?.category || '';
+    document.getElementById('inventoryProductType').value = item?.productType === 'on_demand' ? 'on_demand' : 'stock';
     document.getElementById('inventoryQuantity').value = item?.quantity ?? 0;
     document.getElementById('inventoryUnit').value = item?.unit || 'unidades';
     document.getElementById('inventoryMinQuantity').value = item?.minQuantity ?? 0;
     document.getElementById('inventoryUnitCost').value = item?.unitCost ?? 0;
     document.getElementById('inventoryNotes').value = item?.notes || '';
+    this.toggleStockFields();
     document.getElementById('inventoryModalTitle').textContent = item ? 'Editar artículo' : 'Añadir artículo';
     this.modal?.show();
   }
@@ -44,9 +47,10 @@ export class Inventory {
       id: id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `stock_${Date.now()}`),
       name: document.getElementById('inventoryName').value.trim(),
       category: document.getElementById('inventoryCategory').value.trim() || 'General',
-      quantity: Number(document.getElementById('inventoryQuantity').value) || 0,
+      productType: document.getElementById('inventoryProductType').value === 'on_demand' ? 'on_demand' : 'stock',
+      quantity: document.getElementById('inventoryProductType').value === 'on_demand' ? 0 : (Number(document.getElementById('inventoryQuantity').value) || 0),
       unit: document.getElementById('inventoryUnit').value,
-      minQuantity: Number(document.getElementById('inventoryMinQuantity').value) || 0,
+      minQuantity: document.getElementById('inventoryProductType').value === 'on_demand' ? 0 : (Number(document.getElementById('inventoryMinQuantity').value) || 0),
       unitCost: Number(document.getElementById('inventoryUnitCost').value) || 0,
       notes: document.getElementById('inventoryNotes').value.trim()
     };
@@ -66,10 +70,20 @@ export class Inventory {
     this.render();
   }
 
+  toggleStockFields() {
+    const onDemand = document.getElementById('inventoryProductType')?.value === 'on_demand';
+    document.getElementById('inventoryStockFields')?.classList.toggle('d-none', onDemand);
+    ['inventoryQuantity', 'inventoryMinQuantity'].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) input.disabled = onDemand;
+    });
+  }
+
   render() {
     if (!this.tableBody) return;
     const query = (this.searchInput?.value || '').trim().toLowerCase();
     const isLowStock = item => {
+      if (item.productType === 'on_demand') return false;
       const quantity = Number(item.quantity) || 0;
       const minimum = Math.max(0, Number(item.minQuantity) || 0);
       return quantity <= 0 || (minimum > 0 && quantity <= minimum);
@@ -100,13 +114,14 @@ export class Inventory {
     }
     visibleItems.forEach(item => {
       const row = document.createElement('tr');
+      const onDemand = item.productType === 'on_demand';
       const quantity = Number(item.quantity) || 0;
       const minimum = Math.max(0, Number(item.minQuantity) || 0);
-      const exhausted = quantity <= 0;
+      const exhausted = !onDemand && quantity <= 0;
       const low = isLowStock(item);
-      const status = exhausted ? 'Agotado' : low ? 'Stock bajo' : 'Disponible';
-      const statusClass = exhausted ? 'text-bg-danger' : low ? 'text-bg-warning' : 'text-bg-success';
-      const values = [item.name, item.category || 'General', `${quantity} ${item.unit}`, `${minimum} ${item.unit}`, this.formatMoney(item.unitCost), status];
+      const status = onDemand ? 'Bajo pedido' : exhausted ? 'Agotado' : low ? 'Stock bajo' : 'Disponible';
+      const statusClass = onDemand ? 'text-bg-info' : exhausted ? 'text-bg-danger' : low ? 'text-bg-warning' : 'text-bg-success';
+      const values = [item.name, item.category || 'General', onDemand ? 'No controla stock' : `${quantity} ${item.unit}`, onDemand ? '—' : `${minimum} ${item.unit}`, this.formatMoney(item.unitCost), status];
       values.forEach((text, index) => {
         const cell = document.createElement('td');
         cell.textContent = text;

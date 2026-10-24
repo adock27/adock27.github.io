@@ -133,7 +133,9 @@ export class Sales {
       return;
     }
     const previousItem = previousSale ? this.findInventoryItem(previousSale) : null;
-    if (selectedItem) {
+    const previousTracksStock = previousItem && previousItem.productType !== 'on_demand';
+    const selectedTracksStock = selectedItem && selectedItem.productType !== 'on_demand';
+    if (selectedTracksStock) {
       const sameItem = previousItem && String(previousItem.id) === String(selectedItem.id);
       const available = Number(selectedItem.quantity || 0) + (sameItem ? Number(previousSale?.quantity || 0) : 0);
       if (quantity > available) {
@@ -141,8 +143,8 @@ export class Sales {
         return;
       }
     }
-    if (previousItem && selectedItem) previousItem.quantity = Number(previousItem.quantity || 0) + Number(previousSale.quantity || 0);
-    if (selectedItem) selectedItem.quantity = Number(selectedItem.quantity || 0) - quantity;
+    if (previousTracksStock) previousItem.quantity = Number(previousItem.quantity || 0) + Number(previousSale.quantity || 0);
+    if (selectedTracksStock) selectedItem.quantity = Number(selectedItem.quantity || 0) - quantity;
     const sale = {
       id: id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `sale_${Date.now()}`),
       inventoryId: selectedItem?.id || previousSale?.inventoryId || '',
@@ -196,8 +198,9 @@ export class Sales {
     items.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
-      option.textContent = `${item.name} — ${Number(item.quantity) || 0} ${item.unit || 'unidades'} disponibles`;
-      option.disabled = Number(item.quantity) <= 0 && String(item.id) !== String(effectiveSelectedId);
+      const onDemand = item.productType === 'on_demand';
+      option.textContent = onDemand ? `${item.name} — bajo pedido` : `${item.name} — ${Number(item.quantity) || 0} ${item.unit || 'unidades'} disponibles`;
+      option.disabled = !onDemand && Number(item.quantity) <= 0 && String(item.id) !== String(effectiveSelectedId);
       option.selected = String(item.id) === String(effectiveSelectedId);
       select.appendChild(option);
     });
@@ -212,7 +215,7 @@ export class Sales {
     select.disabled = items.length === 0 && !editingSale;
     const help = document.getElementById('saleInventoryHelp');
     if (help) help.textContent = items.length
-      ? 'El stock se descontará al registrar la venta. El precio de venta se ingresa por separado.'
+      ? 'Los productos con stock descuentan existencias; los productos bajo pedido no. El precio se ingresa por separado.'
       : 'Agrega productos al inventario antes de registrar una venta.';
   }
 
@@ -220,7 +223,8 @@ export class Sales {
     const select = document.getElementById('saleInventoryId');
     const item = (this.app.inventoryModule?.items || []).find(entry => String(entry.id) === String(select?.value));
     const quantity = document.getElementById('saleQuantity');
-    if (quantity && item) quantity.max = String(Number(item.quantity || 0) + (this.items.find(sale => sale.id === document.getElementById('saleId').value && String(this.findInventoryItem(sale)?.id) === String(item.id))?.quantity || 0));
+    if (quantity && item && item.productType !== 'on_demand') quantity.max = String(Number(item.quantity || 0) + (this.items.find(sale => sale.id === document.getElementById('saleId').value && String(this.findInventoryItem(sale)?.id) === String(item.id) && item.productType !== 'on_demand')?.quantity || 0));
+    else if (quantity) quantity.removeAttribute('max');
   }
 
   persistInventory() {
@@ -269,7 +273,7 @@ export class Sales {
       remove.addEventListener('click', () => {
         if (!window.confirm(`¿Eliminar la venta de “${sale.productName}”?`)) return;
         const item = this.app.inventoryModule.items.find(entry => String(entry.id) === String(sale.inventoryId));
-        if (item) {
+        if (item && item.productType !== 'on_demand') {
           item.quantity = Number(item.quantity || 0) + Number(sale.quantity || 0);
           this.persistInventory();
         }

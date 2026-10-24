@@ -95,7 +95,9 @@ export class Orders {
     items.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
-      option.textContent = `${item.name} — stock ${Number(item.quantity) || 0} ${item.unit || 'unidades'}`;
+      option.textContent = item.productType === 'on_demand'
+        ? `${item.name} — bajo pedido`
+        : `${item.name} — stock ${Number(item.quantity) || 0} ${item.unit || 'unidades'}`;
       option.selected = String(item.id) === String(selectedId);
       select.appendChild(option);
     });
@@ -186,7 +188,8 @@ export class Orders {
       ? inventory.find(item => String(item.id) === String(order.inventoryId))
       : null;
     if (order.inventoryId && !product) order.inventoryId = '';
-    if (product && Number(order.quantity) > (Number(product.quantity) || 0)) {
+    const productTracksStock = product && product.productType !== 'on_demand';
+    if (productTracksStock && Number(order.quantity) > (Number(product.quantity) || 0)) {
       this.app.showToast(`Existencias insuficientes. Disponibles: ${Number(product.quantity) || 0} ${product.unit || ''}.`, 'error');
       return false;
     }
@@ -196,7 +199,7 @@ export class Orders {
       if (!alreadyCatalogued) {
         inventory.push({
           id: makeId('stock'), name: order.productName, category: 'General', quantity: 0,
-          unit: 'unidades', minQuantity: 0, unitCost: 0, notes: ''
+          unit: 'unidades', minQuantity: 0, unitCost: 0, notes: '', productType: 'on_demand'
         });
         addedToInventory = true;
       }
@@ -213,8 +216,8 @@ export class Orders {
       paymentMethod: order.paymentMethod || 'Otro',
       notes: `Registrada desde el pedido ${order.orderNumber}. ${order.notes || ''}`.trim()
     };
-    if (product) product.quantity = (Number(product.quantity) || 0) - sale.quantity;
-    if (product || addedToInventory) this.app.inventoryModule.persist();
+    if (productTracksStock) product.quantity = (Number(product.quantity) || 0) - sale.quantity;
+    if (productTracksStock || addedToInventory) this.app.inventoryModule.persist();
     this.app.salesModule.items.push(sale);
     this.app.salesModule.persist();
     order.saleId = sale.id;
