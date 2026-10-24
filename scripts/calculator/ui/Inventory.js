@@ -67,8 +67,15 @@ export class Inventory {
   render() {
     if (!this.tableBody) return;
     const query = (this.searchInput?.value || '').trim().toLowerCase();
-    const visibleItems = this.items.filter(item => `${item.name} ${item.category} ${item.notes || ''}`.toLowerCase().includes(query));
-    const lowStock = this.items.filter(item => Number(item.minQuantity) > 0 && Number(item.quantity) <= Number(item.minQuantity)).length;
+    const isLowStock = item => {
+      const quantity = Number(item.quantity) || 0;
+      const minimum = Math.max(0, Number(item.minQuantity) || 0);
+      return quantity <= 0 || (minimum > 0 && quantity <= minimum);
+    };
+    const visibleItems = this.items
+      .filter(item => `${item.name} ${item.category} ${item.notes || ''}`.toLowerCase().includes(query))
+      .sort((a, b) => Number(isLowStock(b)) - Number(isLowStock(a)));
+    const lowStock = this.items.filter(isLowStock).length;
     const totalValue = this.items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unitCost) || 0), 0);
     const itemCount = document.getElementById('inventoryItemCount');
     const lowCount = document.getElementById('inventoryLowCount');
@@ -89,12 +96,17 @@ export class Inventory {
     }
     visibleItems.forEach(item => {
       const row = document.createElement('tr');
-      const low = Number(item.minQuantity) > 0 && Number(item.quantity) <= Number(item.minQuantity);
-      const values = [item.name, item.category || 'General', `${item.quantity} ${item.unit}`, `${item.minQuantity} ${item.unit}`, this.formatMoney(item.unitCost), low ? 'Stock bajo' : 'Disponible'];
+      const quantity = Number(item.quantity) || 0;
+      const minimum = Math.max(0, Number(item.minQuantity) || 0);
+      const exhausted = quantity <= 0;
+      const low = isLowStock(item);
+      const status = exhausted ? 'Agotado' : low ? 'Stock bajo' : 'Disponible';
+      const statusClass = exhausted ? 'text-bg-danger' : low ? 'text-bg-warning' : 'text-bg-success';
+      const values = [item.name, item.category || 'General', `${quantity} ${item.unit}`, `${minimum} ${item.unit}`, this.formatMoney(item.unitCost), status];
       values.forEach((text, index) => {
         const cell = document.createElement('td');
         cell.textContent = text;
-        if (index === 5) cell.innerHTML = `<span class="badge ${low ? 'text-bg-warning' : 'text-bg-success'}">${text}</span>`;
+        if (index === 5) cell.innerHTML = `<span class="badge ${statusClass}">${text}</span>`;
         if (index === 0) cell.classList.add('fw-semibold');
         row.appendChild(cell);
       });
