@@ -54,7 +54,8 @@ export class Sales {
     document.getElementById('quickInventoryQuantity').value = '1';
     document.getElementById('quickInventoryMinimum').value = '0';
     document.getElementById('quickInventoryCost').value = '0';
-    this.renderInventoryOptions(sale?.inventoryId || '');
+    const linkedItem = sale ? this.findInventoryItem(sale) : null;
+    this.renderInventoryOptions(linkedItem?.id || sale?.inventoryId || '', sale);
     document.getElementById('saleId').value = sale?.id || '';
     document.getElementById('saleDate').value = sale?.date || localDateInput();
     document.getElementById('saleClientName').value = sale?.clientName || '';
@@ -122,28 +123,30 @@ export class Sales {
       return;
     }
     const inventory = this.app.inventoryModule.items;
+    const missingInventoryItem = inventoryId.startsWith('__missing__:');
     const selectedItem = inventory.find(item => String(item.id) === String(inventoryId));
-    if (!selectedItem) {
+    const index = this.items.findIndex(current => current.id === id);
+    const previousSale = index >= 0 ? this.items[index] : null;
+    if (!selectedItem && !(missingInventoryItem && previousSale)) {
       this.app.showToast('Selecciona un producto del inventario.', 'error');
       return;
     }
-    const index = this.items.findIndex(current => current.id === id);
-    const previousSale = index >= 0 ? this.items[index] : null;
-    const previousItem = previousSale?.inventoryId
-      ? inventory.find(item => String(item.id) === String(previousSale.inventoryId))
-      : null;
-    const available = Number(selectedItem.quantity || 0) + (previousItem?.id === selectedItem.id ? Number(previousSale?.quantity || 0) : 0);
-    if (quantity > available) {
-      this.app.showToast(`Existencias insuficientes. Disponibles: ${available} ${selectedItem.unit || ''}.`, 'error');
-      return;
+    const previousItem = previousSale ? this.findInventoryItem(previousSale) : null;
+    if (selectedItem) {
+      const sameItem = previousItem && String(previousItem.id) === String(selectedItem.id);
+      const available = Number(selectedItem.quantity || 0) + (sameItem ? Number(previousSale?.quantity || 0) : 0);
+      if (quantity > available) {
+        this.app.showToast(`Existencias insuficientes. Disponibles: ${available} ${selectedItem.unit || ''}.`, 'error');
+        return;
+      }
     }
-    if (previousItem) previousItem.quantity = Number(previousItem.quantity || 0) + Number(previousSale.quantity || 0);
-    selectedItem.quantity = Number(selectedItem.quantity || 0) - quantity;
+    if (previousItem && selectedItem) previousItem.quantity = Number(previousItem.quantity || 0) + Number(previousSale.quantity || 0);
+    if (selectedItem) selectedItem.quantity = Number(selectedItem.quantity || 0) - quantity;
     const sale = {
       id: id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `sale_${Date.now()}`),
-      inventoryId: selectedItem.id,
+      inventoryId: selectedItem?.id || previousSale?.inventoryId || '',
       date: document.getElementById('saleDate').value,
-      productName: selectedItem.name,
+      productName: selectedItem?.name || previousSale?.productName || '',
       clientName: document.getElementById('saleClientName').value.trim(),
       quantity,
       unitPrice,
@@ -165,26 +168,46 @@ export class Sales {
     this.render();
   }
 
-  renderInventoryOptions(selectedId = '') {
+  findInventoryItem(sale) {
+    const items = this.app.inventoryModule?.items || [];
+    if (sale?.inventoryId) {
+      const byId = items.find(item => String(item.id) === String(sale.inventoryId));
+      if (byId) return byId;
+    }
+    const productName = String(sale?.productName || '').trim().toLocaleLowerCase();
+    return productName ? items.find(item => String(item.name || '').trim().toLocaleLowerCase() === productName) || null : null;
+  }
+
+  renderInventoryOptions(selectedId = '', editingSale = null) {
     const select = document.getElementById('saleInventoryId');
     if (!select) return;
     const items = this.app.inventoryModule?.items || [];
+    const matchedItem = editingSale ? this.findInventoryItem(editingSale) : null;
+    const effectiveSelectedId = matchedItem?.id || selectedId;
     select.replaceChildren();
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = items.length ? 'Selecciona un producto' : 'Agrega productos al inventario primero';
     placeholder.disabled = true;
-    placeholder.selected = !selectedId;
+    placeholder.selected = !effectiveSelectedId && !editingSale;
     select.appendChild(placeholder);
     items.forEach(item => {
       const option = document.createElement('option');
       option.value = item.id;
       option.textContent = `${item.name} — ${Number(item.quantity) || 0} ${item.unit || 'unidades'} disponibles`;
-      option.disabled = Number(item.quantity) <= 0 && String(item.id) !== String(selectedId);
-      option.selected = String(item.id) === String(selectedId);
+      option.disabled = Number(item.quantity) <= 0 && String(item.id) !== String(effectiveSelectedId);
+      option.selected = String(item.id) === String(effectiveSelectedId);
       select.appendChild(option);
     });
-    select.disabled = items.length === 0;
+    const hasSelectedInventoryOption = matchedItem || items.some(item => String(item.id) === String(selectedId));
+    if (editingSale && !hasSelectedInventoryOption) {
+      const historicalOption = document.createElement('option');
+      historicalOption.value = `__missing__:${editingSale.id}`;
+      historicalOption.textContent = `${editingSale.productName || 'Producto'} — ya no está en el inventario`;
+      historicalOption.selected = true;
+      select.appendChild(historicalOption);
+    }
+    select.disabled = items.length === 0 && !editingSale;
     const help = document.getElementById('saleInventoryHelp');
     if (help) help.textContent = items.length
       ? 'El stock se descontará al registrar la venta. El precio de venta se ingresa por separado.'
@@ -195,7 +218,7 @@ export class Sales {
     const select = document.getElementById('saleInventoryId');
     const item = (this.app.inventoryModule?.items || []).find(entry => String(entry.id) === String(select?.value));
     const quantity = document.getElementById('saleQuantity');
-    if (quantity && item) quantity.max = String(Number(item.quantity || 0) + (this.items.find(sale => sale.id === document.getElementById('saleId').value && String(sale.inventoryId) === String(item.id))?.quantity || 0));
+    if (quantity && item) quantity.max = String(Number(item.quantity || 0) + (this.items.find(sale => sale.id === document.getElementById('saleId').value && String(this.findInventoryItem(sale)?.id) === String(item.id))?.quantity || 0));
   }
 
   persistInventory() {
