@@ -220,9 +220,9 @@ export const Engine = {
     const sellerPrice = this.roundUp(totalProductionCost / (1 - ownerMarginPercent / 100), roundingStep);
     const customerPrice = this.roundUp(sellerPrice / (1 - sellerMarginPercent / 100), roundingStep);
     const tiers = [
-      { id: 'base', name: 'Base de producción', icon: '🧾', tag: 'Costo completo', price: totalProductionCost, profit: 0, profitLabel: 'Sin margen', marginPercent: 0 },
-      { id: 'seller', name: 'Precio al vendedor', icon: '🤝', tag: `Margen dueño ${ownerMarginPercent}%`, price: sellerPrice, profit: Math.max(0, sellerPrice - totalProductionCost), profitLabel: 'Retorno dueño', marginPercent: ownerMarginPercent },
-      { id: 'customer', name: 'Precio sugerido al cliente', icon: '🏷️', tag: `Margen vendedor ${sellerMarginPercent}%`, price: customerPrice, profit: Math.max(0, customerPrice - sellerPrice), profitLabel: 'Retorno vendedor', marginPercent: sellerMarginPercent }
+      { id: 'base', name: 'Base de producción', icon: 'bi-receipt', tag: 'Costo completo', price: totalProductionCost, profit: 0, profitLabel: 'Sin margen', marginPercent: 0 },
+      { id: 'seller', name: 'Precio al vendedor', icon: 'bi-person-badge', tag: `Margen dueño ${ownerMarginPercent}%`, price: sellerPrice, profit: Math.max(0, sellerPrice - totalProductionCost), profitLabel: 'Retorno dueño', marginPercent: ownerMarginPercent },
+      { id: 'customer', name: 'Precio sugerido al cliente', icon: 'bi-tag', tag: `Margen vendedor ${sellerMarginPercent}%`, price: customerPrice, profit: Math.max(0, customerPrice - sellerPrice), profitLabel: 'Retorno vendedor', marginPercent: sellerMarginPercent }
     ];
 
     // Desglose porcentual para gráfico o barra visual

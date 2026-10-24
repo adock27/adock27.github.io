@@ -16,6 +16,7 @@ export class Tabs {
     this.tabBtns.forEach(btn => {
       const visible = allowed.has(btn.dataset.target);
       btn.closest('.nav-item')?.classList.toggle('d-none', !visible);
+      btn.setAttribute('aria-current', btn.classList.contains('active') ? 'page' : 'false');
     });
     this.tabPanes.forEach(pane => {
       if (!allowed.has(pane.id)) pane.classList.add('d-none');
@@ -40,13 +41,16 @@ export class Tabs {
     this.tabBtns.forEach(b => {
       const isTarget = b.dataset.target === targetId;
       b.classList.toggle('active', isTarget);
-      b.classList.toggle('bg-success', isTarget);
-      b.classList.toggle('text-white', isTarget);
+      b.setAttribute('aria-current', isTarget ? 'page' : 'false');
     });
 
     this.tabPanes.forEach(pane => {
       pane.classList.toggle('d-none', pane.id !== targetId);
     });
+    this.app.appearance?.closeMobileNav();
+    const selectedLink = [...this.tabBtns].find(btn => btn.dataset.target === targetId);
+    const heading = document.getElementById('currentSectionLabel');
+    if (heading && selectedLink) heading.textContent = selectedLink.querySelector('span')?.textContent.trim() || 'Operaciones';
 
     if (targetId === 'tab-quote' && this.app.quote) {
       this.app.quote.updateQuotePreview();

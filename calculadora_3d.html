@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora de Precios 3D — Bambu Lab P1S + AMS</title>
   <meta name="description" content="Calculadora profesional de costos y precios de impresión 3D para Bambu Lab P1S y AMS, con moneda configurable.">
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem('calc3d_theme_v1') || 'light'; } catch (_) { document.documentElement.dataset.theme = 'light'; }</script>
 
   <!-- Bootstrap 5 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -30,9 +31,10 @@
     <div class="auth-card card border-0 shadow-lg">
       <div class="card-body p-4 p-md-5">
         <div class="text-center mb-4">
-          <div class="fs-1">🖨️</div>
+          <div class="auth-brand-mark" aria-hidden="true"><i class="bi bi-boxes"></i></div>
+          <div class="auth-eyebrow">CONTROL DE PRODUCCIÓN Y VENTAS</div>
           <h1 class="h4 fw-bold mb-1">Calculadora 3D Pro</h1>
-          <p class="text-secondary small mb-0">Inicia sesión para acceder a tus datos</p>
+          <p class="text-secondary small mb-0">Inicia sesión para acceder a tu espacio de trabajo</p>
         </div>
         <div id="authMessage" class="alert alert-danger py-2 small d-none" role="alert"></div>
         <div id="authConnectionActions" class="d-none d-flex gap-2 mb-3">
@@ -61,72 +63,62 @@
     </div>
   </section>
   <div id="calculatorAppShell" class="d-none">
-  <!-- Navbar Minimalista -->
-  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
-    <div class="container py-1">
-      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-dark" href="#">
-        <span class="fs-4">🖨️</span>
-        <span>Calculadora 3D Pro</span>
-        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small fw-semibold">
-          Bambu P1S · AMS
-        </span>
+  <header class="app-topbar">
+    <div class="topbar-leading">
+      <button type="button" id="btnMobileNav" class="icon-button mobile-nav-toggle" aria-label="Abrir navegación" aria-expanded="false" aria-controls="appSidebar"><i class="bi bi-list"></i></button>
+      <a class="app-brand" href="#" aria-label="Calculadora 3D Pro, inicio">
+        <span class="app-brand-mark" aria-hidden="true"><i class="bi bi-boxes"></i></span>
+        <span class="app-brand-copy"><strong>Calculadora 3D</strong><small>OPERACIONES</small></span>
       </a>
-      <div class="d-flex align-items-center gap-2">
-        <span id="accountEmail" class="small text-secondary d-none d-md-inline"></span>
-        <span id="backendSaveStatus" class="badge rounded-pill text-bg-success d-inline-flex align-items-center gap-2" role="status" aria-live="polite"><span id="backendSaveSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span><span id="backendSaveStatusText">Backend conectado</span></span>
-        <button type="button" id="btnLogout" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-box-arrow-right me-1"></i>Salir</button>
-        <a href="/" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-          <i class="bi bi-arrow-left"></i> Inicio
-        </a>
-        <a href="proyectos.html" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-          <i class="bi bi-folder2-open"></i> Proyectos
-        </a>
-      </div>
+      <div class="topbar-context d-none d-md-flex" aria-label="Ubicación actual"><span>Espacio de trabajo</span><i class="bi bi-chevron-right" aria-hidden="true"></i><strong id="currentSectionLabel">Calculadora</strong></div>
     </div>
-  </nav>
+    <div class="topbar-actions">
+      <span id="accountEmail" class="topbar-account d-none d-lg-inline"></span>
+      <span id="backendSaveStatus" class="backend-status text-bg-success" role="status" aria-live="polite"><span id="backendSaveSpinner" class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span><span class="backend-status-dot" aria-hidden="true"></span><span id="backendSaveStatusText">Backend conectado</span></span>
+      <button type="button" id="btnToggleTheme" class="icon-button theme-toggle" aria-label="Cambiar a tema oscuro" aria-pressed="false" title="Cambiar tema"><i id="themeToggleIcon" class="bi bi-moon-stars" aria-hidden="true"></i></button>
+      <a href="proyectos.html" class="topbar-link d-none d-md-inline-flex"><i class="bi bi-folder2-open" aria-hidden="true"></i><span>Proyectos</span></a>
+      <a href="/" class="topbar-link d-none d-xl-inline-flex"><i class="bi bi-house" aria-hidden="true"></i><span>Inicio</span></a>
+      <button type="button" id="btnLogout" class="btn btn-sm btn-outline-secondary topbar-logout"><i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i><span>Salir</span></button>
+    </div>
+  </header>
 
-  <div class="container-fluid app-layout py-3 py-lg-4">
-    <aside class="app-sidebar" aria-label="Navegación principal">
-      <div class="app-sidebar-heading">
-        <span class="small text-uppercase fw-bold text-secondary">Espacio de trabajo</span>
+  <button type="button" id="mobileNavBackdrop" class="mobile-nav-backdrop" aria-label="Cerrar navegación"></button>
+  <div class="container-fluid app-layout">
+    <aside id="appSidebar" class="app-sidebar" aria-label="Navegación principal">
+      <div class="sidebar-heading">
+        <span class="sidebar-section-label">MÓDULOS</span>
+        <button type="button" id="btnToggleSidebar" class="icon-button sidebar-collapse-toggle" aria-label="Contraer menú" aria-pressed="false" title="Contraer menú"><i class="bi bi-layout-sidebar-inset"></i></button>
       </div>
       <ul class="nav flex-column gap-1" id="navTabs">
-        <li class="nav-item"><a class="nav-link nav-tab-btn active bg-success text-white fw-semibold rounded-3" href="#" data-target="tab-calculator"><i class="bi bi-calculator"></i><span>Calculadora</span></a></li>
-        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-quote"><i class="bi bi-chat-text"></i><span>Cotizador</span></a></li>
-        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-settings"><i class="bi bi-gear"></i><span>Configuración</span></a></li>
-        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-inventory"><i class="bi bi-box-seam"></i><span>Inventario de productos</span></a></li>
-        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-purchases"><i class="bi bi-wallet2"></i><span>Compras e inversiones</span></a></li>
-        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-orders"><i class="bi bi-clipboard-check"></i><span>Pedidos</span></a></li>
-        <li class="nav-item"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-sales"><i class="bi bi-cash-coin"></i><span>Ventas</span></a></li>
-        <li class="nav-item d-none" id="adminUsersNav"><a class="nav-link nav-tab-btn text-secondary fw-semibold rounded-3" href="#" data-target="tab-users"><i class="bi bi-people"></i><span>Usuarios</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn active" href="#" data-target="tab-calculator" title="Calculadora"><i class="bi bi-calculator" aria-hidden="true"></i><span>Calculadora</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn" href="#" data-target="tab-quote" title="Cotizador"><i class="bi bi-chat-text" aria-hidden="true"></i><span>Cotizador</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn" href="#" data-target="tab-settings" title="Configuración"><i class="bi bi-sliders" aria-hidden="true"></i><span>Configuración</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn" href="#" data-target="tab-inventory" title="Inventario de productos"><i class="bi bi-box-seam" aria-hidden="true"></i><span>Inventario</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn" href="#" data-target="tab-purchases" title="Compras e inversiones"><i class="bi bi-wallet2" aria-hidden="true"></i><span>Compras e inversiones</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn" href="#" data-target="tab-orders" title="Pedidos"><i class="bi bi-clipboard-check" aria-hidden="true"></i><span>Pedidos</span></a></li>
+        <li class="nav-item"><a class="nav-link nav-tab-btn" href="#" data-target="tab-sales" title="Ventas"><i class="bi bi-receipt" aria-hidden="true"></i><span>Ventas</span></a></li>
+        <li class="nav-item d-none" id="adminUsersNav"><a class="nav-link nav-tab-btn" href="#" data-target="tab-users" title="Usuarios"><i class="bi bi-people" aria-hidden="true"></i><span>Usuarios</span></a></li>
       </ul>
+      <div class="sidebar-footer"><span class="sidebar-machine-icon"><i class="bi bi-printer" aria-hidden="true"></i></span><span><strong>Producción 3D</strong><small>Bambu Lab P1S · AMS</small></span></div>
     </aside>
     <main class="app-main">
     <div id="setupReminder" class="alert alert-info d-none justify-content-between align-items-center gap-3" role="status">
       <span><i class="bi bi-info-circle me-1"></i> Completa tu configuración inicial para adaptar los costos a tu moneda y tarifas.</span>
       <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" id="btnOpenSetup">Configurar</button>
     </div>
-    <!-- Presets Rápidos -->
-    <div class="mb-4">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <span class="text-secondary small fw-bold text-uppercase tracking-wider">
-          <i class="bi bi-lightning-charge-fill text-warning"></i> Presets y plantillas frecuentes:
-        </span>
-      </div>
-      <div class="d-flex flex-wrap align-items-center" id="presetsShelf" style="max-height: 88px; overflow-y: auto; overflow-x: hidden;">
-        <!-- Renderizado dinámico -->
-      </div>
-    </div>
-
     <!-- VISTA 1: CALCULADORA PRINCIPAL -->
     <div id="tab-calculator" class="tab-pane-view">
+      <div class="presets-toolbar mb-4">
+        <div class="presets-toolbar-heading"><i class="bi bi-lightning-charge" aria-hidden="true"></i><span>Plantillas rápidas</span></div>
+        <div class="d-flex flex-wrap align-items-center" id="presetsShelf" style="max-height: 88px; overflow-y: auto; overflow-x: hidden;"></div>
+      </div>
       <div class="row g-4">
         <!-- Columna Izquierda: Entradas de la pieza -->
         <div class="col-lg-7">
           <div class="card border-0 shadow-sm p-4 bg-white mb-4">
             <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
               <div>
-                <h5 class="fw-bold mb-0 text-dark">📦 Parámetros de la Pieza</h5>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-box-seam section-title-icon" aria-hidden="true"></i>Parámetros de la pieza</h5>
                 <small class="text-muted">Ingresa los datos estimados por tu slicer (Bambu Studio / Orca)</small>
               </div>
             </div>
@@ -268,7 +260,7 @@
           <div class="card border-0 shadow-sm p-4 bg-white mb-4 position-sticky" style="top: 80px;">
             <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
               <div>
-                <h5 class="fw-bold mb-0 text-dark">💰 Resumen Económico</h5>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-currency-exchange section-title-icon" aria-hidden="true"></i>Resumen económico</h5>
                 <small class="text-muted">Cálculo dinámico en tiempo real</small>
               </div>
             </div>
@@ -338,7 +330,7 @@
             </div>
 
             <!-- Precios Sugeridos por Nivel -->
-            <h6 class="fw-bold text-dark text-uppercase small mb-2">🎯 Base y precios por canal de venta</h6>
+            <h6 class="fw-bold text-dark text-uppercase small mb-2"><i class="bi bi-bullseye section-title-icon" aria-hidden="true"></i>Base y precios por canal de venta</h6>
             <div class="row g-2 mb-3" id="tiersContainer">
               <!-- Renderizado dinámico -->
             </div>
@@ -358,7 +350,7 @@
           <div class="card border-0 shadow-sm p-4 bg-white">
             <div class="d-flex justify-content-between align-items-center pb-3 mb-3 border-bottom">
               <div>
-                <h5 class="fw-bold mb-0 text-dark">📋 Cotización Lista para WhatsApp</h5>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-chat-square-text section-title-icon" aria-hidden="true"></i>Cotización para clientes</h5>
                 <small class="text-muted">Formato limpio y profesional para enviar a tus clientes</small>
               </div>
             </div>
@@ -396,7 +388,7 @@ Generando cotización...
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm p-4 bg-white mb-4">
             <div class="pb-3 mb-3 border-bottom">
-              <h5 class="fw-bold mb-0 text-dark">⚙️ Parámetros de Costo de Máquina</h5>
+              <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-sliders section-title-icon" aria-hidden="true"></i>Parámetros de costo de máquina</h5>
               <small class="text-muted">Configura tus tarifas. Los cambios se guardan en tu cuenta de Apps Script.</small>
             </div>
 
@@ -505,7 +497,7 @@ Generando cotización...
           <!-- Respaldo JSON -->
           <div class="card border-0 shadow-sm p-4 bg-white">
             <div class="pb-3 mb-3 border-bottom">
-              <h5 class="fw-bold mb-0 text-dark">💾 Respaldo y Portabilidad</h5>
+              <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-arrow-left-right section-title-icon" aria-hidden="true"></i>Respaldo y portabilidad</h5>
               <small class="text-muted">Exporta o importa configuración, catálogos, presets, inventario y ventas en JSON</small>
             </div>
             <div class="d-flex gap-2 flex-wrap">
@@ -526,7 +518,7 @@ Generando cotización...
           <div class="card border-0 shadow-sm p-4 bg-white mb-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 mb-3 border-bottom">
               <div>
-                <h5 class="fw-bold mb-0 text-dark">🧵 Catálogo de Filamentos</h5>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-palette section-title-icon" aria-hidden="true"></i>Catálogo de filamentos</h5>
                 <small class="text-muted">Las compras vinculadas actualizan el costo promedio por kg</small>
               </div>
               <div class="d-flex gap-2 align-self-start align-self-md-auto flex-wrap">
@@ -561,7 +553,7 @@ Generando cotización...
           <div class="card border-0 shadow-sm p-4 bg-white">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pb-3 mb-3 border-bottom">
               <div>
-                <h5 class="fw-bold mb-0 text-dark">🔩 Catálogo de Extras y Herrajes</h5>
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-nut section-title-icon" aria-hidden="true"></i>Catálogo de extras y herrajes</h5>
                 <small class="text-muted">Insumos complementarios para tus piezas</small>
               </div>
               <button type="button" id="btnAddCatalogExtra" class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm align-self-start align-self-md-auto">

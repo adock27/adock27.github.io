@@ -46,16 +46,16 @@ export const DEFAULT_CONFIG = {
 
   // Tiers de ganancia
   pricingTiers: [
-    { id: 'min', name: 'Mínimo', margin: 30, icon: '📉', tag: 'Costo base + 30%' },
-    { id: 'rec', name: 'Recomendado', margin: 50, icon: '⭐', tag: 'Equilibrado + 50%' },
-    { id: 'pre', name: 'Premium / Urgente', margin: 100, icon: '🚀', tag: 'Prioridad + 100%' }
+    { id: 'min', name: 'Mínimo', margin: 30, icon: 'bi-arrow-down-right', tag: 'Costo base + 30%' },
+    { id: 'rec', name: 'Recomendado', margin: 50, icon: 'bi-check2-circle', tag: 'Equilibrado + 50%' },
+    { id: 'pre', name: 'Premium / Urgente', margin: 100, icon: 'bi-lightning-charge', tag: 'Prioridad + 100%' }
   ]
 };
 
 export const DEFAULT_PRESETS = [
   {
     id: 'preset_llavero',
-    name: '🔑 Llavero Personalizado',
+    name: 'Llavero personalizado',
     description: 'Impresión rápida de llavero con argolla incluida',
     materialId: 'pla_std',
     grams: 18,
@@ -66,7 +66,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_clicker',
-    name: '⌨️ Clicker / Fidget Toy',
+    name: 'Clicker / Fidget toy',
     description: 'Juguete antiestrés con switch mecánico',
     materialId: 'pla_std',
     grams: 25,
@@ -77,7 +77,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_figura',
-    name: '🗿 Figura Decorativa Mediana',
+    name: 'Figura decorativa mediana',
     description: 'Estatua o modelo de colección sin extras',
     materialId: 'pla_std',
     grams: 130,
@@ -88,7 +88,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_soporte',
-    name: '🛠️ Pieza Mecánica / Soporte',
+    name: 'Pieza mecánica / soporte',
     description: 'Pieza resistente en PETG con tornillería',
     materialId: 'petgb',
     grams: 95,

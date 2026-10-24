@@ -63,7 +63,7 @@ export class Results {
               <span class="badge ${isRec ? 'bg-success' : 'bg-secondary'} rounded-pill mb-2 align-self-center px-3 py-1">
                 ${tier.tag}
               </span>
-              <div class="fw-bold text-dark mb-1">${tier.icon} ${tier.name}</div>
+              <div class="fw-bold text-dark mb-1"><i class="bi ${tier.icon} me-1 text-secondary" aria-hidden="true"></i>${tier.name}</div>
               <div class="fs-4 fw-bold ${isRec ? 'text-success' : 'text-dark'}">${Engine.formatMoney(tier.price, currency)}</div>
               <div class="small text-muted mt-1">${tier.profitLabel}: <strong class="text-dark">${Engine.formatMoney(tier.profit, currency)}</strong></div>
             </div>

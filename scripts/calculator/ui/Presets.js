@@ -24,20 +24,18 @@ export class Presets {
 
     this.app.presets.forEach(preset => {
       const wrapper = document.createElement('span');
-      wrapper.className = 'preset-pill-wrapper me-2 mb-2';
-      wrapper.style.cssText = 'display:inline-flex; align-items:center; border:1px solid #dee2e6; border-radius:50px; overflow:hidden; background:#fff;';
+      wrapper.className = 'preset-pill-wrapper';
 
       const applyBtn = document.createElement('button');
       applyBtn.type = 'button';
-      applyBtn.className = 'btn btn-sm btn-outline-secondary border-0 rounded-0 rounded-start-pill px-3';
-      applyBtn.style.cssText = 'border-right:1px solid #dee2e6 !important;';
-      applyBtn.textContent = preset.name;
+      applyBtn.className = 'btn preset-apply';
+      applyBtn.textContent = String(preset.name || '').replace(/^[^\w\s]+\s*/, '');
       applyBtn.title = preset.description || 'Aplicar preset';
       applyBtn.addEventListener('click', () => this.applyPreset(preset));
 
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
-      delBtn.className = 'btn btn-sm btn-outline-danger border-0 rounded-0 rounded-end-pill px-2';
+      delBtn.className = 'btn btn-sm preset-remove';
       delBtn.innerHTML = '<i class="bi bi-x"></i>';
       delBtn.title = 'Eliminar preset';
       delBtn.classList.toggle('d-none', !this.app.isAdmin);
@@ -96,7 +94,7 @@ export class Presets {
 
     const newPreset = {
       id: 'preset_' + Date.now(),
-      name: '⭐ ' + name.trim(),
+      name: name.trim(),
       description: `Gramos: ${this.app.currentJob.materialSlots.reduce((a, b) => a + b.grams, 0)}g | Tiempo: ${this.app.currentJob.hours}h ${this.app.currentJob.minutes}m`,
       materialId: this.app.currentJob.materialSlots[0]?.materialId || 'pla_std',
       grams: this.app.currentJob.materialSlots[0]?.grams || 50,

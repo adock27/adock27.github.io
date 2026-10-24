@@ -15,9 +15,11 @@ import { Sales } from './ui/Sales.js';
 import { Orders } from './ui/Orders.js';
 import { Purchases } from './ui/Purchases.js';
 import { Users } from './ui/Users.js';
+import { Appearance } from './ui/Appearance.js';
 
 class CalculatorApp {
   constructor(initialData = {}) {
+    this.appearance = new Appearance();
     this.session = ApiSync.getSession();
     this.isAdmin = this.session?.role === 'admin';
     const accountLabel = document.getElementById('accountEmail');
