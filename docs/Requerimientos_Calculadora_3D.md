@@ -13,6 +13,7 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - Generar cotizaciones estructuradas y listas para compartir con clientes (ej. vía WhatsApp).
 - Configurar y guardar preferencias, catálogos, presets, inventario y ventas en Google Sheets mediante Apps Script, con exportación e importación JSON como respaldo manual.
 - Gestionar existencias y registrar ventas asociadas a productos del inventario.
+- Registrar compras e inversiones del negocio por usuario, con clasificación, cantidades, costos y proveedor.
 
 ## 2. Requerimientos Funcionales (RF)
 
@@ -72,6 +73,12 @@ El sistema permitirá a los usuarios (operadores de impresión 3D):
 - **RF-9.2:** Los estados disponibles son pendiente, en producción, listo, entregado y cancelado; el listado permite buscar y filtrar por estado. La vista inicial muestra pedidos activos y el filtro permite consultar el historial.
 - **RF-9.3:** Crear un pedido no reserva ni descuenta stock. Al marcarlo como entregado, se crea y enlaza una venta. Si está vinculado al inventario, la conversión valida existencias y descuenta la cantidad. Los pedidos personalizados generan ventas sin stock asociado y pueden agregar opcionalmente el producto al inventario con existencia 0.
 - **RF-9.4:** Un pedido ya convertido a venta no puede editarse ni eliminarse desde Pedidos para evitar inconsistencias con el historial de ventas.
+
+### RF-10: Compras e inversiones
+- **RF-10.1:** El usuario puede registrar, consultar, editar y eliminar desembolsos clasificados como equipo/inversión, insumo de producción, mantenimiento o gasto del negocio.
+- **RF-10.2:** Cada registro guarda fecha, concepto, costo, envío, total desembolsado, proveedor, medio de pago y notas; los insumos también guardan cantidad comprada, unidad y saldo disponible editable.
+- **RF-10.3:** El tablero muestra total desembolsado, ventas registradas, valor estimado de insumos disponibles y monto de desembolsos aún no cubierto por ventas registradas.
+- **RF-10.4:** El indicador de cobertura compara compras acumuladas y ventas registradas; no se presenta como utilidad neta. El valor de insumos disponibles se calcula según los saldos editables y no se descuenta automáticamente desde la calculadora.
 
 ## 3. Requerimientos No Funcionales (RNF)
 

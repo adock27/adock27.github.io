@@ -6,7 +6,7 @@ import { ApiSync } from './api-sync.js';
  */
 
 const cloneData = value => JSON.parse(JSON.stringify(value));
-const runtimeData = { config: null, presets: null, inventory: null, sales: null, orders: null };
+const runtimeData = { config: null, presets: null, inventory: null, sales: null, orders: null, purchases: null };
 
 export const DEFAULT_CONFIG = {
   version: 2,
@@ -101,7 +101,7 @@ export const DEFAULT_PRESETS = [
 
 export const Storage = {
   setSnapshot(snapshot = {}) {
-    ['config', 'presets', 'inventory', 'sales', 'orders'].forEach(key => {
+    ['config', 'presets', 'inventory', 'sales', 'orders', 'purchases'].forEach(key => {
       if (Object.prototype.hasOwnProperty.call(snapshot, key)) runtimeData[key] = cloneData(snapshot[key]);
     });
   },
@@ -174,6 +174,17 @@ export const Storage = {
     return true;
   },
 
+  loadPurchases() {
+    return runtimeData.purchases === null ? [] : cloneData(runtimeData.purchases);
+  },
+
+  savePurchases(items) {
+    runtimeData.purchases = cloneData(items);
+    ApiSync.setSnapshot({ purchases: runtimeData.purchases });
+    ApiSync.schedule('purchases');
+    return true;
+  },
+
   /**
    * Guarda un nuevo preset o actualiza uno existente.
    * @param {Object} preset
@@ -207,13 +218,14 @@ export const Storage = {
   exportBackup() {
     const data = ApiSync.getSnapshot();
     return JSON.stringify({
-      version: 2,
+      version: 3,
       exportDate: new Date().toISOString(),
       config: data.config || this.loadConfig(),
       presets: data.presets || this.loadPresets(),
       inventory: data.inventory || this.loadInventory(),
       sales: data.sales || this.loadSales(),
-      orders: data.orders || this.loadOrders()
+      orders: data.orders || this.loadOrders(),
+      purchases: data.purchases || this.loadPurchases()
     }, null, 2);
   },
 
@@ -231,7 +243,8 @@ export const Storage = {
         presets: Array.isArray(data.presets) ? data.presets : current.presets,
         inventory: Array.isArray(data.inventory) ? data.inventory : current.inventory,
         sales: Array.isArray(data.sales) ? data.sales : current.sales,
-        orders: Array.isArray(data.orders) ? data.orders : current.orders
+        orders: Array.isArray(data.orders) ? data.orders : current.orders,
+        purchases: Array.isArray(data.purchases) ? data.purchases : current.purchases
       };
       this.setSnapshot(next);
       ApiSync.setSnapshot(next);

@@ -31,7 +31,8 @@ var DB_SCHEMAS = {
   Cotizaciones: ['id', 'userId', 'projectName', 'clientName', 'payloadJson', 'createdAt', 'updatedAt'],
   Inventario: ['id', 'userId', 'name', 'category', 'quantity', 'unit', 'minQuantity', 'unitCost', 'notes', 'createdAt', 'updatedAt'],
   Ventas: ['id', 'userId', 'date', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'paymentMethod', 'notes', 'createdAt', 'updatedAt', 'inventoryId'],
-  Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt']
+  Pedidos: ['id', 'userId', 'orderNumber', 'inventoryId', 'date', 'dueDate', 'productName', 'clientName', 'quantity', 'unitPrice', 'total', 'status', 'paymentMethod', 'notes', 'saleId', 'createdAt', 'updatedAt'],
+  Compras: ['id', 'userId', 'date', 'type', 'itemName', 'quantity', 'unit', 'purchaseCost', 'shippingCost', 'totalCost', 'remainingQuantity', 'supplier', 'paymentMethod', 'notes', 'createdAt', 'updatedAt']
 };
 
 function getSpreadsheet_() {
@@ -109,7 +110,7 @@ function publicRecord_(sheetName, record) {
   var output = {};
   Object.keys(record).forEach(function (key) {
     if (key.charAt(0) !== '_' && key !== 'passwordHash' && key !== 'salt' && key !== 'dataJson' && key !== 'payloadJson' && key !== 'extrasJson') {
-      output[key] = sheetName === 'Ventas' && key === 'date' && record[key] instanceof Date
+      output[key] = (sheetName === 'Ventas' || sheetName === 'Compras') && key === 'date' && record[key] instanceof Date
         ? Utilities.formatDate(record[key], Session.getScriptTimeZone(), 'yyyy-MM-dd')
         : record[key];
     }
@@ -147,6 +148,7 @@ function doPost(e) {
     else if (entity === 'inventario') result = handleInventory_(body);
     else if (entity === 'ventas') result = handleSales_(body);
     else if (entity === 'pedidos') result = handleOrders_(body);
+    else if (entity === 'compras') result = handlePurchases_(body);
     else throw new Error('Entidad inválida.');
     return jsonResponse_({ ok: true, data: result });
   } catch (err) {

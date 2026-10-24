@@ -25,7 +25,7 @@ Una cotización es una propuesta que se comparte con el cliente; no se convierte
 
 ## Administrar el inventario
 
-En **Inventario**, usa **Añadir artículo** para registrar nombre, categoría, unidad, existencia inicial, stock mínimo y costo unitario. El costo unitario se usa para estimar el valor del inventario; es independiente del precio cobrado en una venta.
+En **Inventario de productos**, usa **Añadir artículo** para registrar productos terminados que fabricas y vendes: nombre, categoría, unidad, existencia inicial, stock mínimo y costo unitario. Los filamentos, resina y demás compras de insumos se registran en **Compras e inversiones**.
 
 El listado muestra todos los artículos. Los de stock crítico aparecen primero:
 
@@ -51,6 +51,12 @@ En **Pedidos**, crea un registro con cliente, producto (del inventario o persona
 
 Crear un pedido no descuenta ni reserva existencias. Al cambiarlo a **Entregado**, la app crea y enlaza su venta. Si el pedido usa un artículo del inventario, valida y descuenta las unidades; si es personalizado, crea la venta sin afectar existencias. En el formulario puedes elegir agregar ese producto personalizado al inventario con existencia 0 para futuras ventas. Los pedidos entregados se conservan en el historial y quedan bloqueados para edición o eliminación, evitando duplicar ventas.
 
+## Registrar compras e inversiones
+
+En **Compras e inversiones**, registra cada desembolso del negocio: equipo (incluido el envío), insumos de producción, mantenimiento y gastos. El total del registro suma el costo de compra más el envío. Para los insumos, indica la cantidad comprada y ajusta manualmente el saldo disponible conforme los consumas; el valor disponible se estima con el costo proporcional del saldo restante.
+
+El tablero compara el total desembolsado con las ventas registradas y muestra cuánto falta para cubrir esas compras. Para que represente dinero recibido, registra ventas ya cobradas. Este indicador sirve para seguir el flujo acumulado de compras y ventas, no representa utilidad neta. El valor disponible de insumos se presenta por separado porque todavía está en existencias. El módulo no descuenta automáticamente materiales al calcular una impresión.
+
 ## Publicar cambios
 
 Los archivos de la app y los archivos `.gs` del backend se publican por separado:
@@ -58,6 +64,6 @@ Los archivos de la app y los archivos `.gs` del backend se publican por separado
 - **Cambios de interfaz o lógica web:** publica los archivos del sitio, incluidos `calculadora_3d.html` y los módulos `scripts/calculator/` afectados; luego recarga con **Ctrl+F5**.
 - **Cambios de Apps Script o de las hojas:** copia todos los `.gs` de `apps_script_crud/` al mismo proyecto. Ejecuta `setupDatabase` si cambió el esquema y publica una nueva versión en **Implementar → Gestionar implementaciones → Editar → Nueva versión → Implementar**.
 
-Al añadir el módulo **Pedidos**, actualiza primero Apps Script: copia `Pedidos.gs` y el `Database.gs` actualizado, ejecuta `setupDatabase` para crear la hoja `Pedidos` y publica una nueva versión. Después publica el frontend. Si la nueva interfaz se publica antes que el backend, fallará la carga porque la API aún no reconoce la entidad `pedidos`.
+Al añadir módulos que usan una entidad nueva, actualiza primero Apps Script: copia su archivo `.gs` y el `Database.gs` actualizado, ejecuta `setupDatabase` para crear la hoja correspondiente y publica una nueva versión. Después publica el frontend. La interfaz no podrá cargar esa entidad hasta que la API actualizada esté desplegada.
 
 Consulta [Backend de Apps Script](../apps_script_crud/README.md) para configurar el Sheet, la propiedad `SPREADSHEET_ID`, despliegues y errores comunes. El documento de alcance funcional está en [Requerimientos de la calculadora](Requerimientos_Calculadora_3D.md).

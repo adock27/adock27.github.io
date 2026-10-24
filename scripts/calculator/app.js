@@ -13,6 +13,7 @@ import { Settings } from './ui/Settings.js';
 import { Inventory } from './ui/Inventory.js';
 import { Sales } from './ui/Sales.js';
 import { Orders } from './ui/Orders.js';
+import { Purchases } from './ui/Purchases.js';
 
 class CalculatorApp {
   constructor(initialData = {}) {
@@ -21,6 +22,7 @@ class CalculatorApp {
     this.inventory = initialData.inventory || Storage.loadInventory();
     this.sales = initialData.sales || Storage.loadSales();
     this.orders = initialData.orders || Storage.loadOrders();
+    this.purchases = initialData.purchases || Storage.loadPurchases();
     
     this.currentJob = {
       projectName: 'Llavero Personalizado',
@@ -65,6 +67,7 @@ class CalculatorApp {
     this.inventoryModule = new Inventory(this);
     this.salesModule = new Sales(this);
     this.ordersModule = new Orders(this);
+    this.purchasesModule = new Purchases(this);
 
     // Initial renders
     this.presetsComponent.render();
@@ -245,7 +248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveStatus = document.getElementById('backendSaveStatus');
   const saveStatusText = document.getElementById('backendSaveStatusText');
   const saveSpinner = document.getElementById('backendSaveSpinner');
-  const scopeLabels = { load: 'datos', all: 'datos', config: 'configuración', presets: 'presets', inventory: 'inventario', sales: 'ventas', orders: 'pedidos' };
+  const scopeLabels = { load: 'datos', all: 'datos', config: 'configuración', presets: 'presets', inventory: 'inventario', sales: 'ventas', orders: 'pedidos', purchases: 'compras e inversiones' };
   const setSaveStatus = (label, state) => {
     if (!saveStatus) return;
     if (saveStatusText) saveStatusText.textContent = label;
@@ -282,7 +285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       presets: localPresets,
       inventory: Storage.loadInventory(),
       sales: Storage.loadSales(),
-      orders: Storage.loadOrders()
+      orders: Storage.loadOrders(),
+      purchases: Storage.loadPurchases()
     });
   } catch (error) {
     Auth.showConnectionError(error);

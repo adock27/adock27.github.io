@@ -166,6 +166,7 @@ export class Sales {
     this.app.sales = this.items;
     Storage.saveSales(this.items);
     this.render();
+    this.app.purchasesModule?.renderSummary();
   }
 
   findInventoryItem(sale) {

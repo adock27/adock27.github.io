@@ -450,6 +450,7 @@ export class Settings {
     this.app.extras.render();
     this.app.inventoryModule.render();
     this.app.salesModule.render();
+    this.app.purchasesModule?.renderSummary();
     this.app.recalculate();
     this.app.showToast('Configuración guardada', 'success');
   }
@@ -507,6 +508,7 @@ export class Settings {
         this.app.inventory = Storage.loadInventory();
         this.app.sales = Storage.loadSales();
         this.app.orders = Storage.loadOrders();
+        this.app.purchases = Storage.loadPurchases();
         this.render();
         this.app.presetsComponent.render();
         this.app.inventoryModule.items = this.app.inventory;
@@ -515,6 +517,8 @@ export class Settings {
         this.app.salesModule.render();
         this.app.ordersModule.items = this.app.orders;
         this.app.ordersModule.render();
+        this.app.purchasesModule.items = this.app.purchases;
+        this.app.purchasesModule.render();
         this.app.filaments.renderPalette();
         this.app.filaments.renderMaterialSlots();
         this.app.extras.render();
