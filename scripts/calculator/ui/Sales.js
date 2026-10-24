@@ -1,4 +1,5 @@
 import { Storage } from '../storage.js';
+import { ApiSync } from '../api-sync.js';
 import { Tables } from './Tables.js';
 
 function localDateInput() {
@@ -36,6 +37,7 @@ export class Sales {
       target?.focus({ preventScroll: true });
     });
     this.searchInput?.addEventListener('input', () => this.render());
+    document.getElementById('btnSyncSalesHistory')?.addEventListener('click', () => this.syncHistory());
     document.getElementById('salesPeriodMonth')?.addEventListener('change', () => this.render());
     document.getElementById('salesPeriodYear')?.addEventListener('change', () => this.render());
     document.getElementById('saleInventoryId')?.addEventListener('change', () => this.updateInventoryHint());
@@ -46,6 +48,31 @@ export class Sales {
     });
     document.getElementById('btnQuickAddInventorySave')?.addEventListener('click', () => this.quickAddInventoryItem());
     ['saleQuantity', 'saleUnitPrice'].forEach(id => document.getElementById(id)?.addEventListener('input', () => this.updateTotalPreview()));
+  }
+
+  async syncHistory() {
+    const button = document.getElementById('btnSyncSalesHistory');
+    const icon = document.getElementById('salesSyncIcon');
+    if (!button || button.disabled) return;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    icon?.classList.add('sales-sync-spinning');
+    try {
+      const sales = await ApiSync.refreshSales();
+      this.items = sales;
+      this.app.sales = sales;
+      Storage.setSnapshot({ sales });
+      ApiSync.setSnapshot({ sales });
+      this.render();
+      this.app.purchasesModule?.renderSummary();
+      this.app.showToast('Historial de ventas sincronizado con el backend.', 'success');
+    } catch (error) {
+      this.app.showToast(error?.message || 'No se pudo sincronizar el historial de ventas.', 'error');
+    } finally {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      icon?.classList.remove('sales-sync-spinning');
+    }
   }
 
   initPeriodControls() {

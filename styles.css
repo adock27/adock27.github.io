@@ -337,6 +337,8 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .backend-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .backend-status[aria-busy='true'] .backend-status-dot { display: none; }
 .backend-status .spinner-border { width: 12px; height: 12px; border-width: 2px; }
+.sales-sync-spinning { animation: sales-sync-spin .9s linear infinite; }
+@keyframes sales-sync-spin { to { transform: rotate(360deg); } }
 .icon-button {
   display: inline-grid;
   width: 36px;

@@ -149,6 +149,40 @@ export const ApiSync = {
 
   async updateUser(action, id, fields = {}) { return request('usuarios', action, { id, ...fields }); },
 
+  async flushPending(allowRetryAfterActiveFailure = true) {
+    clearTimeout(syncTimer);
+    syncTimer = null;
+    if (!pendingScopes.size) {
+      await syncing;
+      if (pendingScopes.size) {
+        if (allowRetryAfterActiveFailure) return this.flushPending(false);
+        throw new Error('No se pudieron guardar los cambios pendientes. Revisa la conexión antes de sincronizar.');
+      }
+      return;
+    }
+    const scopes = new Set(pendingScopes);
+    pendingScopes.clear();
+    window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: Array.from(scopes) } }));
+    const task = syncing.then(() => pushSnapshot(scopes));
+    syncing = task.catch(error => {
+      scopes.forEach(scope => pendingScopes.add(scope));
+      console.error('No se pudieron guardar los cambios pendientes antes de sincronizar.', error);
+      window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: Array.from(scopes), error } }));
+    });
+    await task;
+    window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: Array.from(scopes) } }));
+  },
+
+  async refreshSales() {
+    await this.flushPending();
+    const session = this.getSession();
+    const userId = session?.businessId || session?.id;
+    if (!userId) throw new Error('Inicia sesión para sincronizar las ventas.');
+    const sales = await request('ventas', 'list', { userId });
+    this.setSnapshot({ sales });
+    return sales;
+  },
+
   async load(defaults) {
     window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: ['load'] } }));
     try {
@@ -223,6 +257,7 @@ export const ApiSync = {
         await pushSnapshot(scopes);
         window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: Array.from(scopes) } }));
       }).catch(error => {
+        scopes.forEach(scope => pendingScopes.add(scope));
         console.error('No se pudo guardar en Apps Script.', error);
         window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: Array.from(scopes), error } }));
       });
