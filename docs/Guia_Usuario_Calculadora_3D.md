@@ -17,7 +17,7 @@ La calculadora estima costos de impresión, genera cotizaciones y administra inv
 4. En **Cotizador para Clientes**, elige el nivel de precio y copia el mensaje para compartirlo. La impresión del navegador permite guardar la cotización como PDF.
 5. Ajusta moneda, consumo de máquina, tarifas, cuota de impresora y márgenes en **Configuración & Catálogos**.
 
-El catálogo de filamentos se conserva en el teléfono o computador durante 24 horas para evitar consultarlo al backend en cada apertura. Para traer cambios antes, entra en **Configuración & Catálogos → Catálogo de filamentos → Sync API**. La sincronización añade materiales nuevos y actualiza los existentes.
+La configuración, los extras, las plantillas y el catálogo de filamentos se conservan en caché por negocio durante 24 horas. Si guardas cambios en la app, se renueva la caché correspondiente. Para traer antes cambios externos al catálogo de filamentos, entra en **Configuración & Catálogos → Catálogo de filamentos → Sync API**; la sincronización añade materiales nuevos y actualiza los existentes.
 
 La calculadora presenta tres importes encadenados: **Base de producción** (costo completo del trabajo), **Precio al vendedor** (base más el margen bruto del dueño) y **Precio sugerido al cliente** (precio al vendedor más el margen bruto del vendedor). La cotización para compartir usa por defecto el precio sugerido al cliente. Los márgenes son porcentajes sobre el precio de venta, no recargos sobre el costo.
 

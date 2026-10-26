@@ -2,6 +2,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ6CTe2fjdl1dDyoUfCtnBUngv5a069JAldSfGakdRdsa5/exec';
 const SESSION_KEY = 'calc3d_session_v1';
 const MATERIAL_CACHE_PREFIX = 'calc3d_materials_cache_v1_';
+const CORE_CACHE_PREFIX = 'calc3d_core_cache_v1_';
 const MATERIAL_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const LEGACY_KEYS = ['calc3d_config_v2', 'calc3d_presets_v2', 'calc3d_inventory_v1', 'calc3d_sales_v1', 'calc3d_orders_v1'];
 let syncTimer = null;
@@ -28,6 +29,27 @@ function writeMaterialCache(userId, materials) {
   try {
     localStorage.setItem(materialCacheKey(userId), JSON.stringify({ savedAt: Date.now(), materials }));
   } catch (_) { /* If browser storage is unavailable, fetch the catalog on next load. */ }
+}
+
+function readCoreCache(userId, part) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(`${CORE_CACHE_PREFIX}${encodeURIComponent(String(userId || ''))}`) || 'null');
+    const entry = cache?.[part];
+    const age = Date.now() - Number(entry?.savedAt);
+    if (!entry || age < 0 || age >= MATERIAL_CACHE_TTL_MS) return null;
+    if (part === 'config') return entry.data && typeof entry.data === 'object' ? entry.data : null;
+    return Array.isArray(entry.data) ? entry.data : null;
+  } catch (_) { return null; }
+}
+
+function writeCoreCache(userId, part, data) {
+  if (!userId || (part === 'config' ? !data || typeof data !== 'object' : !Array.isArray(data))) return;
+  const key = `${CORE_CACHE_PREFIX}${encodeURIComponent(String(userId))}`;
+  try {
+    const cache = JSON.parse(localStorage.getItem(key) || '{}') || {};
+    cache[part] = { savedAt: Date.now(), data };
+    localStorage.setItem(key, JSON.stringify(cache));
+  } catch (_) { /* The remote backend remains the source of truth. */ }
 }
 
 async function request(entity, action, fields = {}) {
@@ -123,11 +145,16 @@ async function pushSnapshot(scopes, current = snapshot) {
   const all = scopes.has('all');
   if (all || scopes.has('config')) {
     await request('configuracion', 'save', { userId, data: config });
+    writeCoreCache(userId, 'config', config);
     await replaceCollection('materiales', config.materials || []);
     writeMaterialCache(userId, config.materials || []);
     await replaceCollection('extras', config.extrasCatalog || []);
+    writeCoreCache(userId, 'extras', config.extrasCatalog || []);
   }
-  if (all || scopes.has('presets')) await replaceCollection('presets', presets || []);
+  if (all || scopes.has('presets')) {
+    await replaceCollection('presets', presets || []);
+    writeCoreCache(userId, 'presets', presets || []);
+  }
   if (all || scopes.has('inventory')) await replaceCollection('inventario', inventory || []);
   if (all || scopes.has('sales')) await replaceCollection('ventas', sales || []);
   if (all || scopes.has('orders')) await replaceCollection('pedidos', orders || []);
@@ -276,7 +303,28 @@ export const ApiSync = {
       session = { ...session, id: currentUser.id, email: currentUser.email, role: currentUser.role || 'admin', businessId: currentUser.businessId || currentUser.id };
       this.saveSession(session);
       const userId = session.businessId;
+      const cachedConfig = readCoreCache(userId, 'config');
+      const cachedExtras = readCoreCache(userId, 'extras');
+      const cachedPresets = readCoreCache(userId, 'presets');
       const cachedMaterials = readMaterialCache(userId);
+      const configPromise = cachedConfig !== null
+        ? Promise.resolve({ data: cachedConfig })
+        : request('configuracion', 'get', { userId }).then(record => {
+          if (record?.data) writeCoreCache(userId, 'config', record.data);
+          return record;
+        });
+      const extrasPromise = cachedExtras !== null
+        ? Promise.resolve(cachedExtras)
+        : request('extras', 'list', { userId }).then(extras => {
+          writeCoreCache(userId, 'extras', extras);
+          return extras;
+        });
+      const presetsPromise = cachedPresets !== null
+        ? Promise.resolve(cachedPresets)
+        : request('presets', 'list', { userId }).then(presets => {
+          writeCoreCache(userId, 'presets', presets);
+          return presets;
+        });
       const materialsPromise = cachedMaterials !== null
         ? Promise.resolve(cachedMaterials)
         : request('materiales', 'list', { userId }).then(materials => {
@@ -284,10 +332,10 @@ export const ApiSync = {
           return materials;
         });
       const [remoteConfigRecord, materials, extras, presets] = await Promise.all([
-        request('configuracion', 'get', { userId }),
+        configPromise,
         materialsPromise,
-        request('extras', 'list', { userId }),
-        request('presets', 'list', { userId })
+        extrasPromise,
+        presetsPromise
       ]);
       const remoteConfig = remoteConfigRecord?.data;
       // Cuentas ya inicializadas cargan solo lo que necesita la calculadora.
