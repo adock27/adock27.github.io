@@ -17,6 +17,8 @@ La calculadora estima costos de impresión, genera cotizaciones y administra inv
 4. En **Cotizador para Clientes**, elige el nivel de precio y copia el mensaje para compartirlo. La impresión del navegador permite guardar la cotización como PDF.
 5. Ajusta moneda, consumo de máquina, tarifas, cuota de impresora y márgenes en **Configuración & Catálogos**.
 
+El catálogo de filamentos se conserva en el teléfono o computador durante 24 horas para evitar consultarlo al backend en cada apertura. Para traer cambios antes, entra en **Configuración & Catálogos → Catálogo de filamentos → Sync API**. La sincronización añade materiales nuevos y actualiza los existentes.
+
 La calculadora presenta tres importes encadenados: **Base de producción** (costo completo del trabajo), **Precio al vendedor** (base más el margen bruto del dueño) y **Precio sugerido al cliente** (precio al vendedor más el margen bruto del vendedor). La cotización para compartir usa por defecto el precio sugerido al cliente. Los márgenes son porcentajes sobre el precio de venta, no recargos sobre el costo.
 
 En Configuración puedes definir la cuota mensual de la impresora y las horas productivas facturables estimadas al mes. La app asigna al trabajo la parte proporcional de esa cuota según sus horas de impresión. Mientras recuperas una deuda de la impresora, configura **Desgaste máquina** como costo de mantenimiento para no contabilizar dos veces la compra; al terminar de pagarla, puedes dejar la cuota en cero y ajustar desgaste para reservar la reposición futura.

@@ -410,13 +410,25 @@ export class Settings {
     try {
       const remoteMaterials = await ApiSync.listMaterials();
       if (!Array.isArray(remoteMaterials)) throw new Error('Formato de datos no válido');
-      const existingNames = new Set(this.app.config.materials.map(m => m.name.toLowerCase()));
-      let addedCount = 0;
+      const existingById = new Map(this.app.config.materials.map((material, index) => [String(material.id), index]));
+      const existingByName = new Map(this.app.config.materials.map((material, index) => [String(material.name || '').toLocaleLowerCase(), index]));
+      let addedCount = 0, updatedCount = 0;
       remoteMaterials.forEach(material => {
-        if (!existingNames.has(String(material.name || '').toLowerCase())) {
+        const index = existingById.get(String(material.id)) ?? existingByName.get(String(material.name || '').toLocaleLowerCase());
+        if (index === undefined) {
           this.app.config.materials.push(material);
-          existingNames.add(String(material.name || '').toLowerCase());
+          const nextIndex = this.app.config.materials.length - 1;
+          existingById.set(String(material.id), nextIndex);
+          existingByName.set(String(material.name || '').toLocaleLowerCase(), nextIndex);
           addedCount++;
+        } else {
+          const current = this.app.config.materials[index];
+          const changed = ['id', 'name', 'pricePerKg', 'color', 'note']
+            .some(key => String(current[key] ?? '') !== String(material[key] ?? ''));
+          this.app.config.materials[index] = { ...current, ...material };
+          existingById.set(String(material.id), index);
+          existingByName.set(String(material.name || '').toLocaleLowerCase(), index);
+          if (changed) updatedCount++;
         }
       });
       Storage.saveConfig(this.app.config);
@@ -424,7 +436,7 @@ export class Settings {
       this.app.filaments.renderPalette();
       this.app.filaments.renderMaterialSlots();
       this.app.recalculate();
-      this.app.showToast(`Sincronización exitosa: ${addedCount} materiales añadidos`, 'success');
+      this.app.showToast(`Catálogo actualizado: ${addedCount} añadidos y ${updatedCount} actualizados.`, 'success');
     } catch (err) {
       console.error(err);
       this.app.showToast('Error al sincronizar con la API', 'error');

@@ -1,6 +1,8 @@
 // Persistencia remota de todos los datos de la calculadora en Google Apps Script.
 const API_URL = 'https://script.google.com/macros/s/AKfycbwIK7JC4Me4vaboluWaY6tJ6CTe2fjdl1dDyoUfCtnBUngv5a069JAldSfGakdRdsa5/exec';
 const SESSION_KEY = 'calc3d_session_v1';
+const MATERIAL_CACHE_PREFIX = 'calc3d_materials_cache_v1_';
+const MATERIAL_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const LEGACY_KEYS = ['calc3d_config_v2', 'calc3d_presets_v2', 'calc3d_inventory_v1', 'calc3d_sales_v1', 'calc3d_orders_v1'];
 let syncTimer = null;
 let syncing = Promise.resolve();
@@ -8,6 +10,25 @@ let activeApiRequests = 0;
 const pendingScopes = new Set();
 const loadingEntities = new Map();
 let snapshot = { config: null, presets: null, inventory: null, sales: null, orders: null, purchases: null };
+
+function materialCacheKey(userId) {
+  return `${MATERIAL_CACHE_PREFIX}${encodeURIComponent(String(userId || ''))}`;
+}
+
+function readMaterialCache(userId) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(materialCacheKey(userId)) || 'null');
+    const age = Date.now() - Number(cached?.savedAt);
+    return Array.isArray(cached?.materials) && age >= 0 && age < MATERIAL_CACHE_TTL_MS ? cached.materials : null;
+  } catch (_) { return null; }
+}
+
+function writeMaterialCache(userId, materials) {
+  if (!Array.isArray(materials) || !userId) return;
+  try {
+    localStorage.setItem(materialCacheKey(userId), JSON.stringify({ savedAt: Date.now(), materials }));
+  } catch (_) { /* If browser storage is unavailable, fetch the catalog on next load. */ }
+}
 
 async function request(entity, action, fields = {}) {
   const session = ApiSync.getSession();
@@ -103,6 +124,7 @@ async function pushSnapshot(scopes, current = snapshot) {
   if (all || scopes.has('config')) {
     await request('configuracion', 'save', { userId, data: config });
     await replaceCollection('materiales', config.materials || []);
+    writeMaterialCache(userId, config.materials || []);
     await replaceCollection('extras', config.extrasCatalog || []);
   }
   if (all || scopes.has('presets')) await replaceCollection('presets', presets || []);
@@ -152,7 +174,10 @@ export const ApiSync = {
 
   async listMaterials() {
     const session = this.getSession();
-    return request('materiales', 'list', { userId: session?.businessId || session?.id });
+    const userId = session?.businessId || session?.id;
+    const materials = await request('materiales', 'list', { userId });
+    writeMaterialCache(userId, materials);
+    return materials;
   },
 
   async listUsers() { return request('usuarios', 'list'); },
@@ -251,9 +276,16 @@ export const ApiSync = {
       session = { ...session, id: currentUser.id, email: currentUser.email, role: currentUser.role || 'admin', businessId: currentUser.businessId || currentUser.id };
       this.saveSession(session);
       const userId = session.businessId;
+      const cachedMaterials = readMaterialCache(userId);
+      const materialsPromise = cachedMaterials !== null
+        ? Promise.resolve(cachedMaterials)
+        : request('materiales', 'list', { userId }).then(materials => {
+          writeMaterialCache(userId, materials);
+          return materials;
+        });
       const [remoteConfigRecord, materials, extras, presets] = await Promise.all([
         request('configuracion', 'get', { userId }),
-        request('materiales', 'list', { userId }),
+        materialsPromise,
         request('extras', 'list', { userId }),
         request('presets', 'list', { userId })
       ]);
