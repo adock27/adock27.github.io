@@ -11,6 +11,16 @@ const TABLE_LANGUAGE = {
 };
 
 export const Tables = {
+  addMobileLabels(table) {
+    if (!table) return;
+    const labels = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    table.querySelectorAll('tbody tr').forEach(row => {
+      [...row.cells].forEach((cell, index) => {
+        if (!cell.hasAttribute('colspan') && labels[index]) cell.dataset.label = labels[index];
+      });
+    });
+  },
+
   begin(tbody) {
     const table = tbody?.closest('table');
     if (!table || !globalThis.DataTable?.isDataTable?.(table)) return table;
@@ -23,6 +33,8 @@ export const Tables = {
     if (!table || !globalThis.DataTable || globalThis.DataTable.isDataTable(table)) return;
     const rows = [...tbody.rows];
     if (!rows.length || rows.every(row => row.querySelector('td[colspan]'))) return;
+
+    this.addMobileLabels(table);
 
     new globalThis.DataTable(table, {
       searching: options.searching ?? false,
