@@ -113,8 +113,16 @@ async function pushSnapshot(scopes, current = snapshot) {
 
 export const ApiSync = {
   getSession() {
-    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); }
-    catch (_) { return null; }
+    try {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (saved) return JSON.parse(saved);
+      // Migra sesiones abiertas antes de persistir el acceso entre recargas móviles.
+      const temporary = sessionStorage.getItem(SESSION_KEY);
+      if (!temporary) return null;
+      localStorage.setItem(SESSION_KEY, temporary);
+      sessionStorage.removeItem(SESSION_KEY);
+      return JSON.parse(temporary);
+    } catch (_) { return null; }
   },
 
   getSnapshot() { return JSON.parse(JSON.stringify(snapshot)); },
@@ -123,8 +131,11 @@ export const ApiSync = {
     snapshot = { ...snapshot, ...JSON.parse(JSON.stringify(data)) };
   },
 
-  saveSession(session) { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); },
-  clearSession() { sessionStorage.removeItem(SESSION_KEY); },
+  saveSession(session) { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); },
+  clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
+  },
 
   async register(email, password) {
     await request('usuarios', 'create', { email, password });
