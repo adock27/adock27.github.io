@@ -6,6 +6,7 @@ let syncTimer = null;
 let syncing = Promise.resolve();
 let activeApiRequests = 0;
 const pendingScopes = new Set();
+const loadingEntities = new Map();
 let snapshot = { config: null, presets: null, inventory: null, sales: null, orders: null, purchases: null };
 
 async function request(entity, action, fields = {}) {
@@ -156,6 +157,53 @@ export const ApiSync = {
 
   async listUsers() { return request('usuarios', 'list'); },
 
+  async loadUsers() {
+    window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: ['usuarios'], operation: 'load' } }));
+    try {
+      const users = await this.listUsers();
+      window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: ['usuarios'], operation: 'load' } }));
+      return users;
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: ['usuarios'], operation: 'load', error } }));
+      if (/sesión|cuenta ya no existe|cuenta está desactivada|no autorizado/i.test(error.message || '')) window.dispatchEvent(new Event('calculator-auth-expired'));
+      throw error;
+    }
+  },
+
+  async loadEntity(entity) {
+    const entities = {
+      inventario: 'inventory',
+      ventas: 'sales',
+      pedidos: 'orders',
+      compras: 'purchases'
+    };
+    const key = entities[entity];
+    if (!key) throw new Error(`No se reconoce el módulo ${entity}.`);
+    if (loadingEntities.has(entity)) return loadingEntities.get(entity);
+    const session = this.getSession();
+    const userId = session?.businessId || session?.id;
+    if (!userId) throw new Error('Inicia sesión para cargar este módulo.');
+    const task = (async () => {
+      window.dispatchEvent(new CustomEvent('calculator-api-sync-start', { detail: { scopes: [entity], operation: 'load' } }));
+      try {
+        const records = await request(entity, 'list', { userId });
+        this.setSnapshot({ [key]: records });
+        window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: [entity], operation: 'load' } }));
+        return records;
+      } catch (error) {
+        window.dispatchEvent(new CustomEvent('calculator-api-sync-error', { detail: { scopes: [entity], operation: 'load', error } }));
+        if (/sesión|cuenta ya no existe|cuenta está desactivada|no autorizado/i.test(error.message || '')) {
+          window.dispatchEvent(new Event('calculator-auth-expired'));
+        }
+        throw error;
+      } finally {
+        loadingEntities.delete(entity);
+      }
+    })();
+    loadingEntities.set(entity, task);
+    return task;
+  },
+
   async createEmployee(email, password) { return request('usuarios', 'createuser', { email, password }); },
 
   async updateUser(action, id, fields = {}) { return request('usuarios', action, { id, ...fields }); },
@@ -203,18 +251,36 @@ export const ApiSync = {
       session = { ...session, id: currentUser.id, email: currentUser.email, role: currentUser.role || 'admin', businessId: currentUser.businessId || currentUser.id };
       this.saveSession(session);
       const userId = session.businessId;
-      const purchaseRequest = session.role === 'admin' ? request('compras', 'list', { userId }) : Promise.resolve([]);
-      const [remoteConfigRecord, materials, extras, presets, inventory, sales, orders, purchases] = await Promise.all([
+      const [remoteConfigRecord, materials, extras, presets] = await Promise.all([
         request('configuracion', 'get', { userId }),
         request('materiales', 'list', { userId }),
         request('extras', 'list', { userId }),
-        request('presets', 'list', { userId }),
+        request('presets', 'list', { userId })
+      ]);
+      const remoteConfig = remoteConfigRecord?.data;
+      // Cuentas ya inicializadas cargan solo lo que necesita la calculadora.
+      // La lectura completa se reserva para migraciones o el primer inicio.
+      if (remoteConfigRecord) {
+        const config = {
+          ...defaults.config,
+          ...remoteConfig,
+          materials,
+          extrasCatalog: extras
+        };
+        const snapshotData = { config, presets, inventory: [], sales: [], orders: [], purchases: [] };
+        this.setSnapshot(snapshotData);
+        const loaded = { ...this.getSnapshot(), connected: true, deferred: ['inventario', 'ventas', 'pedidos', ...(session.role === 'admin' ? ['compras'] : [])] };
+        window.dispatchEvent(new CustomEvent('calculator-api-sync-success', { detail: { scopes: ['load'] } }));
+        return loaded;
+      }
+
+      const purchaseRequest = session.role === 'admin' ? request('compras', 'list', { userId }) : Promise.resolve([]);
+      const [inventory, sales, orders, purchases] = await Promise.all([
         request('inventario', 'list', { userId }),
         request('ventas', 'list', { userId }),
         request('pedidos', 'list', { userId }),
         purchaseRequest
       ]);
-      const remoteConfig = remoteConfigRecord?.data;
       const hasRemoteData = Boolean(remoteConfig || materials.length || extras.length || presets.length || inventory.length || sales.length || orders.length || purchases.length);
       if (!hasRemoteData) {
         if (session.role !== 'admin') throw new Error('El administrador debe inicializar primero los datos del negocio.');

@@ -8,7 +8,6 @@ export class Users {
     this.body = document.getElementById('adminUsersTableBody');
     document.getElementById('adminCreateUserForm')?.addEventListener('submit', event => this.create(event));
     document.getElementById('btnReloadUsers')?.addEventListener('click', () => this.render());
-    this.render();
   }
 
   async create(event) {
@@ -26,14 +25,14 @@ export class Users {
     } finally { button.disabled = false; }
   }
 
-  async render() {
+  async render(loadedUsers = null) {
     if (!this.body) return;
     Tables.begin(this.body);
     this.body.replaceChildren();
     const loading = document.createElement('tr');
     const cell = document.createElement('td'); cell.colSpan = 4; cell.className = 'text-secondary text-center py-3'; cell.textContent = 'Cargando usuarios…'; loading.appendChild(cell); this.body.appendChild(loading);
     try {
-      const users = await ApiSync.listUsers();
+      const users = Array.isArray(loadedUsers) ? loadedUsers : await ApiSync.listUsers();
       this.body.replaceChildren();
       users.forEach(user => this.renderRow(user));
       if (!users.length) {
@@ -41,10 +40,12 @@ export class Users {
         empty.colSpan = 4; empty.className = 'text-secondary text-center py-3'; empty.textContent = 'No hay cuentas registradas.'; row.appendChild(empty); this.body.appendChild(row);
       }
       Tables.end(this.body, { searching: true });
+      return true;
     } catch (error) {
       this.body.replaceChildren();
       const row = document.createElement('tr'), cell = document.createElement('td');
       cell.colSpan = 4; cell.className = 'text-danger text-center py-3'; cell.textContent = error.message || 'No se pudo cargar la lista.'; row.appendChild(cell); this.body.appendChild(row);
+      return false;
     }
   }
 

@@ -52,6 +52,8 @@ export class Tabs {
     const heading = document.getElementById('currentSectionLabel');
     if (heading && selectedLink) heading.textContent = selectedLink.querySelector('span')?.textContent.trim() || 'Operaciones';
 
+    const loading = this.app.loadTab?.(targetId);
+    loading?.then(() => requestAnimationFrame(() => Tables.adjustVisible())).catch(() => {});
     if (targetId === 'tab-quote' && this.app.quote) {
       this.app.quote.updateQuotePreview();
     }

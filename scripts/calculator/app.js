@@ -30,6 +30,13 @@ class CalculatorApp {
     this.sales = initialData.sales || Storage.loadSales();
     this.orders = initialData.orders || Storage.loadOrders();
     this.purchases = initialData.purchases || Storage.loadPurchases();
+    this.deferredTabs = new Set(initialData.deferred || []);
+    this.loadedTabs = new Set(['tab-calculator', 'tab-quote', 'tab-settings']);
+    if (!Array.isArray(initialData.deferred)) {
+      ['tab-inventory', 'tab-sales', 'tab-orders', ...(this.isAdmin ? ['tab-purchases'] : [])]
+        .forEach(tab => this.loadedTabs.add(tab));
+    }
+    this.tabLoads = new Map();
     
     this.currentJob = {
       projectName: 'Llavero Personalizado',
@@ -83,6 +90,58 @@ class CalculatorApp {
     this.filaments.renderMaterialSlots();
     this.extras.render();
     this.settings.render();
+  }
+
+  loadTab(targetId) {
+    const loaders = {
+      'tab-inventory': async () => {
+        this.inventory = await ApiSync.loadEntity('inventario');
+        this.inventoryModule.items = this.inventory;
+        this.inventoryModule.render();
+        this.salesModule.renderInventoryOptions();
+        this.ordersModule.renderInventoryOptions();
+      },
+      'tab-sales': async () => {
+        await this.loadTab('tab-inventory');
+        this.sales = await ApiSync.loadEntity('ventas');
+        this.salesModule.items = this.sales;
+        this.salesModule.render();
+        if (this.loadedTabs.has('tab-purchases')) this.purchasesModule.renderSummary();
+      },
+      'tab-orders': async () => {
+        await this.loadTab('tab-inventory');
+        await this.loadTab('tab-sales');
+        this.orders = await ApiSync.loadEntity('pedidos');
+        this.ordersModule.items = this.orders;
+        this.ordersModule.render();
+      },
+      'tab-purchases': async () => {
+        await this.loadTab('tab-sales');
+        const purchases = await ApiSync.loadEntity('compras');
+        this.purchases = purchases;
+        this.purchasesModule.items = purchases;
+        this.purchasesModule.render();
+      },
+      'tab-users': async () => {
+        if (this.isAdmin) {
+          const users = await ApiSync.loadUsers();
+          if (!await this.usersModule.render(users)) throw new Error('No se pudieron cargar las cuentas.');
+        }
+      }
+    };
+    if (this.loadedTabs.has(targetId)) return Promise.resolve();
+    if (this.tabLoads.has(targetId)) return this.tabLoads.get(targetId);
+    if (!loaders[targetId]) return Promise.resolve();
+    const task = Promise.resolve().then(loaders[targetId]).then(() => {
+      this.loadedTabs.add(targetId);
+      const entityByTab = { 'tab-inventory': 'inventario', 'tab-sales': 'ventas', 'tab-orders': 'pedidos', 'tab-purchases': 'compras', 'tab-users': 'usuarios' };
+      this.deferredTabs.delete(entityByTab[targetId]);
+    }).catch(error => {
+      console.error(`No se pudo cargar ${targetId}.`, error);
+      throw error;
+    }).finally(() => this.tabLoads.delete(targetId));
+    this.tabLoads.set(targetId, task);
+    return task;
   }
 
   canManageRecord(record) {
@@ -293,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveStatus = document.getElementById('backendSaveStatus');
   const saveStatusText = document.getElementById('backendSaveStatusText');
   const saveSpinner = document.getElementById('backendSaveSpinner');
-  const scopeLabels = { load: 'datos', all: 'datos', config: 'configuración', presets: 'presets', inventory: 'inventario', sales: 'ventas', orders: 'pedidos', purchases: 'compras e inversiones' };
+  const scopeLabels = { load: 'datos', all: 'datos', config: 'configuración', presets: 'presets', inventory: 'inventario', sales: 'ventas', orders: 'pedidos', purchases: 'compras e inversiones', inventario: 'inventario', ventas: 'ventas', pedidos: 'pedidos', compras: 'compras e inversiones', usuarios: 'cuentas' };
   const setSaveStatus = (label, state) => {
     if (!saveStatus) return;
     if (saveStatusText) saveStatusText.textContent = label;
@@ -310,11 +369,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`;
   };
   window.addEventListener('calculator-api-sync-start', event => {
-    const isLoad = event.detail?.scopes?.includes('load');
+    const isLoad = event.detail?.operation === 'load' || event.detail?.scopes?.includes('load');
     setSaveStatus(`${isLoad ? 'Cargando' : 'Guardando'} ${labelForScopes(event.detail?.scopes)}…`, 'pending');
   });
   window.addEventListener('calculator-api-sync-success', event => {
-    const isLoad = event.detail?.scopes?.includes('load');
+    const isLoad = event.detail?.operation === 'load' || event.detail?.scopes?.includes('load');
     setSaveStatus(isLoad ? 'Backend conectado' : 'Guardado en backend', 'success');
   });
   window.addEventListener('calculator-api-sync-error', event => {

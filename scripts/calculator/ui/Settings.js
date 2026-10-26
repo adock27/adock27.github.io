@@ -514,7 +514,20 @@ export class Settings {
     if (btn) btn.innerHTML = 'Valores de Fábrica';
   }
 
-  handleExportBackup() {
+  async handleExportBackup() {
+    try {
+      const [inventory, sales, orders, purchases] = await Promise.all([
+        ApiSync.loadEntity('inventario'), ApiSync.loadEntity('ventas'),
+        ApiSync.loadEntity('pedidos'), ...(this.app.isAdmin ? [ApiSync.loadEntity('compras')] : [])
+      ]);
+      this.app.inventory = inventory;
+      this.app.sales = sales;
+      this.app.orders = orders;
+      if (this.app.isAdmin) this.app.purchases = purchases;
+    } catch (_) {
+      this.app.showToast('No se pudo completar la copia desde el backend.', 'error');
+      return;
+    }
     const json = Storage.exportBackup();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -531,8 +544,16 @@ export class Settings {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const [inventory, sales, orders, purchases] = await Promise.all([
+          ApiSync.loadEntity('inventario'), ApiSync.loadEntity('ventas'),
+          ApiSync.loadEntity('pedidos'), ...(this.app.isAdmin ? [ApiSync.loadEntity('compras')] : [])
+        ]);
+        this.app.inventory = inventory;
+        this.app.sales = sales;
+        this.app.orders = orders;
+        if (this.app.isAdmin) this.app.purchases = purchases;
         Storage.importBackup(e.target.result);
         this.app.config = Storage.loadConfig();
         this.app.presets = Storage.loadPresets();
@@ -550,6 +571,7 @@ export class Settings {
         this.app.ordersModule.render();
         this.app.purchasesModule.items = this.app.purchases;
         this.app.purchasesModule.render();
+        ['tab-inventory', 'tab-sales', 'tab-orders', ...(this.app.isAdmin ? ['tab-purchases'] : [])].forEach(tab => this.app.loadedTabs.add(tab));
         this.app.filaments.renderPalette();
         this.app.filaments.renderMaterialSlots();
         this.app.extras.render();

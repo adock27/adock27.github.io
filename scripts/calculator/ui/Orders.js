@@ -156,7 +156,7 @@ export class Orders {
     ]);
   }
 
-  saveOrder(event) {
+  async saveOrder(event) {
     event.preventDefault();
     const id = document.getElementById('orderId').value;
     const inventoryId = document.getElementById('orderInventoryId').value;
@@ -200,6 +200,8 @@ export class Orders {
       saleId: existing?.saleId || ''
     };
     if (status === 'Entregado' && !order.saleId) {
+      try { await this.app.loadTab('tab-sales'); }
+      catch (_) { return this.app.showToast('No se pudo cargar el historial de ventas. El pedido no se entregó.', 'error'); }
       const addCustomToInventory = this.app.isAdmin && isCustom && document.getElementById('orderAddCustomToInventory').checked;
       if (!this.createSaleFromOrder(order, addCustomToInventory)) return;
     }

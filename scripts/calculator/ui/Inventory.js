@@ -81,9 +81,10 @@ export class Inventory {
     });
   }
 
-  quickSell(item) {
+  async quickSell(item) {
     const sales = this.app.salesModule;
     if (!sales) return this.app.showToast('El módulo de ventas todavía no está disponible.', 'error');
+    try { await this.app.loadTab('tab-sales'); } catch (_) { return; }
     sales.openForm();
     const select = document.getElementById('saleInventoryId');
     if (select) select.value = String(item.id);
@@ -91,9 +92,10 @@ export class Inventory {
     sales.updateTotalPreview();
   }
 
-  quickOrder(item) {
+  async quickOrder(item) {
     const orders = this.app.ordersModule;
     if (!orders) return this.app.showToast('El módulo de pedidos todavía no está disponible.', 'error');
+    try { await this.app.loadTab('tab-orders'); } catch (_) { return; }
     orders.openForm();
     const select = document.getElementById('orderInventoryId');
     if (select) select.value = String(item.id);
