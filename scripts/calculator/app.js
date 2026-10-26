@@ -329,7 +329,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { entity, action } = event.detail || {};
     const verb = apiActions[action] || 'Procesando';
     const noun = apiNames[entity] || 'datos';
-    const title = `${verb} ${noun}…`;
+    const title = entity === 'usuarios' && action === 'me'
+      ? 'Validando sesión…'
+      : `${verb} ${noun}…`;
     if (window.Swal.isVisible()) window.Swal.update({ title });
     else window.Swal.fire({
       title,
